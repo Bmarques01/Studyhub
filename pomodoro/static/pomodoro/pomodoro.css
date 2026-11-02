@@ -308,3 +308,66 @@ kbd {
     justify-content: center;
     text-align: center;
 }
+
+/* ===== "Ainda no foco?" ===== */
+.aviso-foco,
+.foco-livre {
+    width: 100%;
+    max-width: 440px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--rosa-fundo);
+    border: 2px solid var(--rosa-claro);
+    text-align: center;
+    animation: aparecer 0.25s ease-out;
+}
+
+/* [hidden] precisa vencer o display das classes acima */
+.aviso-foco[hidden],
+.foco-livre[hidden] {
+    display: none;
+}
+
+.aviso-foco p {
+    margin-bottom: 10px;
+}
+
+.aviso-botoes {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.btn-texto {
+    border: none;
+    background: none;
+    color: var(--vinho);
+    font-family: inherit;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.foco-livre {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+/* No modo livre o anel fica cheio e "respira" devagar */
+.relogio-card.livre .anel-progresso {
+    animation: respirar 2.4s ease-in-out infinite;
+}
+
+@keyframes respirar {
+    50% { opacity: 0.45; }
+}
+
+@keyframes aparecer {
+    from { opacity: 0; transform: translateY(-4px); }
+}

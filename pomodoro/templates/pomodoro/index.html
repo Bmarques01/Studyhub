@@ -39,6 +39,23 @@
             </div>
         </div>
 
+        {# Aparece 1 minuto antes do fim do foco #}
+        <div id="aviso-foco" class="aviso-foco" role="alert" hidden>
+            <p><strong>Ainda no foco?</strong> Falta 1 minuto para a pausa.</p>
+            <div class="aviso-botoes">
+                <button type="button" class="btn btn-claro" data-estender="5">+5 min</button>
+                <button type="button" class="btn btn-claro" data-estender="15">+15 min</button>
+                <button type="button" class="btn" id="btn-livre">seguir sem limite</button>
+                <button type="button" class="btn-texto" id="btn-fazer-pausa">fazer a pausa</button>
+            </div>
+        </div>
+
+        {# Modo livre: o relógio conta o tempo extra até você encerrar #}
+        <div id="foco-livre" class="foco-livre" hidden>
+            <span><strong>Foco livre</strong> · contando o tempo extra</span>
+            <button type="button" class="btn" id="btn-encerrar">✓ encerrar foco</button>
+        </div>
+
         <div class="escolha-estudo">
             <select id="disciplina" title="Disciplina">
                 <option value="">Sem disciplina</option>

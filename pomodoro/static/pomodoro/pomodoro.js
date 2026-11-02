@@ -25,69 +25,107 @@ const TOPICOS = JSON.parse(document.getElementById('dados-topicos').textContent)
 const CIRCUNFERENCIA = 2 * Math.PI * 90;
 anel.style.strokeDasharray = CIRCUNFERENCIA;
 
+// Precisam vir antes do estado, que já usa duracaoMs() (e ela usa UM_MINUTO)
+const UM_MINUTO = 60 * 1000;
+const LIMITE_MS = 180 * UM_MINUTO;  // um foco registra no máximo 3h
+
 // ===== Estado (o que o relógio "lembra") =====
 let modo = 'foco';
 let focosConcluidos = 0;
 let rodando = false;
-let restanteMs = tempos.foco * 60 * 1000;
-let fimEm = null;      // momento exato em que o bloco termina
+let alvoMs = duracaoMs('foco');  // quanto este bloco deve durar (cresce com +5 / +15 min)
+let acumuladoMs = 0;             // tempo já passado antes da última vez que apertou "iniciar"
+let inicioTrecho = null;         // momento em que apertou "iniciar" pela última vez
+let livre = false;               // "seguir sem limite": conta o tempo extra até encerrar
+let avisou = false;              // já perguntou "ainda no foco?" neste bloco
 let intervalo = null;
 let audio = null;
 
+// Elementos do aviso "ainda no foco?"
+const aviso = document.getElementById('aviso-foco');
+const barraLivre = document.getElementById('foco-livre');
+
 // ===== Funções =====
 function duracaoMs(m) {
-    return tempos[m] * 60 * 1000;
+    return tempos[m] * UM_MINUTO;
 }
 
-function formatar(ms) {
-    const totalSeg = Math.ceil(ms / 1000);
+function formatar(ms, arredondar = Math.ceil) {
+    const totalSeg = arredondar(ms / 1000);
     const min = String(Math.floor(totalSeg / 60)).padStart(2, '0');
     const seg = String(totalSeg % 60).padStart(2, '0');
     return `${min}:${seg}`;
 }
 
+// Em vez de "diminuir 1 por segundo", calculamos pelo relógio do computador.
+// Assim o tempo não atrasa se o navegador deixar a aba mais lenta.
+function decorridoMs() {
+    return acumuladoMs + (rodando ? Date.now() - inicioTrecho : 0);
+}
+
 function atualizarTela() {
-    const texto = formatar(restanteMs);
+    const restante = alvoMs - decorridoMs();
+    // No modo livre, depois do tempo previsto mostra o extra: "+03:20"
+    const texto = livre && restante < 0 ? `+${formatar(-restante, Math.floor)}` : formatar(Math.max(0, restante));
     elTempo.textContent = texto;
     document.title = `${texto} · ${NOMES[modo]}`;  // aparece na aba do navegador
 
-    const fracao = restanteMs / duracaoMs(modo);
+    const fracao = livre ? 1 : Math.max(0, restante) / alvoMs;
     anel.style.strokeDashoffset = CIRCUNFERENCIA * (1 - fracao);
 
     elCiclo.textContent = `Ciclo ${(focosConcluidos % tempos.ciclos) + 1} de ${tempos.ciclos}`;
-    btnIniciar.textContent = rodando ? 'Pausar' : 'Iniciar';
+    btnIniciar.textContent = rodando ? 'Pausar' : (decorridoMs() > 0 ? 'Continuar' : 'Iniciar');
 
     botoesModo.forEach(b => b.classList.toggle('ativo', b.dataset.modo === modo));
     card.classList.toggle('pausa', modo !== 'foco');
+    card.classList.toggle('livre', livre);
+    barraLivre.hidden = !livre;
 }
 
 function iniciar() {
+    if (rodando) return;
     // O navegador só deixa tocar som depois de um clique, então preparamos aqui
     audio ??= new AudioContext();
+    pedirPermissaoDeNotificacao();
+    inicioTrecho = Date.now();
     rodando = true;
-    fimEm = Date.now() + restanteMs;
-    // Em vez de "diminuir 1 por segundo", calculamos quanto falta até fimEm.
-    // Assim o relógio não atrasa se o navegador deixar a aba mais lenta.
     intervalo = setInterval(tick, 250);
     atualizarTela();
 }
 
 function pausar() {
-    rodando = false;
-    clearInterval(intervalo);
+    if (rodando) {
+        acumuladoMs = decorridoMs();
+        rodando = false;
+        clearInterval(intervalo);
+    }
     atualizarTela();
 }
 
 function tick() {
-    restanteMs = Math.max(0, fimEm - Date.now());
-    atualizarTela();
-    if (restanteMs === 0) terminar();
+    const restante = alvoMs - decorridoMs();
+
+    // 1 minuto antes do fim do foco: pergunta se quer continuar
+    if (modo === 'foco' && !livre && !avisou && restante <= UM_MINUTO && alvoMs > UM_MINUTO) {
+        perguntarSeContinua();
+    }
+
+    const acabou = livre ? decorridoMs() >= LIMITE_MS : restante <= 0;
+    if (acabou) {
+        terminar();
+    } else {
+        atualizarTela();
+    }
 }
 
 function trocarModo(novo) {
     pausar();
     modo = novo;
-    restanteMs = duracaoMs(modo);
+    alvoMs = duracaoMs(modo);
+    acumuladoMs = 0;
+    livre = false;
+    avisou = false;
+    aviso.hidden = true;
     atualizarTela();
 }
 
@@ -97,19 +135,61 @@ function proximoModo() {
 }
 
 function terminar() {
+    // registra o tempo que você realmente focou (pode ser mais que o previsto)
+    const minutos = Math.max(1, Math.round(Math.min(decorridoMs(), LIMITE_MS) / UM_MINUTO));
     pausar();
     tocarSom();
     if (modo === 'foco') {
         focosConcluidos++;
-        registrarSessao(tempos.foco);
+        registrarSessao(minutos);
     }
     trocarModo(proximoModo());
 }
 
-// Três "plins" suaves, gerados pelo próprio navegador (sem arquivo de áudio)
-function tocarSom() {
+// ===== "Ainda no foco?" =====
+function perguntarSeContinua() {
+    avisou = true;
+    aviso.hidden = false;
+    tocarSom(1);  // um "plim" só, mais discreto
+    notificar();
+}
+
+function estender(minutos) {
+    alvoMs = Math.min(alvoMs + minutos * UM_MINUTO, LIMITE_MS);
+    avisou = false;  // pergunta de novo 1 minuto antes do novo fim
+    aviso.hidden = true;
+    atualizarTela();
+}
+
+function seguirSemLimite() {
+    livre = true;
+    aviso.hidden = true;
+    atualizarTela();
+}
+
+function pedirPermissaoDeNotificacao() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
+
+// Notificação do sistema, só quando você está em outra aba ou janela
+function notificar() {
+    if (!document.hidden || !('Notification' in window) || Notification.permission !== 'granted') return;
+    const notificacao = new Notification('Ainda no foco?', {
+        body: 'Falta 1 minuto. Quer continuar estudando ou fazer a pausa?',
+        tag: 'studyhub-foco',
+    });
+    notificacao.onclick = () => {
+        window.focus();
+        notificacao.close();
+    };
+}
+
+// "Plins" suaves, gerados pelo próprio navegador (sem arquivo de áudio)
+function tocarSom(vezes = 3) {
     if (!audio) return;
-    [0, 0.35, 0.7].forEach(atraso => {
+    [0, 0.35, 0.7].slice(0, vezes).forEach(atraso => {
         const t = audio.currentTime + atraso;
         const osc = audio.createOscillator();
         const volume = audio.createGain();
@@ -214,6 +294,14 @@ btnIniciar.addEventListener('click', () => (rodando ? pausar() : iniciar()));
 
 document.getElementById('btn-reiniciar').addEventListener('click', () => trocarModo(modo));
 
+// Botões do aviso "ainda no foco?" e do modo livre
+document.querySelectorAll('[data-estender]').forEach(botao => {
+    botao.addEventListener('click', () => estender(Number(botao.dataset.estender)));
+});
+document.getElementById('btn-livre').addEventListener('click', seguirSemLimite);
+document.getElementById('btn-fazer-pausa').addEventListener('click', () => { aviso.hidden = true; });
+document.getElementById('btn-encerrar').addEventListener('click', terminar);
+
 // Pular não conta como pomodoro concluído
 document.getElementById('btn-pular').addEventListener('click', () => {
     trocarModo(modo === 'foco' ? 'pausa_curta' : 'foco');
@@ -245,8 +333,9 @@ Object.keys(TEMPOS_PADRAO).forEach(m => {
         localStorage.setItem('pomodoro-tempos', JSON.stringify(tempos));
         if (m === 'ciclos') {
             focosConcluidos = 0;  // recomeça a contagem com o novo total
-        } else if (!rodando && m === modo) {
-            restanteMs = duracaoMs(modo);
+        } else if (!rodando && m === modo && !livre) {
+            alvoMs = duracaoMs(modo);
+            acumuladoMs = 0;
         }
         atualizarTela();
     });
