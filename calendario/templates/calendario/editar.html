@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Editar evento{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'calendario/calendario.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+<section class="card form-card">
+    <header class="card-topo">
+        <h1 class="rotulo">editar evento</h1>
+        {% if evento.concluido %}<span class="etiqueta">feito ✓</span>{% endif %}
+    </header>
+
+    <form method="post">
+        {% csrf_token %}
+        {% include "calendario/_form_evento.html" %}
+        <div class="form-botoes">
+            <a href="{% url 'calendario:index' %}?mes={{ evento.data|date:'Y-m' }}" class="btn btn-claro">cancelar</a>
+            <button class="btn">salvar</button>
+        </div>
+    </form>
+
+    <div class="form-rodape">
+        <form method="post" action="{% url 'calendario:concluir' evento.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+            <button class="btn btn-claro">{% if evento.concluido %}marcar como pendente{% else %}marcar como feito ✓{% endif %}</button>
+        </form>
+        <form method="post" action="{% url 'calendario:excluir' evento.id %}"
+              onsubmit="return confirm('Excluir &quot;{{ evento.titulo|escapejs }}&quot;?');">
+            {% csrf_token %}
+            <button class="btn-texto-perigo">excluir evento</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

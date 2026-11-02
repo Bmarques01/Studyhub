@@ -1,0 +1,26 @@
+{# Lista dos próximos eventos. Usada no calendário e no dashboard. #}
+{% if proximos %}
+    <ul class="proximos">
+        {% for e in proximos %}
+            <li class="proximo">
+                <form method="post" action="{% url 'calendario:concluir' e.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+                    <button class="check" title="Marcar como feito" aria-label="Marcar {{ e.titulo }} como feito"></button>
+                </form>
+                <div class="proximo-info">
+                    <a href="{% url 'calendario:editar' e.id %}" class="proximo-titulo">
+                        <i class="marca tipo-{{ e.tipo }}"></i>{{ e.titulo }}
+                    </a>
+                    <small>
+                        {{ e.get_tipo_display }}{% if e.disciplina %} · {{ e.disciplina.nome }}{% endif %}
+                        · {{ e.data|date:"D d/m" }}{% if e.hora %} {{ e.hora|time:"H:i" }}{% endif %}
+                    </small>
+                </div>
+                <span class="quando {% if e.dias_restantes <= 3 %}perto{% endif %}">{{ e.quando }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="vazio-card">Nada marcado pela frente.</p>
+{% endif %}

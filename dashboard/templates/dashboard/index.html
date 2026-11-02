@@ -125,20 +125,39 @@
         {# ===== Calendário do mês ===== #}
         <section class="card calendario">
             <header class="card-topo">
-                <h2 class="rotulo">{{ hoje|date:"F Y"|lower }}</h2>
+                <a href="{% url 'calendario:index' %}" class="rotulo link-rotulo">{{ hoje|date:"F Y"|lower }}</a>
             </header>
             <div class="cal-grade">
                 {% for d in dias_semana %}<span class="cal-cabecalho">{{ d|first|upper }}</span>{% endfor %}
-                {% for semana in semanas_calendario %}
+                {% for semana in calendario_mes %}
                     {% for dia in semana %}
-                        <span class="cal-dia {% if dia.month != hoje.month %}fora{% endif %} {% if dia == hoje %}hoje{% endif %}">
-                            {{ dia.day }}
-                            {% if dia in dias_com_estudo %}<i class="ponto" title="Dia com estudo"></i>{% endif %}
+                        <span class="cal-dia {% if dia.fora %}fora{% endif %} {% if dia.hoje %}hoje{% endif %} {% if dia.estudou %}estudou{% endif %}"
+                              {% if dia.titulos %}title="{{ dia.titulos }}"{% endif %}>
+                            {{ dia.data.day }}
+                            {% if dia.tipos %}
+                                <span class="cal-marcas">
+                                    {% for tipo in dia.tipos %}<i class="marca tipo-{{ tipo }}"></i>{% endfor %}
+                                </span>
+                            {% endif %}
                         </span>
                     {% endfor %}
                 {% endfor %}
             </div>
-            <p class="cal-legenda"><i class="ponto"></i> dia com estudo</p>
+            <p class="cal-legenda">
+                <span><i class="amostra-estudo"></i>estudou</span>
+                <span><i class="marca tipo-prova"></i>prova</span>
+                <span><i class="marca tipo-trabalho"></i>trabalho</span>
+                <span><i class="marca tipo-entrega"></i>entrega</span>
+            </p>
+        </section>
+
+        {# ===== Próximos eventos ===== #}
+        <section class="card proximos-card">
+            <header class="card-topo">
+                <h2 class="rotulo">próximos</h2>
+                <a href="{% url 'calendario:index' %}" class="sub">ver calendário →</a>
+            </header>
+            {% include "calendario/_proximos.html" %}
         </section>
 
         {# ===== Mapa de calor ===== #}

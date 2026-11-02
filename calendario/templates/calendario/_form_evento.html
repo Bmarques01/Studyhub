@@ -1,0 +1,56 @@
+{# Campos do evento. Usado em "novo evento" (sem 'evento') e em "editar" (com 'evento'). #}
+<div class="form-evento">
+    <label class="campo">
+        título
+        <input type="text" name="titulo" required maxlength="150"
+               value="{{ evento.titulo|default:'' }}" placeholder="Ex.: P1 de Redes 2">
+    </label>
+
+    <fieldset class="campo">
+        <legend>tipo</legend>
+        <div class="tipos">
+            {% for valor, texto in tipos %}
+                <label class="tipo-opcao">
+                    <input type="radio" name="tipo" value="{{ valor }}"
+                           {% if evento %}{% if evento.tipo == valor %}checked{% endif %}{% elif forloop.first %}checked{% endif %}>
+                    <span><i class="marca tipo-{{ valor }}"></i>{{ texto }}</span>
+                </label>
+            {% endfor %}
+        </div>
+    </fieldset>
+
+    <div class="campo-linha">
+        <label class="campo">
+            data
+            <input type="date" name="data" required
+                   value="{% if evento %}{{ evento.data|date:'Y-m-d' }}{% else %}{{ data_inicial|date:'Y-m-d' }}{% endif %}">
+        </label>
+        <label class="campo">
+            <span>hora <small>(opcional)</small></span>
+            <input type="time" name="hora" value="{{ evento.hora|time:'H:i' }}">
+        </label>
+    </div>
+
+    <label class="campo">
+        <span>disciplina <small>(opcional)</small></span>
+        <select name="disciplina">
+            <option value="">Nenhuma</option>
+            {% for rotulo, disciplinas in opcoes %}
+                <optgroup label="{{ rotulo }}">
+                    {% for d in disciplinas %}
+                        <option value="{{ d.id }}" {% if evento.disciplina_id == d.id %}selected{% endif %}>{{ d.nome }}</option>
+                    {% endfor %}
+                </optgroup>
+            {% endfor %}
+            {# disciplina arquivada não aparece nas opções; mantém ela se o evento já usava #}
+            {% if evento.disciplina.arquivada %}
+                <option value="{{ evento.disciplina_id }}" selected>{{ evento.disciplina.nome }} (arquivada)</option>
+            {% endif %}
+        </select>
+    </label>
+
+    <label class="campo">
+        <span>anotações <small>(opcional)</small></span>
+        <textarea name="descricao" rows="3" placeholder="Conteúdo da prova, link do trabalho...">{{ evento.descricao|default:'' }}</textarea>
+    </label>
+</div>

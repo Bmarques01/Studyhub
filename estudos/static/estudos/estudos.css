@@ -39,15 +39,6 @@
     gap: 10px;
 }
 
-.etiqueta {
-    font-family: var(--fonte-mono);
-    font-size: 0.7rem;
-    padding: 2px 8px;
-    border-radius: 6px;
-    background: var(--rosa-bebe);
-    color: var(--vinho);
-}
-
 /* ===== Grupo: um semestre/módulo ===== */
 .grupo {
     display: flex;

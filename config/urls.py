@@ -5,5 +5,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('pomodoro/', include('pomodoro.urls')),
     path('estudos/', include('estudos.urls')),
+    path('calendario/', include('calendario.urls')),
     path('', include('dashboard.urls')),  # página inicial = dashboard
 ]

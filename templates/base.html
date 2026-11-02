@@ -35,8 +35,11 @@
                 {% include "componentes/icone.html" with nome="estudos" %} Estudos
             </a>
 
+            <a href="{% url 'calendario:index' %}" class="menu-item {% if app == 'calendario' %}ativo{% endif %}">
+                {% include "componentes/icone.html" with nome="calendario" %} Calendário
+            </a>
+
             <span class="menu-secao">em breve</span>
-            <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="calendario" %} Calendário</span>
             <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="projetos" %} Projetos</span>
             <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="cadernos" %} Cadernos</span>
             <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="flashcards" %} Flashcards</span>

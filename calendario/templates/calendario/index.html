@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Calendário{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'calendario/calendario.css' %}">
+<script src="{% static 'calendario/calendario.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="cal-pagina">
+
+    {# ===== Mês ===== #}
+    <section class="card cal-mes">
+        <header class="cal-topo">
+            <h1 class="rotulo">{{ primeiro|date:"F Y"|lower }}</h1>
+            <div class="cal-nav">
+                <a class="btn-icone" href="?mes={{ mes_anterior|date:'Y-m' }}" title="Mês anterior">‹</a>
+                {% if not eh_mes_atual %}<a class="btn btn-claro" href="{% url 'calendario:index' %}">hoje</a>{% endif %}
+                <a class="btn-icone" href="?mes={{ proximo_mes|date:'Y-m' }}" title="Próximo mês">›</a>
+            </div>
+        </header>
+
+        <div class="legenda-tipos">
+            {% for valor, texto in tipos %}<span><i class="marca tipo-{{ valor }}"></i>{{ texto }}</span>{% endfor %}
+            <small>clique num dia para adicionar</small>
+        </div>
+
+        <div class="mes-grade">
+            {% for d in dias_semana %}<div class="mes-cabecalho">{{ d }}</div>{% endfor %}
+            {% for semana in grade %}
+                {% for dia in semana %}
+                    <div class="mes-dia {% if dia.fora %}fora{% endif %} {% if dia.hoje %}hoje{% endif %}"
+                         data-data="{{ dia.data|date:'Y-m-d' }}">
+                        <span class="mes-numero">{{ dia.data.day }}</span>
+                        {% for e in dia.eventos|slice:":3" %}
+                            <a href="{% url 'calendario:editar' e.id %}" class="evento-chip {% if e.concluido %}concluido{% endif %}"
+                               title="{{ e.get_tipo_display }}: {{ e.titulo }}{% if e.hora %} às {{ e.hora|time:'H:i' }}{% endif %}">
+                                <i class="marca tipo-{{ e.tipo }}"></i>
+                                <span>{{ e.titulo }}</span>
+                            </a>
+                        {% endfor %}
+                        {% if dia.eventos|length > 3 %}
+                            <span class="mais">+{{ dia.eventos|length|add:"-3" }} mais</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </section>
+
+    {# ===== Lateral: novo evento + próximos ===== #}
+    <aside class="cal-lateral">
+        <section class="card">
+            <h2 class="rotulo">novo evento</h2>
+            <form method="post" action="{% url 'calendario:criar' %}" id="form-novo">
+                {% csrf_token %}
+                <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+                {% include "calendario/_form_evento.html" %}
+                <button class="btn btn-largo">adicionar</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2 class="rotulo">próximos</h2>
+            {% include "calendario/_proximos.html" %}
+        </section>
+    </aside>
+</div>
+{% endblock %}

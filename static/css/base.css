@@ -340,3 +340,118 @@ input[type="color"] {
 .editavel.editando .modo-ver {
     display: none;
 }
+
+.etiqueta {
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--rosa-bebe);
+    color: var(--vinho);
+}
+
+/* ===== Tipos de evento do calendário (cores validadas para daltonismo) =====
+   "Outro" é uma bolinha vazada: a forma diferencia, não só a cor. */
+.marca {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.marca.tipo-prova { background: #d64f8f; }
+.marca.tipo-trabalho { background: #6250d6; }
+.marca.tipo-entrega { background: #c98500; }
+.marca.tipo-outro { box-shadow: inset 0 0 0 2px #8a6b7c; }
+
+/* ===== Lista de próximos eventos (calendário e dashboard) ===== */
+.proximos {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.proximo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px;
+    border-radius: 10px;
+}
+
+.proximo:hover {
+    background: var(--rosa-fundo);
+}
+
+.check {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--rosa-claro);
+    border-radius: 6px;
+    background: var(--branco);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.check:hover {
+    border-color: var(--rosa-forte);
+    background: var(--rosa-bebe);
+}
+
+.proximo-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.proximo-titulo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--texto);
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-decoration: none;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.proximo-titulo:hover {
+    color: var(--rosa-forte);
+}
+
+.proximo-info small {
+    padding-left: 15px;
+    color: #8a6b7c;
+    font-size: 0.75rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.quando {
+    font-family: var(--fonte-mono);
+    font-size: 0.72rem;
+    color: #8a6b7c;
+    white-space: nowrap;
+}
+
+.quando.perto {
+    color: var(--rosa-forte);
+    font-weight: 700;
+}
+
+.vazio-card {
+    color: #8a6b7c;
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+.vazio-card a {
+    color: var(--rosa-forte);
+    font-weight: 600;
+}

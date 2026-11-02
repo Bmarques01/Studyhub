@@ -4,13 +4,13 @@ Plataforma pessoal de estudos, feita com Django. Junta num só lugar as ferramen
 
 ## O que já tem
 
-- **Dashboard**: horas de estudo no dia, na semana e no mês, meta semanal, sequência de dias, gráfico da semana, mapa de constância e tempo por disciplina
+- **Dashboard**: horas de estudo no dia, na semana e no mês, meta semanal, sequência de dias, gráfico da semana, calendário do mês, próximos eventos, mapa de constância e tempo por disciplina
 - **Pomodoro**: tempos e número de ciclos configuráveis, com cada sessão ligada a uma disciplina e a um tópico
-- **Estudos**: organização em Categoria → Semestre/Módulo → Disciplina → Tópico, com cor por disciplina
+- **Estudos**: categorias por tipo (graduação em semestres, pós em módulos, projetos) → Disciplina → Tópico, com cor por disciplina
+- **Calendário**: provas, trabalhos e entregas no mês, com lista de próximos e marcação de feito
 
 ## Próximos passos
 
-- Calendário da faculdade (provas, trabalhos, entregas)
 - Projetos (quadro de tarefas e diário de bordo)
 - Cadernos digitais com resumos gerados por IA a partir de slides
 - Flashcards com repetição espaçada

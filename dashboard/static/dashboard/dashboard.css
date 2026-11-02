@@ -77,14 +77,15 @@
 }
 
 .kpi { grid-column: span 3; }
-.grafico-semana { grid-column: span 8; }
-.calendario { grid-column: span 4; }
-.mapa-calor { grid-column: span 7; }
-.por-disciplina { grid-column: span 5; }
+.grafico-semana { grid-column: span 7; }
+.calendario { grid-column: span 5; }
+.proximos-card { grid-column: span 6; }
+.por-disciplina { grid-column: span 6; }
+.mapa-calor { grid-column: span 12; order: 1; }  /* order 1 = vai para o fim da grade */
 
 @media (max-width: 1100px) {
     .kpi { grid-column: span 6; }
-    .grafico-semana, .calendario, .mapa-calor, .por-disciplina { grid-column: span 12; }
+    .grafico-semana, .calendario, .mapa-calor, .por-disciplina, .proximos-card { grid-column: span 12; }
 }
 
 .card-topo {
@@ -360,32 +361,67 @@
     font-weight: 700;
 }
 
-.ponto {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--g-atual);
+/* dia com estudo: fundo rosinha (os pontos ficam para os eventos) */
+.cal-dia.estudou:not(.hoje) {
+    background: var(--rosa-bebe);
 }
 
-.cal-dia .ponto {
+.cal-marcas {
     position: absolute;
     bottom: 3px;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    gap: 2px;
 }
 
-.cal-dia.hoje .ponto {
-    background: var(--branco);
+.cal-marcas .marca {
+    width: 6px;
+    height: 6px;
+    box-shadow: 0 0 0 1.5px var(--branco);  /* anel claro para separar pontos vizinhos */
+}
+
+.cal-marcas .marca.tipo-outro {
+    box-shadow: inset 0 0 0 1.5px #8a6b7c, 0 0 0 1.5px var(--branco);
 }
 
 .cal-legenda {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
+    gap: 12px;
     margin-top: 12px;
     font-size: 0.75rem;
     color: var(--texto-suave);
+}
+
+.cal-legenda span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.amostra-estudo {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    background: var(--rosa-bebe);
+}
+
+.link-rotulo {
+    text-decoration: none;
+}
+
+.link-rotulo:hover {
+    text-decoration: underline;
+}
+
+a.sub {
+    text-decoration: none;
+}
+
+a.sub:hover {
+    color: var(--rosa-forte);
 }
 
 /* ===== Mapa de calor ===== */
@@ -404,7 +440,8 @@
 }
 
 .mapa-dias span {
-    line-height: 14px;
+    display: flex;
+    align-items: center;
 }
 
 .mapa-grade {
@@ -423,9 +460,8 @@
 
 .celula {
     display: inline-block;
-    min-width: 12px;
+    min-width: 10px;
     aspect-ratio: 1;
-    max-width: 22px;
     border-radius: 3px;
     background: var(--g-vazio);
 }
@@ -509,17 +545,6 @@
     font-family: var(--fonte-mono);
     font-size: 0.8rem;
     font-weight: 700;
-}
-
-.vazio-card {
-    color: var(--texto-suave);
-    font-size: 0.9rem;
-    line-height: 1.7;
-}
-
-.vazio-card a {
-    color: var(--rosa-forte);
-    font-weight: 600;
 }
 
 /* ===== Tooltip (balãozinho) ===== */

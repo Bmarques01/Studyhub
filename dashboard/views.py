@@ -1,4 +1,3 @@
-import calendar
 from datetime import timedelta
 
 from django.db.models import Sum
@@ -7,13 +6,15 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from calendario.models import Evento
+from calendario.views import eventos_por_dia, proximos_eventos, semanas_do_mes
 from pomodoro.models import SessaoPomodoro
 
 from .models import Perfil
 from .templatetags.tempo import horas
 
 DIAS_SEMANA = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom']
-SEMANAS_NO_MAPA = 18  # ~4 meses no mapa de calor
+SEMANAS_NO_MAPA = 40  # ~9 meses no mapa de calor
 
 
 # ===== Cálculos =====
@@ -145,8 +146,22 @@ def index(request):
     for linha in por_disciplina:
         linha['largura'] = linha['total'] / maior * 100
 
-    # --- Calendário do mês (semanas começando na segunda) ---
-    semanas_calendario = calendar.Calendar(firstweekday=0).monthdatescalendar(hoje.year, hoje.month)
+    # --- Calendário do mês: dias com estudo + eventos (provas, trabalhos...) ---
+    semanas = semanas_do_mes(hoje.year, hoje.month)
+    eventos = eventos_por_dia(semanas[0][0], semanas[-1][-1])
+    ordem_tipos = [valor for valor, _ in Evento.TIPOS]
+    calendario_mes = [
+        [{
+            'data': dia,
+            'fora': dia.month != hoje.month,
+            'hoje': dia == hoje,
+            'estudou': bool(por_dia.get(dia)),
+            # um ponto por tipo de evento no dia, sempre na mesma ordem
+            'tipos': sorted({e.tipo for e in eventos.get(dia, [])}, key=ordem_tipos.index),
+            'titulos': ', '.join(e.titulo for e in eventos.get(dia, [])),
+        } for dia in semana]
+        for semana in semanas
+    ]
 
     if agora.hour < 12:
         saudacao = 'Bom dia'
@@ -178,8 +193,8 @@ def index(request):
         'mapa': mapa,
         'dias_semana': DIAS_SEMANA,
         'por_disciplina': por_disciplina,
-        'semanas_calendario': semanas_calendario,
-        'dias_com_estudo': {dia for dia, minutos in por_dia.items() if minutos},
+        'calendario_mes': calendario_mes,
+        'proximos': proximos_eventos(limite=5),
     })
 
 
