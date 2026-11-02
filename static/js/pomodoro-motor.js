@@ -171,6 +171,28 @@ window.Pomodoro = (() => {
         avisarTelas('mudou');
     }
 
+    // ■ Encerrar antes do tempo: salva o foco feito até agora e para o pomodoro.
+    // Não começa a pausa: se você encerrou, o pomodoro não emenda nada.
+    function minutosFeitos() {
+        return Math.round(Math.min(decorridoMs(), LIMITE_MS) / UM_MINUTO);
+    }
+
+    function textoParaEncerrar() {
+        if (estado.modo !== 'foco') return 'Encerrar a pausa e parar o pomodoro?';
+        const minutos = minutosFeitos();
+        return minutos >= 1
+            ? `Encerrar agora? ${minutos} min de foco serão registrados.`
+            : 'Encerrar agora? Com menos de 1 minuto, nada será registrado.';
+    }
+
+    function finalizar() {
+        const eraFoco = estado.modo === 'foco';
+        const minutos = minutosFeitos();
+        if (eraFoco && minutos >= 1) estado.focosConcluidos++;
+        trocarModo('foco');  // volta ao início, parado (a contagem de ciclos continua)
+        if (eraFoco && minutos >= 1) registrarSessao(minutos);
+    }
+
     // ✕ do mini pomodoro: dispensa o bloco que estava esperando
     function dispensar() {
         estado.aguardando = false;
@@ -388,6 +410,7 @@ window.Pomodoro = (() => {
         get estado() { return estado; },
         ouvir: funcao => ouvintes.add(funcao),
         iniciar, pausar, alternar, pular, recomecar, estender, seguirSemLimite, fecharAviso, dispensar,
+        finalizar, textoParaEncerrar,
         encerrar: () => terminar(), definirTempo, tick,
         decorridoMs, textoDoTempo, textoDoCiclo, fracaoRestante, emAndamento, mostrarAviso,
     };

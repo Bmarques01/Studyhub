@@ -30,6 +30,7 @@ if (mini && window.Pomodoro) {
         el('mini-aviso').hidden = !P.mostrarAviso();
         el('mini-livre').hidden = !estado.livre;
         el('mini-fechar').hidden = !esperando;
+        el('mini-finalizar').hidden = esperando;  // esperando: o ✕ já faz esse papel
     }
 
     P.ouvir((tipo, dados) => {
@@ -46,6 +47,9 @@ if (mini && window.Pomodoro) {
     el('mini-fazer-pausa').addEventListener('click', P.fecharAviso);
     el('mini-encerrar').addEventListener('click', P.encerrar);
     el('mini-fechar').addEventListener('click', P.dispensar);
+    el('mini-finalizar').addEventListener('click', () => {
+        if (confirm(P.textoParaEncerrar())) P.finalizar();
+    });
     mini.querySelectorAll('[data-estender]').forEach(botao => {
         botao.addEventListener('click', () => P.estender(Number(botao.dataset.estender)));
     });

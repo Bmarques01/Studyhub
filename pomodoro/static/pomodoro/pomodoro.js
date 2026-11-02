@@ -12,6 +12,7 @@ const elModo = document.getElementById('modo-atual');
 const anel = document.getElementById('anel');
 const campoTarefa = document.getElementById('tarefa');
 const btnIniciar = document.getElementById('btn-iniciar');
+const btnFinalizar = document.getElementById('btn-finalizar');
 const aviso = document.getElementById('aviso-foco');
 const barraLivre = document.getElementById('foco-livre');
 const selDisciplina = document.getElementById('disciplina');
@@ -40,6 +41,7 @@ function atualizarTela() {
     card.classList.toggle('livre', estado.livre);
     aviso.hidden = !P.mostrarAviso();
     barraLivre.hidden = !estado.livre;
+    btnFinalizar.hidden = !(estado.rodando || estado.acumuladoMs > 0 || estado.livre);
 }
 
 // ===== Lista "hoje" =====
@@ -120,6 +122,9 @@ document.getElementById('btn-pular').addEventListener('click', P.pular);  // nã
 document.getElementById('btn-livre').addEventListener('click', P.seguirSemLimite);
 document.getElementById('btn-fazer-pausa').addEventListener('click', P.fecharAviso);
 document.getElementById('btn-encerrar').addEventListener('click', P.encerrar);
+btnFinalizar.addEventListener('click', () => {
+    if (confirm(P.textoParaEncerrar())) P.finalizar();
+});
 document.querySelectorAll('[data-estender]').forEach(botao => {
     botao.addEventListener('click', () => P.estender(Number(botao.dataset.estender)));
 });

@@ -381,3 +381,27 @@ kbd {
 @keyframes aparecer {
     from { opacity: 0; transform: translateY(-4px); }
 }
+
+/* ===== Encerrar antes do tempo ===== */
+.btn-encerrar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: -8px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: var(--vinho);
+    font-family: var(--fonte-mono);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+.btn-encerrar[hidden] { display: none; }
+.btn-encerrar:hover { background: var(--rosa-bebe); }
+
+.btn-encerrar .icone {
+    width: 14px;
+    height: 14px;
+}
