@@ -226,3 +226,65 @@
     font-size: 0.85rem;
     border-radius: 8px;
 }
+
+/* ===== Modo leitura × modo edição (por categoria) =====
+   Fora do modo edição, tudo marcado com .so-edicao some.
+   !important porque esses elementos também têm display próprio (flex etc.). */
+.categoria:not(.editando-categoria) .so-edicao {
+    display: none !important;
+}
+
+.categoria.editando-categoria .so-ver {
+    display: none !important;
+}
+
+.categoria.editando-categoria {
+    border: 2px dashed var(--rosa-claro);
+}
+
+.categoria-ver {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.categoria-editar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.categoria-editar .form-linha {
+    flex: 1;
+    min-width: 280px;
+}
+
+.categoria-editar .acoes {
+    align-items: center;
+    gap: 14px;
+}
+
+/* No modo leitura o tópico é só uma etiqueta: sem clique para renomear */
+.categoria:not(.editando-categoria) .topico-nome {
+    pointer-events: none;
+}
+
+.categoria:not(.editando-categoria) .topico {
+    padding-right: 10px;
+}
+
+.btn-texto-perigo {
+    border: none;
+    background: none;
+    color: #b0436f;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-texto-perigo:hover {
+    text-decoration: underline;
+}

@@ -5,7 +5,7 @@
             <span class="bolinha"></span>
             <span class="disciplina-nome">{{ disciplina.nome }}</span>
 
-            <div class="acoes">
+            <div class="acoes so-edicao">
                 <button type="button" class="btn-icone" data-editar title="Editar">✎</button>
                 <form method="post" action="{% url 'estudos:arquivar_disciplina' disciplina.id %}">
                     {% csrf_token %}
@@ -46,8 +46,8 @@
         {% for topico in disciplina.topicos.all %}
             <div class="topico editavel">
                 <div class="modo-ver">
-                    <span class="topico-nome" data-editar title="Clique para renomear">{{ topico.nome }}</span>
-                    <form method="post" action="{% url 'estudos:excluir_topico' topico.id %}">
+                    <span class="topico-nome" data-editar>{{ topico.nome }}</span>
+                    <form method="post" action="{% url 'estudos:excluir_topico' topico.id %}" class="so-edicao">
                         {% csrf_token %}
                         <button title="Remover tópico">×</button>
                     </form>
@@ -59,7 +59,7 @@
             </div>
         {% endfor %}
         {% if not disciplina.arquivada %}
-            <form method="post" action="{% url 'estudos:criar_topico' disciplina.id %}" class="topico-novo">
+            <form method="post" action="{% url 'estudos:criar_topico' disciplina.id %}" class="topico-novo so-edicao">
                 {% csrf_token %}
                 <input type="text" name="nome" placeholder="+ tópico" required maxlength="150">
             </form>
