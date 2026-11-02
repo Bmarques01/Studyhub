@@ -8,7 +8,7 @@ from .models import Categoria, Disciplina, Periodo, Topico
 class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
-        fields = ['nome', 'divisao']
+        fields = ['nome', 'tipo']
 
 
 class PeriodoForm(forms.ModelForm):

@@ -8,14 +8,23 @@ class Categoria(models.Model):
     """Nível mais alto: ex. Ciência da Computação, Cloud Computing, Estudos livres."""
 
     # choices = lista fechada de opções: (valor salvo no banco, texto mostrado na tela)
-    DIVISOES = [
-        ('semestre', 'Semestres'),
-        ('modulo', 'Módulos'),
-        ('', 'Sem divisão'),
+    TIPOS = [
+        ('graduacao', 'Graduação'),
+        ('pos', 'Pós-graduação'),
+        ('projetos', 'Projetos'),
+        ('outro', 'Outro'),
     ]
 
+    # O tipo decide como a categoria se divide. Para mudar a regra, é só mexer aqui.
+    DIVISAO_POR_TIPO = {
+        'graduacao': 'semestre',
+        'pos': 'modulo',
+        'projetos': '',  # ainda sem divisão
+        'outro': '',
+    }
+
     nome = models.CharField(max_length=100)
-    divisao = models.CharField(max_length=10, choices=DIVISOES, blank=True, default='')
+    tipo = models.CharField(max_length=10, choices=TIPOS, default='outro')
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -23,6 +32,11 @@ class Categoria(models.Model):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def divisao(self):
+        """'semestre', 'modulo' ou '' (sem divisão), de acordo com o tipo."""
+        return self.DIVISAO_POR_TIPO.get(self.tipo, '')
 
     @property
     def nome_periodo(self):

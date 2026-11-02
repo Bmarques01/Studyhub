@@ -12,13 +12,13 @@
     <div class="estudos-topo">
         <div>
             <h1 class="rotulo">estudos</h1>
-            <p class="subtitulo">Categoria → Semestre/Módulo → Disciplina → Tópico</p>
+            <p class="subtitulo">Graduação → semestres · Pós → módulos · Projetos e Outro → direto</p>
         </div>
         <form method="post" action="{% url 'estudos:criar_categoria' %}" class="form-linha">
             {% csrf_token %}
             <input type="text" name="nome" placeholder="Nova categoria (ex.: Graduação)" required maxlength="100">
-            <select name="divisao" title="Como dividir">
-                {% for valor, texto in divisoes %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+            <select name="tipo" title="Tipo da categoria">
+                {% for valor, texto in tipos %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
             </select>
             <button class="btn">+ categoria</button>
         </form>
@@ -32,7 +32,7 @@
                 <div class="modo-ver">
                     <div class="titulo-com-etiqueta">
                         <h2>{{ cat.nome }}</h2>
-                        {% if cat.divisao %}<span class="etiqueta">{{ cat.get_divisao_display|lower }}</span>{% endif %}
+                        <span class="etiqueta">{{ cat.get_tipo_display|lower }}</span>
                     </div>
                     <div class="acoes">
                         <button type="button" class="btn-icone" data-editar title="Editar categoria">✎</button>
@@ -46,9 +46,9 @@
                 <form method="post" action="{% url 'estudos:editar_categoria' cat.id %}" class="modo-edicao form-linha">
                     {% csrf_token %}
                     <input type="text" name="nome" value="{{ cat.nome }}" required maxlength="100">
-                    <select name="divisao" title="Como dividir">
-                        {% for valor, texto in divisoes %}
-                            <option value="{{ valor }}" {% if valor == cat.divisao %}selected{% endif %}>{{ texto }}</option>
+                    <select name="tipo" title="Tipo da categoria">
+                        {% for valor, texto in tipos %}
+                            <option value="{{ valor }}" {% if valor == cat.tipo %}selected{% endif %}>{{ texto }}</option>
                         {% endfor %}
                     </select>
                     <button class="btn">salvar</button>

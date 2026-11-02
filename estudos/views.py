@@ -72,7 +72,7 @@ def salvar_ou_avisar(request, form):
 def index(request):
     return render(request, 'estudos/index.html', {
         'estrutura': estrutura_de_estudos(),
-        'divisoes': Categoria.DIVISOES,
+        'tipos': Categoria.TIPOS,
         # para a lista "mover para..." na edição de disciplina
         'todas_categorias': Categoria.objects.prefetch_related('periodos'),
     })

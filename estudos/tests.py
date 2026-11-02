@@ -6,7 +6,7 @@ from .models import Categoria, Disciplina, Periodo, Topico
 
 class EstudosTests(TestCase):
     def setUp(self):
-        self.grad = Categoria.objects.create(nome='Ciência da Computação', divisao='semestre')
+        self.grad = Categoria.objects.create(nome='Ciência da Computação', tipo='graduacao')
         self.livres = Categoria.objects.create(nome='Estudos livres')
 
     def test_pagina_lista_categorias(self):
@@ -14,9 +14,10 @@ class EstudosTests(TestCase):
         self.assertContains(resposta, 'Ciência da Computação')
         self.assertContains(resposta, '+ semestre')
 
-    def test_criar_categoria_com_divisao(self):
-        self.client.post(reverse('estudos:criar_categoria'), {'nome': 'Cloud Computing', 'divisao': 'modulo'})
-        self.assertEqual(Categoria.objects.get(nome='Cloud Computing').divisao, 'modulo')
+    def test_criar_categoria_com_tipo(self):
+        self.client.post(reverse('estudos:criar_categoria'), {'nome': 'Cloud Computing', 'tipo': 'pos'})
+        cloud = Categoria.objects.get(nome='Cloud Computing')
+        self.assertEqual((cloud.tipo, cloud.divisao), ('pos', 'modulo'))
 
     def test_periodo_sem_nome_ganha_nome_automatico(self):
         url = reverse('estudos:criar_periodo', args=[self.grad.id])
@@ -24,9 +25,16 @@ class EstudosTests(TestCase):
         self.client.post(url, {'nome': ''})
         self.assertEqual(list(self.grad.periodos.values_list('nome', flat=True)), ['1º semestre', '2º semestre'])
 
-        cloud = Categoria.objects.create(nome='Cloud', divisao='modulo')
+        cloud = Categoria.objects.create(nome='Cloud', tipo='pos')
         self.client.post(reverse('estudos:criar_periodo', args=[cloud.id]), {'nome': ''})
         self.assertEqual(cloud.periodos.get().nome, 'Módulo 1')
+
+    def test_projetos_e_outro_nao_tem_divisao(self):
+        projetos = Categoria.objects.create(nome='Projetos', tipo='projetos')
+        self.assertEqual(projetos.divisao, '')
+        self.assertEqual(self.livres.divisao, '')  # tipo padrão = outro
+        resposta = self.client.get(reverse('estudos:index'))
+        self.assertContains(resposta, 'projetos</span>')
 
     def test_criar_disciplina_dentro_do_periodo(self):
         periodo = Periodo.objects.create(categoria=self.grad, nome='5º semestre')
@@ -68,7 +76,7 @@ class EstudosTests(TestCase):
 
     def test_renomear_categoria_e_periodo(self):
         self.client.post(reverse('estudos:editar_categoria', args=[self.grad.id]),
-                         {'nome': 'Graduação', 'divisao': 'semestre'})
+                         {'nome': 'Graduação', 'tipo': 'graduacao'})
         periodo = Periodo.objects.create(categoria=self.grad, nome='5º')
         self.client.post(reverse('estudos:editar_periodo', args=[periodo.id]), {'nome': '5º semestre'})
         self.grad.refresh_from_db()
@@ -77,7 +85,7 @@ class EstudosTests(TestCase):
 
     def test_nome_vazio_nao_altera_e_avisa(self):
         resposta = self.client.post(reverse('estudos:editar_categoria', args=[self.grad.id]),
-                                    {'nome': '', 'divisao': 'semestre'}, follow=True)
+                                    {'nome': '', 'tipo': 'graduacao'}, follow=True)
         self.grad.refresh_from_db()
         self.assertEqual(self.grad.nome, 'Ciência da Computação')
         self.assertContains(resposta, 'mensagem error')

@@ -28,7 +28,7 @@ class PomodoroTests(TestCase):
         self.assertContains(self.client.get(reverse('pomodoro:index')), 'Anatomia')
 
     def test_registrar_com_disciplina_e_topico(self):
-        categoria = Categoria.objects.create(nome="Cloud Computing", divisao="modulo")
+        categoria = Categoria.objects.create(nome="Cloud Computing", tipo="pos")
         k8s = Disciplina.objects.create(categoria=categoria, nome='Kubernetes', cor='#a77bf3')
         topico = Topico.objects.create(disciplina=k8s, nome='Deployments')
 
@@ -43,7 +43,7 @@ class PomodoroTests(TestCase):
         self.assertEqual(sessao.topico, topico)
 
     def test_topico_de_outra_disciplina_e_ignorado(self):
-        categoria = Categoria.objects.create(nome="Cloud Computing", divisao="modulo")
+        categoria = Categoria.objects.create(nome="Cloud Computing", tipo="pos")
         k8s = Disciplina.objects.create(categoria=categoria, nome='Kubernetes')
         aws = Disciplina.objects.create(categoria=categoria, nome='AWS')
         topico_aws = Topico.objects.create(disciplina=aws, nome='VPC')
@@ -56,7 +56,7 @@ class PomodoroTests(TestCase):
         self.assertIsNone(SessaoPomodoro.objects.get().topico)
 
     def test_excluir_disciplina_mantem_sessao(self):
-        categoria = Categoria.objects.create(nome="Cloud Computing", divisao="modulo")
+        categoria = Categoria.objects.create(nome="Cloud Computing", tipo="pos")
         k8s = Disciplina.objects.create(categoria=categoria, nome='Kubernetes')
         SessaoPomodoro.objects.create(duracao_minutos=25, disciplina=k8s)
         k8s.delete()
