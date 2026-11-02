@@ -239,3 +239,9 @@
     border: 2px solid var(--rosa-claro);
     box-shadow: var(--sombra);
 }
+
+.novo-topico {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--g-grade);
+}

@@ -183,8 +183,16 @@
                     {% endif %}
                 </ul>
             {% else %}
-                <p class="vazio-card">Nenhum tópico cadastrado. Adicione em Estudos, pelo ✎ da categoria.</p>
+                <p class="vazio-card">Nenhum tópico cadastrado ainda.</p>
             {% endif %}
+
+            <form method="post" action="{% url 'estudos:criar_topico' disciplina.id %}" class="form-linha novo-topico">
+                {% csrf_token %}
+                <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+                <input type="text" name="nome" placeholder="Novo tópico (ex.: Roteamento)" required maxlength="150"
+                       aria-label="Nome do novo tópico">
+                <button class="btn btn-claro">+ tópico</button>
+            </form>
         </section>
 
         {# ===== Provas e entregas ===== #}

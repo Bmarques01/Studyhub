@@ -5,6 +5,7 @@ from django.db.models import Count, Max, Sum
 from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from calendario.models import Evento
@@ -331,6 +332,12 @@ def criar_topico(request, disciplina_id):
         topico = form.save(commit=False)
         topico.disciplina = disciplina
         topico.save()
+    else:
+        avisar_erros(request, form)
+    # Volta para a página de onde veio (ex.: a página da disciplina), se for do próprio site
+    destino = request.POST.get('proximo')
+    if destino and url_has_allowed_host_and_scheme(destino, allowed_hosts={request.get_host()}):
+        return redirect(destino)
     return redirect('estudos:index')
 
 

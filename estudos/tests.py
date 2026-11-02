@@ -188,6 +188,13 @@ class PaginaDisciplinaTests(TestCase):
         self.assertContains(resposta, 'nunca estudado')  # Roteamento
         self.assertContains(resposta, '5º semestre')
 
+    def test_adicionar_topico_pela_pagina_da_disciplina(self):
+        pagina = reverse('estudos:disciplina', args=[self.redes.id])
+        resposta = self.client.post(reverse('estudos:criar_topico', args=[self.redes.id]),
+                                    {'nome': 'IPv6', 'proximo': pagina})
+        self.assertRedirects(resposta, pagina)
+        self.assertTrue(self.redes.topicos.filter(nome='IPv6').exists())
+
     def test_salvar_notas(self):
         self.client.post(reverse('estudos:salvar_notas', args=[self.redes.id]), {'nota_ga': '5', 'nota_gb': ''})
         self.redes.refresh_from_db()
