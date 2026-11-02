@@ -1,10 +1,14 @@
 // ===== Configuração =====
-// Tempos em minutos e quantidade de ciclos (focos) até a pausa longa.
-// Ficam salvos no navegador (localStorage).
-const TEMPOS_PADRAO = { foco: 25, pausa_curta: 5, pausa_longa: 15, ciclos: 4 };
-const NOMES = { foco: 'Foco', pausa_curta: 'Pausa', pausa_longa: 'Pausa longa' };
+// Foco e pausa (em minutos) e a meta de ciclos da sessão. Ficam salvos no navegador (localStorage).
+const TEMPOS_PADRAO = { foco: 25, pausa: 5, ciclos: 4 };
+const NOMES = { foco: 'Foco', pausa: 'Pausa' };
 
-const tempos = { ...TEMPOS_PADRAO, ...JSON.parse(localStorage.getItem('pomodoro-tempos') || '{}') };
+const salvos = JSON.parse(localStorage.getItem('pomodoro-tempos') || '{}');
+const tempos = {
+    foco: salvos.foco ?? TEMPOS_PADRAO.foco,
+    pausa: salvos.pausa ?? salvos.pausa_curta ?? TEMPOS_PADRAO.pausa,  // aproveita o valor da versão antiga
+    ciclos: salvos.ciclos ?? TEMPOS_PADRAO.ciclos,
+};
 
 // ===== Elementos da página =====
 const secao = document.querySelector('.pomodoro');
@@ -73,7 +77,7 @@ function atualizarTela() {
     const fracao = livre ? 1 : Math.max(0, restante) / alvoMs;
     anel.style.strokeDashoffset = CIRCUNFERENCIA * (1 - fracao);
 
-    elCiclo.textContent = `Ciclo ${(focosConcluidos % tempos.ciclos) + 1} de ${tempos.ciclos}`;
+    elCiclo.textContent = textoDoCiclo();
     btnIniciar.textContent = rodando ? 'Pausar' : (decorridoMs() > 0 ? 'Continuar' : 'Iniciar');
 
     elModo.textContent = NOMES[modo].toLowerCase();
@@ -129,9 +133,18 @@ function trocarModo(novo) {
     atualizarTela();
 }
 
+// Ciclo = um foco. Ex.: "ciclo 2 de 4"; ao bater a meta: "4 de 4 ciclos ✓"
+function textoDoCiclo() {
+    const meta = tempos.ciclos;
+    if (modo === 'pausa') {
+        return focosConcluidos >= meta ? `${focosConcluidos} de ${meta} ciclos ✓` : `${focosConcluidos} de ${meta} ciclos`;
+    }
+    const atual = focosConcluidos + 1;
+    return atual > meta ? `ciclo ${atual} · meta batida ✓` : `ciclo ${atual} de ${meta}`;
+}
+
 function proximoModo() {
-    if (modo !== 'foco') return 'foco';
-    return focosConcluidos % tempos.ciclos === 0 ? 'pausa_longa' : 'pausa_curta';
+    return modo === 'foco' ? 'pausa' : 'foco';
 }
 
 function terminar() {
@@ -330,7 +343,7 @@ document.getElementById('btn-encerrar').addEventListener('click', terminar);
 
 // Pular não conta como pomodoro concluído
 document.getElementById('btn-pular').addEventListener('click', () => {
-    trocarModo(modo === 'foco' ? 'pausa_curta' : 'foco');
+    trocarModo(proximoModo());
 });
 
 // Botão do sino: toca o som do alarme para você ouvir como é
@@ -347,7 +360,7 @@ document.addEventListener('keydown', evento => {
     }
 });
 
-// Campos de configuração (tempos e ciclos)
+// Campos do topo (foco, pausa e meta de ciclos)
 Object.keys(TEMPOS_PADRAO).forEach(m => {
     const campo = document.getElementById(`cfg-${m}`);
     campo.value = tempos[m];
@@ -359,9 +372,7 @@ Object.keys(TEMPOS_PADRAO).forEach(m => {
         }
         tempos[m] = valor;
         localStorage.setItem('pomodoro-tempos', JSON.stringify(tempos));
-        if (m === 'ciclos') {
-            focosConcluidos = 0;  // recomeça a contagem com o novo total
-        } else if (!rodando && m === modo && !livre) {
+        if (!rodando && m === modo && !livre) {
             alvoMs = duracaoMs(modo);
             acumuladoMs = 0;
         }

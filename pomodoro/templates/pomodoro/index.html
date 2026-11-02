@@ -18,9 +18,8 @@
         {# Tempos sempre à mão, no topo. Ficam salvos no navegador. #}
         <div class="tempos-topo">
             <label>foco <input type="number" id="cfg-foco" min="1" max="180"> <small>min</small></label>
-            <label>pausa <input type="number" id="cfg-pausa_curta" min="1" max="60"> <small>min</small></label>
-            <label>pausa longa <input type="number" id="cfg-pausa_longa" min="1" max="60"> <small>min</small></label>
-            <label title="Quantos focos até a pausa longa">ciclos <input type="number" id="cfg-ciclos" min="1" max="12"></label>
+            <label>pausa <input type="number" id="cfg-pausa" min="1" max="60"> <small>min</small></label>
+            <label title="Meta de ciclos (focos) nesta sessão">ciclos <input type="number" id="cfg-ciclos" min="1" max="20"></label>
             <button type="button" class="btn-icone" id="btn-testar-som" title="Ouvir o som do alarme">
                 {% include "componentes/icone.html" with nome="sino" %}
             </button>
@@ -41,7 +40,7 @@
             <div class="relogio-texto">
                 <div class="modo-atual" id="modo-atual">foco</div>
                 <div class="tempo" id="tempo">25:00</div>
-                <div class="ciclo" id="ciclo">Ciclo 1 de 4</div>
+                <div class="ciclo" id="ciclo">ciclo 1 de 4</div>
             </div>
         </div>
 
