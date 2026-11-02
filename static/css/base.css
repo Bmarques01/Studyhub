@@ -1,0 +1,342 @@
+/* ===== Paleta de cores =====
+   Variáveis CSS: mude aqui e o site inteiro muda junto. */
+:root {
+    --rosa-fundo: #fff5f9;
+    --rosa-bebe: #ffe0ec;
+    --rosa-claro: #ffc2d9;
+    --rosa: #f48fb8;
+    --rosa-forte: #e0609a;
+    --lilas: #a77bf3;
+    --vinho: #8c3b62;
+    --texto: #4a2a3d;
+    --branco: #ffffff;
+
+    --degrade: linear-gradient(135deg, var(--rosa-forte), var(--lilas));
+    --sombra: 0 8px 24px rgba(224, 96, 154, 0.15);
+    --raio: 20px;
+
+    --fonte-texto: 'Space Grotesk', sans-serif;
+    --fonte-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--fonte-texto);
+    color: var(--texto);
+    background-color: var(--rosa-fundo);
+    /* fundo quadriculado, tipo papel milimetrado */
+    background-image:
+        linear-gradient(var(--rosa-bebe) 1px, transparent 1px),
+        linear-gradient(90deg, var(--rosa-bebe) 1px, transparent 1px);
+    background-size: 32px 32px;
+    min-height: 100vh;
+}
+
+button, input {
+    font-family: inherit;
+}
+
+/* ===== Layout: menu lateral + conteúdo ===== */
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.lateral {
+    position: sticky;  /* o menu fica parado enquanto a página rola */
+    top: 0;
+    height: 100vh;
+    width: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 28px 18px;
+    background: var(--branco);
+    border-right: 1px solid var(--rosa-bebe);
+}
+
+.logo {
+    font-family: var(--fonte-mono);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--texto);
+    text-decoration: none;
+    padding-left: 8px;
+}
+
+.logo-prompt {
+    background: var(--degrade);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.logo-cursor {
+    color: var(--rosa-forte);
+    animation: piscar 1s steps(1) infinite;
+}
+
+@keyframes piscar {
+    50% { opacity: 0; }
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    color: var(--vinho);
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.menu-item:hover {
+    background: var(--rosa-fundo);
+}
+
+.menu-item.ativo {
+    background: var(--rosa-bebe);
+    font-weight: 700;
+    color: var(--texto);
+}
+
+.menu-item.em-breve {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.menu-item.em-breve:hover {
+    background: none;
+}
+
+.menu-secao {
+    margin: 14px 0 4px 14px;
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    color: var(--rosa);
+}
+
+.icone {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.usuaria {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--rosa-fundo);
+}
+
+.usuaria strong {
+    display: block;
+    font-size: 0.95rem;
+}
+
+.usuaria small {
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    color: var(--rosa-forte);
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--degrade);
+    color: var(--branco);
+    font-weight: 700;
+}
+
+/* ===== Área principal ===== */
+.conteudo {
+    flex: 1;
+    min-width: 0;
+    max-width: 1240px;
+    padding: 36px 40px;
+}
+
+/* Telas estreitas: o menu vira uma barra no topo */
+@media (max-width: 900px) {
+    .layout {
+        flex-direction: column;
+    }
+
+    .lateral {
+        position: static;
+        width: auto;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        border-right: none;
+        border-bottom: 1px solid var(--rosa-bebe);
+    }
+
+    .menu {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .menu-secao, .em-breve, .usuaria {
+        display: none;
+    }
+
+    .conteudo {
+        padding: 24px 18px;
+    }
+}
+
+/* Cartão branco reutilizável */
+.card {
+    background: var(--branco);
+    border: 1px solid var(--rosa-bebe);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+    padding: 32px;
+}
+
+/* Título no estilo comentário de código: // hoje */
+.rotulo {
+    font-family: var(--fonte-mono);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--rosa-forte);
+    text-transform: lowercase;
+}
+
+.rotulo::before {
+    content: '// ';
+    color: var(--lilas);
+}
+
+/* ===== Botões e formulários reutilizáveis ===== */
+.btn {
+    display: inline-block;
+    border: none;
+    background: var(--degrade);
+    color: var(--branco);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 9px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-claro {
+    background: var(--rosa-bebe);
+    color: var(--vinho);
+}
+
+.btn-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: none;
+    border-radius: 8px;
+    color: var(--vinho);
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.btn-icone:hover {
+    background: var(--rosa-bebe);
+}
+
+input[type="text"], select {
+    padding: 9px 14px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--texto);
+    background: var(--branco);
+    outline: none;
+}
+
+input[type="text"]:focus, select:focus {
+    border-color: var(--rosa);
+}
+
+input[type="color"] {
+    width: 40px;
+    height: 38px;
+    padding: 2px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    background: var(--branco);
+    cursor: pointer;
+}
+
+.form-linha {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.form-linha input[type="text"] {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ===== Mensagens ("Disciplina criada.") ===== */
+.mensagens {
+    list-style: none;
+    margin-bottom: 20px;
+}
+
+.mensagem {
+    padding: 10px 16px;
+    background: var(--branco);
+    border-left: 4px solid var(--lilas);
+    border-radius: 10px;
+    box-shadow: var(--sombra);
+    font-size: 0.9rem;
+}
+
+.mensagem.error {
+    border-left-color: #d64545;
+    color: #9b2c2c;
+}
+
+/* ===== Edição direto na página (usado com static/js/editar.js) =====
+   Cada ".editavel" tem um ".modo-ver" e um ".modo-edicao"; a classe "editando" alterna. */
+.editavel .modo-edicao {
+    display: none;
+}
+
+.editavel.editando .modo-edicao {
+    display: flex;
+}
+
+.editavel.editando .modo-ver {
+    display: none;
+}

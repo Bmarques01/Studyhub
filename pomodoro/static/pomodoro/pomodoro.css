@@ -1,0 +1,310 @@
+.pomodoro {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 28px;
+    align-items: start;
+}
+
+@media (max-width: 800px) {
+    .pomodoro {
+        grid-template-columns: 1fr;
+    }
+}
+
+.relogio-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+/* ===== Abas de modo ===== */
+.modos {
+    display: flex;
+    gap: 6px;
+    padding: 6px;
+    background: var(--rosa-fundo);
+    border-radius: 999px;
+}
+
+.modo {
+    border: none;
+    background: none;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-weight: 600;
+    color: var(--vinho);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modo.ativo {
+    background: var(--rosa-forte);
+    color: var(--branco);
+}
+
+/* ===== Relógio com anel ===== */
+.relogio {
+    position: relative;
+    width: 280px;
+    height: 280px;
+}
+
+.anel {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg); /* faz o anel começar no topo */
+}
+
+.anel-fundo {
+    fill: none;
+    stroke: var(--rosa-bebe);
+    stroke-width: 10;
+}
+
+.anel-progresso {
+    fill: none;
+    stroke: url(#degrade-anel);
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s linear;
+}
+
+.relogio-texto {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.tempo {
+    font-family: var(--fonte-mono);
+    font-size: 3.6rem;
+    font-weight: 700;
+    color: var(--texto);
+}
+
+.ciclo {
+    font-family: var(--fonte-mono);
+    font-size: 0.85rem;
+    color: var(--rosa);
+    font-weight: 500;
+}
+
+/* Cores diferentes nas pausas */
+.relogio-card.pausa .anel-progresso { stroke: var(--lilas); }
+.relogio-card.pausa .modo.ativo { background: var(--lilas); }
+
+/* ===== Escolha de disciplina e tópico ===== */
+.escolha-estudo {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 440px;
+}
+
+.escolha-estudo select {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.escolha-estudo select:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.dica-cadastro {
+    font-size: 0.85rem;
+    margin-top: -12px;
+}
+
+.dica-cadastro a {
+    color: var(--rosa-forte);
+}
+
+/* ===== Campo de anotação ===== */
+.tarefa {
+    width: 100%;
+    max-width: 440px;
+    padding: 10px 18px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 12px;
+    font-size: 1rem;
+    color: var(--texto);
+    text-align: center;
+    outline: none;
+}
+
+.tarefa:focus {
+    border-color: var(--rosa);
+}
+
+/* ===== Botões ===== */
+.controles {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.btn-principal {
+    border: none;
+    background: var(--degrade);
+    color: var(--branco);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 16px 48px;
+    border-radius: 14px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(224, 96, 154, 0.35);
+    transition: transform 0.1s, box-shadow 0.2s;
+    min-width: 170px;
+}
+
+.btn-principal:hover {
+    box-shadow: 0 10px 28px rgba(167, 123, 243, 0.45);
+}
+
+.btn-principal:active {
+    transform: translateY(2px);
+}
+
+.btn-redondo {
+    width: 48px;
+    height: 48px;
+    border: 2px solid var(--rosa-claro);
+    background: var(--branco);
+    color: var(--rosa-forte);
+    border-radius: 12px;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.btn-redondo:hover {
+    background: var(--rosa-bebe);
+}
+
+.dica {
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--rosa);
+    margin-top: -12px;
+}
+
+kbd {
+    background: var(--rosa-bebe);
+    border-radius: 6px;
+    padding: 2px 6px;
+}
+
+/* ===== Configurações ===== */
+.config {
+    width: 100%;
+    color: var(--vinho);
+}
+
+.config summary {
+    cursor: pointer;
+    text-align: center;
+    font-family: var(--fonte-mono);
+    font-size: 0.85rem;
+}
+
+.config-campos {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.config-campos input {
+    width: 60px;
+    padding: 6px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    text-align: center;
+    color: var(--texto);
+}
+
+/* ===== Resumo do dia ===== */
+
+
+.destaque {
+    margin: 8px 0 20px;
+    font-weight: 600;
+}
+
+.destaque span {
+    font-family: var(--fonte-mono);
+    font-size: 2.2rem;
+    background: var(--degrade);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.lista-sessoes {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lista-sessoes li {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--rosa-fundo);
+    border-radius: 10px;
+    border-left: 3px solid var(--cor, var(--rosa));  /* cor da disciplina, ou rosa */
+    font-size: 0.95rem;
+}
+
+.lista-sessoes .hora {
+    font-family: var(--fonte-mono);
+    font-size: 0.8rem;
+    color: var(--rosa-forte);
+    font-weight: 700;
+}
+
+.lista-sessoes .nome {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.lista-sessoes .nome strong,
+.lista-sessoes .nome small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lista-sessoes .nome strong {
+    font-weight: 600;
+}
+
+.lista-sessoes .nome small {
+    color: var(--vinho);
+    opacity: 0.75;
+    font-size: 0.8rem;
+}
+
+.lista-sessoes .min {
+    color: var(--vinho);
+    font-weight: 600;
+}
+
+.lista-sessoes .vazio {
+    background: none;
+    border: none;
+    color: var(--rosa);
+    justify-content: center;
+    text-align: center;
+}

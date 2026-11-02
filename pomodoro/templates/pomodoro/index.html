@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Pomodoro{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'pomodoro/pomodoro.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+<!-- data-* guardam informações que o JavaScript vai ler -->
+<section class="pomodoro"
+         data-url-registrar="{% url 'pomodoro:registrar' %}"
+         data-csrf="{{ csrf_token }}">
+
+    <div class="card relogio-card">
+        <div class="modos">
+            <button class="modo ativo" data-modo="foco">Foco</button>
+            <button class="modo" data-modo="pausa_curta">Pausa curta</button>
+            <button class="modo" data-modo="pausa_longa">Pausa longa</button>
+        </div>
+
+        <div class="relogio">
+            <!-- O anel de progresso é um círculo SVG que vai "esvaziando" -->
+            <svg viewBox="0 0 200 200" class="anel">
+                <defs>
+                    <linearGradient id="degrade-anel" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#e0609a" />
+                        <stop offset="100%" stop-color="#a77bf3" />
+                    </linearGradient>
+                </defs>
+                <circle class="anel-fundo" cx="100" cy="100" r="90" />
+                <circle class="anel-progresso" id="anel" cx="100" cy="100" r="90" />
+            </svg>
+            <div class="relogio-texto">
+                <div class="tempo" id="tempo">25:00</div>
+                <div class="ciclo" id="ciclo">Ciclo 1 de 4</div>
+            </div>
+        </div>
+
+        <div class="escolha-estudo">
+            <select id="disciplina" title="Disciplina">
+                <option value="">Sem disciplina</option>
+                {% for rotulo, disciplinas in opcoes %}
+                    <optgroup label="{{ rotulo }}">
+                        {% for d in disciplinas %}
+                            <option value="{{ d.id }}">{{ d.nome }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+            <select id="topico" title="Tópico" disabled>
+                <option value="">Sem tópico</option>
+            </select>
+        </div>
+        {% if not tem_disciplinas %}
+            <p class="dica-cadastro">
+                <a href="{% url 'estudos:index' %}">Cadastre suas disciplinas</a> para acompanhar o tempo de cada uma.
+            </p>
+        {% endif %}
+
+        <input id="tarefa" class="tarefa" maxlength="200"
+               placeholder="Anotação (opcional): o que vai fazer agora?">
+
+        <div class="controles">
+            <button id="btn-reiniciar" class="btn-redondo" title="Reiniciar">↺</button>
+            <button id="btn-iniciar" class="btn-principal">Iniciar</button>
+            <button id="btn-pular" class="btn-redondo" title="Pular para o próximo">⏭</button>
+        </div>
+        <p class="dica">Dica: aperte <kbd>espaço</kbd> para iniciar/pausar</p>
+
+        <details class="config">
+            <summary>ajustar tempos</summary>
+            <div class="config-campos">
+                <label>Foco <input type="number" id="cfg-foco" min="1" max="180"> min</label>
+                <label>Pausa curta <input type="number" id="cfg-pausa_curta" min="1" max="60"> min</label>
+                <label>Pausa longa <input type="number" id="cfg-pausa_longa" min="1" max="60"> min</label>
+                <label>Ciclos até a pausa longa <input type="number" id="cfg-ciclos" min="1" max="12"></label>
+            </div>
+        </details>
+    </div>
+
+    <aside class="card resumo-dia">
+        <h2 class="rotulo">hoje</h2>
+        <p class="destaque">
+            <span id="total-minutos">{{ minutos_hoje }}</span> min de foco
+        </p>
+        <ul id="lista-sessoes" class="lista-sessoes">
+            {% for sessao in sessoes_hoje %}
+                <li {% if sessao.disciplina %}style="--cor: {{ sessao.disciplina.cor }}"{% endif %}>
+                    <span class="hora">{{ sessao.concluida_em|time:"H:i" }}</span>
+                    <span class="nome">
+                        <strong>{{ sessao.disciplina.nome|default:"Foco" }}{% if sessao.topico %} · {{ sessao.topico.nome }}{% endif %}</strong>
+                        {% if sessao.tarefa %}<small>{{ sessao.tarefa }}</small>{% endif %}
+                    </span>
+                    <span class="min">{{ sessao.duracao_minutos }} min</span>
+                </li>
+            {% empty %}
+                <li class="vazio">Nenhum pomodoro ainda. Bora começar?</li>
+            {% endfor %}
+        </ul>
+    </aside>
+</section>
+
+{# json_script coloca os dados na página de forma segura para o JavaScript ler #}
+{{ topicos_por_disciplina|json_script:"dados-topicos" }}
+<script src="{% static 'pomodoro/pomodoro.js' %}"></script>
+{% endblock %}

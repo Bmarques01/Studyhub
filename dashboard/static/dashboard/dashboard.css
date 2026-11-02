@@ -1,0 +1,566 @@
+/* Cores dos gráficos (validadas para contraste e daltonismo) */
+.dash {
+    --g-atual: #e0609a;
+    --g-anterior: #8f6fd8;
+    --g-vazio: #f6edf1;
+    --g-1: #f093bb;
+    --g-2: #e0609a;
+    --g-3: #bf3f7c;
+    --g-4: #8c2a5c;
+    --g-grade: #f3e6ec;
+    --texto-suave: #8a6b7c;
+
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+/* ===== Saudação ===== */
+.dash-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.dash-topo h1 {
+    font-size: 1.9rem;
+    font-weight: 700;
+}
+
+.dash-data {
+    color: var(--texto-suave);
+    margin-top: 2px;
+}
+
+.dash-topo-acoes {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chip-sequencia {
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: var(--branco);
+    border: 1px solid var(--rosa-bebe);
+    font-size: 0.9rem;
+}
+
+.chip-sequencia strong {
+    font-size: 1.1rem;
+}
+
+.btn-com-icone {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 18px;
+}
+
+.btn-com-icone .icone {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+/* ===== Grade de cards (12 colunas) ===== */
+.dash-grade {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 20px;
+}
+
+.dash-grade > .card {
+    padding: 22px 24px;
+}
+
+.kpi { grid-column: span 3; }
+.grafico-semana { grid-column: span 8; }
+.calendario { grid-column: span 4; }
+.mapa-calor { grid-column: span 7; }
+.por-disciplina { grid-column: span 5; }
+
+@media (max-width: 1100px) {
+    .kpi { grid-column: span 6; }
+    .grafico-semana, .calendario, .mapa-calor, .por-disciplina { grid-column: span 12; }
+}
+
+.card-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.sub {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+}
+
+/* ===== KPIs ===== */
+.kpi-rotulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--fonte-mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--texto-suave);
+}
+
+.kpi-valor {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 6px 0 4px;
+}
+
+.kpi-delta {
+    font-size: 0.82rem;
+    color: var(--texto-suave);
+}
+
+.kpi-delta.subiu { color: #2f855a; }
+.kpi-delta.desceu { color: #b0436f; }
+.kpi-delta span { color: var(--texto-suave); }
+
+/* Meta: barra de progresso */
+.kpi-meta {
+    background: linear-gradient(135deg, #fff, #fdf0f7);
+}
+
+.medidor {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--rosa-bebe);
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.medidor span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--degrade);
+}
+
+.btn-mini {
+    width: 24px;
+    height: 24px;
+    font-size: 0.85rem;
+}
+
+.form-meta {
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-meta label {
+    font-size: 0.9rem;
+}
+
+.form-meta input {
+    width: 70px;
+    padding: 8px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 1rem;
+    text-align: center;
+}
+
+/* ===== Gráfico da semana ===== */
+.legenda {
+    display: flex;
+    gap: 16px;
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+}
+
+.legenda span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chave {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.chave.atual { background: var(--g-atual); }
+.chave.anterior { background: var(--g-anterior); }
+
+.grafico {
+    display: flex;
+    gap: 10px;
+}
+
+.eixo-y {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 250px;
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    color: var(--texto-suave);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    transform: translateY(-0.45em);  /* alinha o texto com a linha da grade */
+}
+
+.plot {
+    position: relative;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.grade {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.grade span {
+    border-top: 1px solid var(--g-grade);
+}
+
+.dia {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 10px;
+    outline: none;
+    cursor: default;
+}
+
+/* a área de toque é a coluna inteira do dia, não só a barrinha */
+.dia:hover .barras,
+.dia:focus-visible .barras {
+    background: var(--rosa-fundo);
+}
+
+.barras {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    height: 250px;
+    border-radius: 8px;
+}
+
+.barra {
+    position: relative;
+    width: 14px;
+    border-radius: 4px 4px 0 0;  /* arredondada em cima, reta na base */
+}
+
+.barra.atual { background: var(--g-atual); }
+.barra.anterior { background: var(--g-anterior); }
+
+.rotulo-barra {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-style: normal;
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--texto);
+    white-space: nowrap;
+}
+
+.dia-nome {
+    margin-top: 8px;
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.dia.hoje .dia-nome {
+    color: var(--texto);
+    font-weight: 700;
+}
+
+/* ===== Tabela "ver como tabela" ===== */
+.ver-tabela {
+    margin-top: 14px;
+    font-size: 0.85rem;
+}
+
+.ver-tabela summary {
+    cursor: pointer;
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.ver-tabela table {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.ver-tabela th, .ver-tabela td {
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--g-grade);
+}
+
+.ver-tabela th {
+    font-weight: 600;
+    color: var(--texto-suave);
+}
+
+/* ===== Calendário ===== */
+.cal-grade {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    text-align: center;
+}
+
+.cal-cabecalho {
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    color: var(--texto-suave);
+    padding-bottom: 6px;
+}
+
+.cal-dia {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    max-height: 40px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+}
+
+.cal-dia.fora {
+    color: #d8c6cf;
+}
+
+.cal-dia.hoje {
+    background: var(--degrade);
+    color: var(--branco);
+    font-weight: 700;
+}
+
+.ponto {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--g-atual);
+}
+
+.cal-dia .ponto {
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.cal-dia.hoje .ponto {
+    background: var(--branco);
+}
+
+.cal-legenda {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+/* ===== Mapa de calor ===== */
+.mapa {
+    display: flex;
+    gap: 8px;
+}
+
+.mapa-dias {
+    display: grid;
+    grid-template-rows: repeat(7, 1fr);
+    gap: 4px;
+    font-family: var(--fonte-mono);
+    font-size: 0.65rem;
+    color: var(--texto-suave);
+}
+
+.mapa-dias span {
+    line-height: 14px;
+}
+
+.mapa-grade {
+    flex: 1;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 4px;
+}
+
+.mapa-semana {
+    display: grid;
+    grid-template-rows: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.celula {
+    display: inline-block;
+    min-width: 12px;
+    aspect-ratio: 1;
+    max-width: 22px;
+    border-radius: 3px;
+    background: var(--g-vazio);
+}
+
+.mapa-grade .celula:hover {
+    outline: 2px solid var(--texto);
+    outline-offset: 1px;
+}
+
+.celula.futuro { background: transparent; }
+.celula.nivel-1 { background: var(--g-1); }
+.celula.nivel-2 { background: var(--g-2); }
+.celula.nivel-3 { background: var(--g-3); }
+.celula.nivel-4 { background: var(--g-4); }
+
+.mapa-legenda {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 14px;
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.mapa-legenda .celula {
+    width: 12px;
+    min-width: 12px;
+}
+
+.mapa-legenda small {
+    margin-left: auto;
+    font-family: var(--fonte-mono);
+    font-size: 0.65rem;
+}
+
+/* ===== Ranking por disciplina ===== */
+.ranking {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.ranking li {
+    display: grid;
+    grid-template-columns: minmax(90px, 38%) 1fr auto;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+}
+
+.ranking-nome {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.bolinha {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ranking-trilho {
+    height: 10px;
+}
+
+.ranking-barra {
+    display: block;
+    height: 100%;
+    min-width: 4px;
+    border-radius: 0 4px 4px 0;  /* reta na base (esquerda), arredondada na ponta */
+    background: var(--g-atual);
+}
+
+.ranking-valor {
+    font-family: var(--fonte-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.vazio-card {
+    color: var(--texto-suave);
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+.vazio-card a {
+    color: var(--rosa-forte);
+    font-weight: 600;
+}
+
+/* ===== Tooltip (balãozinho) ===== */
+.tooltip {
+    position: absolute;
+    z-index: 10;
+    min-width: 140px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--texto);
+    color: var(--branco);
+    font-size: 0.8rem;
+    box-shadow: 0 8px 24px rgba(74, 42, 61, 0.25);
+    pointer-events: none;
+    transform: translate(-50%, calc(-100% - 10px));
+}
+
+.tooltip-titulo {
+    display: block;
+    margin-bottom: 6px;
+    opacity: 0.75;
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+}
+
+.tooltip-linha {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tooltip-linha strong {
+    font-size: 0.95rem;
+}
+
+.tooltip-linha i {
+    width: 12px;
+    height: 2px;  /* chave em forma de linha, não de caixa */
+    border-radius: 1px;
+}
+
+.tooltip-linha span {
+    opacity: 0.75;
+}

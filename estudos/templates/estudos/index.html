@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Estudos{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'estudos/estudos.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+<div class="estudos">
+    <div class="estudos-topo">
+        <div>
+            <h1 class="rotulo">estudos</h1>
+            <p class="subtitulo">Categoria → Semestre/Módulo → Disciplina → Tópico</p>
+        </div>
+        <form method="post" action="{% url 'estudos:criar_categoria' %}" class="form-linha">
+            {% csrf_token %}
+            <input type="text" name="nome" placeholder="Nova categoria (ex.: Graduação)" required maxlength="100">
+            <select name="divisao" title="Como dividir">
+                {% for valor, texto in divisoes %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+            </select>
+            <button class="btn">+ categoria</button>
+        </form>
+    </div>
+
+    {% for item in estrutura %}
+    {% with cat=item.categoria %}
+        <section class="card categoria">
+            {# ----- Cabeçalho da categoria ----- #}
+            <header class="categoria-topo editavel">
+                <div class="modo-ver">
+                    <div class="titulo-com-etiqueta">
+                        <h2>{{ cat.nome }}</h2>
+                        {% if cat.divisao %}<span class="etiqueta">{{ cat.get_divisao_display|lower }}</span>{% endif %}
+                    </div>
+                    <div class="acoes">
+                        <button type="button" class="btn-icone" data-editar title="Editar categoria">✎</button>
+                        <form method="post" action="{% url 'estudos:excluir_categoria' cat.id %}"
+                              onsubmit="return confirm('Excluir a categoria &quot;{{ cat.nome|escapejs }}&quot; e TUDO que está dentro dela?');">
+                            {% csrf_token %}
+                            <button class="btn-icone" title="Excluir categoria">✕</button>
+                        </form>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'estudos:editar_categoria' cat.id %}" class="modo-edicao form-linha">
+                    {% csrf_token %}
+                    <input type="text" name="nome" value="{{ cat.nome }}" required maxlength="100">
+                    <select name="divisao" title="Como dividir">
+                        {% for valor, texto in divisoes %}
+                            <option value="{{ valor }}" {% if valor == cat.divisao %}selected{% endif %}>{{ texto }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn">salvar</button>
+                    <button type="button" class="btn btn-claro" data-cancelar>cancelar</button>
+                </form>
+            </header>
+
+            {# ----- Um bloco por semestre/módulo (e um "sem período") ----- #}
+            {% for grupo in item.grupos %}
+                <div class="grupo">
+                    {% if grupo.periodo %}
+                        <div class="grupo-topo editavel">
+                            <div class="modo-ver">
+                                <h3>{{ grupo.periodo.nome }}</h3>
+                                <div class="acoes">
+                                    <button type="button" class="btn-icone" data-editar title="Renomear">✎</button>
+                                    <form method="post" action="{% url 'estudos:excluir_periodo' grupo.periodo.id %}"
+                                          onsubmit="return confirm('Excluir &quot;{{ grupo.periodo.nome|escapejs }}&quot;? As disciplinas dele NÃO serão apagadas, só ficam sem {{ cat.nome_periodo }}.');">
+                                        {% csrf_token %}
+                                        <button class="btn-icone" title="Excluir">✕</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <form method="post" action="{% url 'estudos:editar_periodo' grupo.periodo.id %}" class="modo-edicao form-linha">
+                                {% csrf_token %}
+                                <input type="text" name="nome" value="{{ grupo.periodo.nome }}" required maxlength="100">
+                                <button class="btn">salvar</button>
+                                <button type="button" class="btn btn-claro" data-cancelar>cancelar</button>
+                            </form>
+                        </div>
+                    {% elif cat.divisao %}
+                        <div class="grupo-topo"><h3 class="sem-periodo">sem {{ cat.nome_periodo }}</h3></div>
+                    {% endif %}
+
+                    <ul class="disciplinas">
+                        {% for disciplina in grupo.disciplinas %}
+                            {% include "estudos/_disciplina.html" %}
+                        {% empty %}
+                            <li class="vazio">Nenhuma disciplina ainda.</li>
+                        {% endfor %}
+                    </ul>
+
+                    <form method="post" action="{% url 'estudos:criar_disciplina' %}" class="form-linha">
+                        {% csrf_token %}
+                        {# "local" diz onde a disciplina vai ficar: p:ID = período, c:ID = categoria sem período #}
+                        <input type="hidden" name="local"
+                               value="{% if grupo.periodo %}p:{{ grupo.periodo.id }}{% else %}c:{{ cat.id }}{% endif %}">
+                        <input type="color" name="cor" value="#e0609a" title="Cor da disciplina">
+                        <input type="text" name="nome" placeholder="Nova disciplina" required maxlength="100">
+                        <button class="btn">+ disciplina</button>
+                    </form>
+                </div>
+            {% endfor %}
+
+            {% if cat.divisao %}
+                <form method="post" action="{% url 'estudos:criar_periodo' cat.id %}" class="form-linha novo-periodo">
+                    {% csrf_token %}
+                    <input type="text" name="nome" maxlength="100"
+                           placeholder="Nome do {{ cat.nome_periodo }} (opcional, ex.: {% if cat.divisao == 'modulo' %}Módulo 1{% else %}1º semestre{% endif %})">
+                    <button class="btn btn-claro">+ {{ cat.nome_periodo }}</button>
+                </form>
+            {% endif %}
+
+            {% if item.arquivadas %}
+                <details class="arquivadas">
+                    <summary>arquivadas ({{ item.arquivadas|length }})</summary>
+                    <ul class="disciplinas">
+                        {% for disciplina in item.arquivadas %}
+                            {% include "estudos/_disciplina.html" %}
+                        {% endfor %}
+                    </ul>
+                </details>
+            {% endif %}
+        </section>
+    {% endwith %}
+    {% empty %}
+        <section class="card vazio-grande">
+            Comece criando uma categoria, como "Graduação" ou "Estudos livres".
+        </section>
+    {% endfor %}
+</div>
+{% endblock %}

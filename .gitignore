@@ -1,0 +1,19 @@
+# Ambiente virtual (cada computador cria o seu com: python -m venv .venv)
+.venv/
+
+# Banco de dados: tem os seus dados pessoais de estudo, não vai para o GitHub
+db.sqlite3
+*.sqlite3
+
+# Arquivos gerados pelo Python
+__pycache__/
+*.py[cod]
+
+# Editor e sistema
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Variáveis de ambiente / segredos
+.env

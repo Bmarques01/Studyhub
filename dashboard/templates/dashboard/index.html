@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load static tempo %}
+
+{% block titulo %}Dashboard{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<script src="{% static 'dashboard/dashboard.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash">
+
+    {# ===== Saudação ===== #}
+    <header class="dash-topo">
+        <div>
+            <h1>{{ saudacao }}, {{ perfil.nome }} 👋</h1>
+            <p class="dash-data">{{ hoje|date:"l, j \d\e F"|lower|capfirst }}</p>
+        </div>
+        <div class="dash-topo-acoes">
+            <div class="chip-sequencia" title="Dias seguidos com pelo menos um pomodoro">
+                🔥 <strong>{{ sequencia }}</strong> dia{{ sequencia|pluralize }} seguido{{ sequencia|pluralize }}
+            </div>
+            <a href="{% url 'pomodoro:index' %}" class="btn btn-com-icone">
+                {% include "componentes/icone.html" with nome="play" %} Iniciar pomodoro
+            </a>
+        </div>
+    </header>
+
+    <div class="dash-grade">
+
+        {# ===== Números do topo ===== #}
+        {% for card in cards %}
+            <section class="card kpi">
+                <h2 class="kpi-rotulo">{{ card.rotulo }}</h2>
+                <p class="kpi-valor">{{ card.minutos|horas }}</p>
+                <p class="kpi-delta {{ card.comparacao.direcao }}">
+                    {% if card.comparacao.direcao == 'subiu' %}▲{% elif card.comparacao.direcao == 'desceu' %}▼{% endif %}
+                    {{ card.comparacao.texto }} <span>{{ card.referencia }}</span>
+                </p>
+            </section>
+        {% endfor %}
+
+        <section class="card kpi kpi-meta editavel">
+            <div class="modo-ver">
+                <h2 class="kpi-rotulo">
+                    meta semanal
+                    <button type="button" class="btn-icone btn-mini" data-editar title="Mudar meta">✎</button>
+                </h2>
+                <p class="kpi-valor">{{ meta_pct }}%</p>
+                <div class="medidor" role="meter" aria-label="Meta semanal"
+                     aria-valuemin="0" aria-valuemax="{{ meta_min }}" aria-valuenow="{{ min_semana }}">
+                    <span style="width: {% if meta_pct > 100 %}100{% else %}{{ meta_pct }}{% endif %}%"></span>
+                </div>
+                <p class="kpi-delta">
+                    {{ min_semana|horas }} de {{ meta_min|horas }}
+                    {% if falta_meta %}· faltam {{ falta_meta|horas }}{% else %}· meta batida! 🎉{% endif %}
+                </p>
+            </div>
+            <form method="post" action="{% url 'dashboard:salvar_meta' %}" class="modo-edicao form-meta">
+                {% csrf_token %}
+                <h2 class="kpi-rotulo">meta semanal</h2>
+                <label>
+                    <input type="number" name="meta_semanal_horas" value="{{ perfil.meta_semanal_horas }}"
+                           min="1" max="100" required> horas por semana
+                </label>
+                <div class="form-linha">
+                    <button class="btn">salvar</button>
+                    <button type="button" class="btn btn-claro" data-cancelar>cancelar</button>
+                </div>
+            </form>
+        </section>
+
+        {# ===== Gráfico: esta semana × semana passada ===== #}
+        <section class="card grafico-semana">
+            <header class="card-topo">
+                <h2 class="rotulo">semana</h2>
+                <div class="legenda">
+                    <span><i class="chave anterior"></i>semana passada</span>
+                    <span><i class="chave atual"></i>esta semana</span>
+                </div>
+            </header>
+
+            <div class="grafico">
+                <div class="eixo-y" aria-hidden="true">
+                    {% for marca in marcas_eixo %}<span>{{ marca|horas }}</span>{% endfor %}
+                </div>
+                <div class="plot">
+                    <div class="grade" aria-hidden="true"><span></span><span></span><span></span></div>
+                    {% for c in colunas %}
+                        <div class="dia {% if c.hoje %}hoje{% endif %}" tabindex="0"
+                             data-tip-titulo="{{ c.nome }}, {{ c.data|date:'d/m' }}"
+                             data-tip-atual="{% if c.atual is None %}—{% else %}{{ c.atual|horas }}{% endif %}"
+                             data-tip-anterior="{{ c.anterior|horas }}"
+                             aria-label="{{ c.nome }}: esta semana {% if c.atual is None %}ainda não chegou{% else %}{{ c.atual|horas }}{% endif %}, semana passada {{ c.anterior|horas }}">
+                            <div class="barras">
+                                <span class="barra anterior" style="height: {{ c.altura_anterior|floatformat:'1u' }}%"></span>
+                                <span class="barra atual" style="height: {{ c.altura_atual|floatformat:'1u' }}%">
+                                    {% if c.hoje and c.atual %}<em class="rotulo-barra">{{ c.atual|horas }}</em>{% endif %}
+                                </span>
+                            </div>
+                            <span class="dia-nome">{{ c.nome }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <details class="ver-tabela">
+                <summary>ver como tabela</summary>
+                <table>
+                    <thead><tr><th>dia</th><th>esta semana</th><th>semana passada</th></tr></thead>
+                    <tbody>
+                        {% for c in colunas %}
+                            <tr>
+                                <td>{{ c.nome }} {{ c.data|date:'d/m' }}</td>
+                                <td>{% if c.atual is None %}—{% else %}{{ c.atual|horas }}{% endif %}</td>
+                                <td>{{ c.anterior|horas }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </details>
+        </section>
+
+        {# ===== Calendário do mês ===== #}
+        <section class="card calendario">
+            <header class="card-topo">
+                <h2 class="rotulo">{{ hoje|date:"F Y"|lower }}</h2>
+            </header>
+            <div class="cal-grade">
+                {% for d in dias_semana %}<span class="cal-cabecalho">{{ d|first|upper }}</span>{% endfor %}
+                {% for semana in semanas_calendario %}
+                    {% for dia in semana %}
+                        <span class="cal-dia {% if dia.month != hoje.month %}fora{% endif %} {% if dia == hoje %}hoje{% endif %}">
+                            {{ dia.day }}
+                            {% if dia in dias_com_estudo %}<i class="ponto" title="Dia com estudo"></i>{% endif %}
+                        </span>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            <p class="cal-legenda"><i class="ponto"></i> dia com estudo</p>
+        </section>
+
+        {# ===== Mapa de calor ===== #}
+        <section class="card mapa-calor">
+            <header class="card-topo">
+                <h2 class="rotulo">constância</h2>
+                <span class="sub">últimas {{ mapa|length }} semanas</span>
+            </header>
+            <div class="mapa">
+                <div class="mapa-dias" aria-hidden="true">
+                    {% for d in dias_semana %}<span>{% if forloop.counter0|divisibleby:2 %}{{ d }}{% endif %}</span>{% endfor %}
+                </div>
+                <div class="mapa-grade">
+                    {% for semana in mapa %}
+                        <div class="mapa-semana">
+                            {% for dia in semana %}
+                                {% if dia.futuro %}
+                                    <span class="celula futuro"></span>
+                                {% else %}
+                                    <span class="celula nivel-{{ dia.nivel }}"
+                                          data-tip-titulo="{{ dia.data|date:'D, d/m' }}"
+                                          data-tip-valor="{{ dia.minutos|horas }}"
+                                          aria-label="{{ dia.data|date:'d/m' }}: {{ dia.minutos|horas }}"></span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mapa-legenda">
+                menos
+                <span class="celula nivel-0" title="nada"></span>
+                <span class="celula nivel-1" title="até 30min"></span>
+                <span class="celula nivel-2" title="30min a 1h"></span>
+                <span class="celula nivel-3" title="1h a 2h"></span>
+                <span class="celula nivel-4" title="2h ou mais"></span>
+                mais
+                <small>0 · &lt;30min · &lt;1h · &lt;2h · 2h+</small>
+            </div>
+        </section>
+
+        {# ===== Tempo por disciplina ===== #}
+        <section class="card por-disciplina">
+            <header class="card-topo">
+                <h2 class="rotulo">por disciplina</h2>
+                <span class="sub">este mês</span>
+            </header>
+            {% if por_disciplina %}
+                <ul class="ranking">
+                    {% for linha in por_disciplina %}
+                        <li>
+                            <span class="ranking-nome">
+                                <i class="bolinha" style="background: {{ linha.disciplina__cor|default:'#c9b8c1' }}"></i>
+                                {{ linha.disciplina__nome|default:"Sem disciplina" }}
+                            </span>
+                            <span class="ranking-trilho">
+                                <span class="ranking-barra" style="width: {{ linha.largura|floatformat:'1u' }}%"></span>
+                            </span>
+                            <span class="ranking-valor">{{ linha.total|horas }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="vazio-card">
+                    Nenhum pomodoro este mês ainda.<br>
+                    <a href="{% url 'pomodoro:index' %}">Começar o primeiro →</a>
+                </p>
+            {% endif %}
+        </section>
+
+    </div>
+</div>
+{% endblock %}

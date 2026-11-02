@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}{% endblock %} · Studyhub</title>
+
+    <!-- Fontes do Google: Space Grotesk (texto) e JetBrains Mono (logo e números) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <script src="{% static 'js/editar.js' %}" defer></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+<div class="layout">
+    <aside class="lateral">
+        <a href="{% url 'dashboard:index' %}" class="logo">
+            <span class="logo-prompt">&gt;</span> studyhub<span class="logo-cursor">_</span>
+        </a>
+
+        {# app = qual parte do site está aberta, para destacar o item certo no menu #}
+        {% with app=request.resolver_match.app_name %}
+        <nav class="menu">
+            <a href="{% url 'dashboard:index' %}" class="menu-item {% if app == 'dashboard' %}ativo{% endif %}">
+                {% include "componentes/icone.html" with nome="dashboard" %} Dashboard
+            </a>
+            <a href="{% url 'pomodoro:index' %}" class="menu-item {% if app == 'pomodoro' %}ativo{% endif %}">
+                {% include "componentes/icone.html" with nome="pomodoro" %} Pomodoro
+            </a>
+            <a href="{% url 'estudos:index' %}" class="menu-item {% if app == 'estudos' %}ativo{% endif %}">
+                {% include "componentes/icone.html" with nome="estudos" %} Estudos
+            </a>
+
+            <span class="menu-secao">em breve</span>
+            <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="calendario" %} Calendário</span>
+            <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="projetos" %} Projetos</span>
+            <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="cadernos" %} Cadernos</span>
+            <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="flashcards" %} Flashcards</span>
+            <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="erros" %} Erros</span>
+        </nav>
+        {% endwith %}
+
+        <div class="usuaria">
+            <span class="avatar">B</span>
+            <div>
+                <strong>Bruna</strong>
+                <small>CC · Cloud</small>
+            </div>
+        </div>
+    </aside>
+
+    <main class="conteudo">
+        {% if messages %}
+            <ul class="mensagens">
+                {% for mensagem in messages %}<li class="mensagem {{ mensagem.tags }}">{{ mensagem }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+        {% block conteudo %}{% endblock %}
+    </main>
+</div>
+</body>
+</html>

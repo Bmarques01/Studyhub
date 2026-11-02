@@ -1,0 +1,68 @@
+{# Pedaço reaproveitado: uma disciplina com seus tópicos. Usado com {% include %}. #}
+<li class="disciplina {% if disciplina.arquivada %}arquivada{% endif %}" style="--cor: {{ disciplina.cor }}">
+    <div class="editavel">
+        <div class="modo-ver disciplina-linha">
+            <span class="bolinha"></span>
+            <span class="disciplina-nome">{{ disciplina.nome }}</span>
+
+            <div class="acoes">
+                <button type="button" class="btn-icone" data-editar title="Editar">✎</button>
+                <form method="post" action="{% url 'estudos:arquivar_disciplina' disciplina.id %}">
+                    {% csrf_token %}
+                    <button class="btn-icone" title="{% if disciplina.arquivada %}Reativar{% else %}Arquivar{% endif %}">
+                        {% if disciplina.arquivada %}↩{% else %}🗄{% endif %}
+                    </button>
+                </form>
+                <form method="post" action="{% url 'estudos:excluir_disciplina' disciplina.id %}"
+                      onsubmit="return confirm('Excluir &quot;{{ disciplina.nome|escapejs }}&quot;? Dica: arquivar mantém o histórico.');">
+                    {% csrf_token %}
+                    <button class="btn-icone" title="Excluir">✕</button>
+                </form>
+            </div>
+        </div>
+
+        <form method="post" action="{% url 'estudos:editar_disciplina' disciplina.id %}" class="modo-edicao form-linha">
+            {% csrf_token %}
+            <input type="color" name="cor" value="{{ disciplina.cor }}" title="Cor">
+            <input type="text" name="nome" value="{{ disciplina.nome }}" required maxlength="100">
+            <select name="local" title="Onde fica">
+                {% for c in todas_categorias %}
+                    <optgroup label="{{ c.nome }}">
+                        <option value="c:{{ c.id }}" {% if disciplina.categoria_id == c.id and not disciplina.periodo_id %}selected{% endif %}>
+                            {% if c.divisao %}sem {{ c.nome_periodo }}{% else %}{{ c.nome }}{% endif %}
+                        </option>
+                        {% for p in c.periodos.all %}
+                            <option value="p:{{ p.id }}" {% if disciplina.periodo_id == p.id %}selected{% endif %}>{{ p.nome }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+            <button class="btn">salvar</button>
+            <button type="button" class="btn btn-claro" data-cancelar>cancelar</button>
+        </form>
+    </div>
+
+    <div class="topicos">
+        {% for topico in disciplina.topicos.all %}
+            <div class="topico editavel">
+                <div class="modo-ver">
+                    <span class="topico-nome" data-editar title="Clique para renomear">{{ topico.nome }}</span>
+                    <form method="post" action="{% url 'estudos:excluir_topico' topico.id %}">
+                        {% csrf_token %}
+                        <button title="Remover tópico">×</button>
+                    </form>
+                </div>
+                <form method="post" action="{% url 'estudos:editar_topico' topico.id %}" class="modo-edicao">
+                    {% csrf_token %}
+                    <input type="text" name="nome" value="{{ topico.nome }}" required maxlength="150">
+                </form>
+            </div>
+        {% endfor %}
+        {% if not disciplina.arquivada %}
+            <form method="post" action="{% url 'estudos:criar_topico' disciplina.id %}" class="topico-novo">
+                {% csrf_token %}
+                <input type="text" name="nome" placeholder="+ tópico" required maxlength="150">
+            </form>
+        {% endif %}
+    </div>
+</li>
