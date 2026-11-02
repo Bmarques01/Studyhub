@@ -184,7 +184,15 @@ window.Pomodoro = (() => {
         avisarTelas('mudou');
     }
 
-    function terminar({ atrasado = false } = {}) {
+    // Começa o bloco "voltando no tempo": como se tivesse começado em `desde`.
+    // Usado quando o fim do bloco anterior foi percebido com atraso.
+    function iniciarDesde(desde) {
+        iniciar();
+        estado.inicioTrecho = Math.min(desde, Date.now());
+        salvar();
+    }
+
+    function terminar() {
         // Se outra aba já terminou este bloco, só sincroniza
         const noNavegador = ler();
         if (noNavegador && noNavegador.blocoId !== estado.blocoId) {
@@ -194,6 +202,11 @@ window.Pomodoro = (() => {
         }
 
         const decorrido = decorridoMs();
+        // Quando o bloco deveria ter acabado. O navegador pode perceber o fim com atraso
+        // (página em segundo plano só confere o relógio ~1x por minuto, ou site fechado).
+        const fimPrevisto = estado.livre ? Date.now()
+            : (estado.rodando ? estado.inicioTrecho + (estado.alvoMs - estado.acumuladoMs) : Date.now());
+        const atraso = Math.max(0, Date.now() - fimPrevisto);
         // tempo real focado: no modo livre, tudo (até 3h); senão, no máximo o previsto
         const focado = estado.livre ? Math.min(decorrido, LIMITE_MS) : Math.min(decorrido, estado.alvoMs);
         const minutos = Math.max(1, Math.round(focado / UM_MINUTO));
@@ -207,14 +220,25 @@ window.Pomodoro = (() => {
                   eraFoco ? `${minutos} min de foco registrados. Hora da pausa.` : 'Bora para o próximo foco.');
         if (eraFoco) registrarSessao(minutos);
 
-        // Automático: o próximo bloco já começa. Não começa se a meta de ciclos foi batida
-        // ou se o bloco acabou enquanto o site estava fechado (você pode não estar aí).
+        // Automático: o próximo bloco começa contando a partir de quando o anterior acabou.
+        // Ex.: o foco acabou há 1 min (aba em segundo plano) → a pausa já aparece com 4 min.
         const metaBatida = estado.modo === 'foco' && estado.focosConcluidos >= tempos.ciclos;
-        if (!metaBatida && !atrasado) {
-            iniciar();
+        const esperar = () => { estado.aguardando = true; salvar(); };  // mini fica visível, esperando você
+
+        if (metaBatida) {
+            esperar();
+        } else if (estado.modo === 'pausa') {
+            if (atraso < estado.alvoMs) {
+                iniciarDesde(fimPrevisto);
+            } else {
+                // a pausa inteira também já passou (você não estava aqui): espera no próximo foco
+                trocarModo('foco');
+                esperar();
+            }
+        } else if (atraso < 2 * UM_MINUTO) {
+            iniciarDesde(fimPrevisto);  // pausa acabou há pouco: o foco segue automático
         } else {
-            estado.aguardando = true;  // o mini pomodoro continua visível, esperando você
-            salvar();
+            esperar();  // pausa acabou faz tempo: não inventa um foco que você não fez
         }
         avisarTelas('fim', { eraFoco, minutos });
     }
@@ -234,7 +258,7 @@ window.Pomodoro = (() => {
 
         const acabou = estado.livre ? decorridoMs() >= LIMITE_MS : restante <= 0;
         if (acabou) {
-            terminar({ atrasado: !estado.livre && -restante > UM_MINUTO });
+            terminar();
         } else {
             avisarTelas('tick');
         }
@@ -357,6 +381,7 @@ window.Pomodoro = (() => {
     });
 
     setInterval(tick, 250);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 
     return {
         NOMES, tempos, CHAVE_ESCOLHA,
