@@ -17,28 +17,10 @@
                 <p class="sub">de {{ filtro.nome }} · <a href="{% url 'cadernos:index' %}">ver todos</a></p>
             {% endif %}
         </div>
+        <button type="button" class="btn" id="btn-novo-caderno">+ novo caderno</button>
     </div>
 
     <div class="grade-cadernos">
-        {# ===== Novo caderno ===== #}
-        <form method="post" action="{% url 'cadernos:criar_caderno' %}" class="novo-caderno card">
-            {% csrf_token %}
-            <span class="rotulo">novo caderno</span>
-            <input type="text" name="nome" placeholder="Nome (ex.: Redes 2, Ideias...)" required maxlength="100">
-            <select name="disciplina" aria-label="Disciplina">
-                <option value="">Sem disciplina (caderno livre)</option>
-                {% for rotulo, disciplinas in opcoes %}
-                    <optgroup label="{{ rotulo }}">
-                        {% for d in disciplinas %}
-                            <option value="{{ d.id }}" {% if filtro and filtro.id == d.id %}selected{% endif %}>{{ d.nome }}</option>
-                        {% endfor %}
-                    </optgroup>
-                {% endfor %}
-            </select>
-            <label class="linha-cor">cor da capa <input type="color" name="cor_capa" value="#e0609a"></label>
-            <button class="btn">criar caderno</button>
-        </form>
-
         {# ===== Cadernos (capas) ===== #}
         {% for c in cadernos %}
             <a href="{% url 'cadernos:caderno' c.id %}" class="capa" style="--capa: {{ c.cor_capa }}">
@@ -51,7 +33,48 @@
                     {{ c.total_paginas }} página{{ c.total_paginas|pluralize }} · {{ c.atualizado_em|date:"d/m" }}
                 </span>
             </a>
+        {% empty %}
+            <p class="estante-vazia">Nenhum caderno ainda. Clique em <strong>+ novo caderno</strong> para criar o primeiro.</p>
         {% endfor %}
     </div>
 </div>
+
+{# ===== Janela "novo caderno" (abre pelo botão) ===== #}
+<dialog id="dialogo-caderno" class="dialogo-caderno">
+    <form method="post" action="{% url 'cadernos:criar_caderno' %}" class="novo-caderno">
+        {% csrf_token %}
+        <h2 class="rotulo">novo caderno</h2>
+        <label>nome
+            <input type="text" name="nome" placeholder="Ex.: Redes 2, Ideias..." required maxlength="100">
+        </label>
+        <label>disciplina <small>(opcional)</small>
+            <select name="disciplina">
+                <option value="">Sem disciplina (caderno livre)</option>
+                {% for rotulo, disciplinas in opcoes %}
+                    <optgroup label="{{ rotulo }}">
+                        {% for d in disciplinas %}
+                            <option value="{{ d.id }}" {% if filtro and filtro.id == d.id %}selected{% endif %}>{{ d.nome }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="linha-cor">cor da capa <input type="color" name="cor_capa" value="#e0609a"></label>
+        <div class="dialogo-botoes">
+            <button type="button" class="btn btn-claro" data-fechar>cancelar</button>
+            <button class="btn">criar caderno</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    // Botão "+ novo caderno" abre a janela; cancelar, Esc ou clicar fora fecham
+    const dialogo = document.getElementById('dialogo-caderno');
+    document.getElementById('btn-novo-caderno').addEventListener('click', () => {
+        dialogo.showModal();
+        dialogo.querySelector('input[name="nome"]').focus();
+    });
+    dialogo.querySelector('[data-fechar]').addEventListener('click', () => dialogo.close());
+    dialogo.addEventListener('click', evento => { if (evento.target === dialogo) dialogo.close(); });
+</script>
 {% endblock %}

@@ -41,14 +41,60 @@
     gap: 22px;
 }
 
+.estante-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.estante-vazia {
+    grid-column: 1 / -1;
+    color: var(--texto-suave);
+}
+
+/* ===== Janela "novo caderno" ===== */
+.dialogo-caderno {
+    width: min(420px, 92vw);
+    margin: auto;
+    padding: 26px;
+    border: none;
+    border-radius: var(--raio);
+    box-shadow: 0 20px 60px rgba(74, 42, 61, 0.3);
+    color: var(--texto);
+}
+
+.dialogo-caderno::backdrop {
+    background: rgba(74, 42, 61, 0.35);
+}
+
 .novo-caderno {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 20px;
+    gap: 14px;
 }
 
-.novo-caderno .rotulo { font-size: 0.95rem; }
+.novo-caderno .rotulo { font-size: 1.05rem; }
+
+.novo-caderno label:not(.linha-cor) {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.novo-caderno input,
+.novo-caderno select {
+    font-family: var(--fonte-texto);  /* o rótulo usa fonte mono; o campo, a normal */
+}
+
+.dialogo-botoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
 
 .novo-caderno input[type="text"], .novo-caderno select { width: 100%; }
 
@@ -67,7 +113,7 @@
     flex-direction: column;
     justify-content: space-between;
     aspect-ratio: 3 / 4;
-    padding: 22px 18px 16px 30px;
+    padding: 20px 12px 14px 24px;
     border-radius: 6px 16px 16px 6px;
     background: var(--capa);
     color: var(--texto);
@@ -93,15 +139,16 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 12px 14px;
+    padding: 10px 11px;
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.92);
 }
 
 .capa-etiqueta strong {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     line-height: 1.2;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    hyphens: auto;  /* quebra palavras longas com hífen, no lugar certo (a página é pt-br) */
 }
 
 .capa-etiqueta small, .capa-info {
