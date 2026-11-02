@@ -10,8 +10,6 @@
 {% block conteudo %}
 <!-- data-* guardam informações que o JavaScript vai ler -->
 <section class="pomodoro"
-         data-url-registrar="{% url 'pomodoro:registrar' %}"
-         data-csrf="{{ csrf_token }}"
          data-disciplina-inicial="{{ disciplina_inicial }}"
          data-segunda-inicial="{{ segunda_inicial }}">
 
@@ -129,5 +127,5 @@
 
 {# json_script coloca os dados na página de forma segura para o JavaScript ler #}
 {{ topicos_por_disciplina|json_script:"dados-topicos" }}
-<script src="{% static 'pomodoro/pomodoro.js' %}"></script>
+<script src="{% static 'pomodoro/pomodoro.js' %}" defer></script>
 {% endblock %}

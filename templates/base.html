@@ -13,6 +13,8 @@
 
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <script src="{% static 'js/editar.js' %}" defer></script>
+    {# Motor do pomodoro: roda em todas as páginas, para o tempo não parar ao navegar #}
+    <script src="{% static 'js/pomodoro-motor.js' %}" defer></script>
     {% block head %}{% endblock %}
 </head>
 <body>
@@ -69,5 +71,53 @@
         {% block conteudo %}{% endblock %}
     </main>
 </div>
+
+{# Dados que o motor do pomodoro usa para registrar as sessões, em qualquer página #}
+<div id="pomodoro-config" hidden
+     data-url-registrar="{% url 'pomodoro:registrar' %}" data-csrf="{{ csrf_token }}"></div>
+
+{# Mini pomodoro no canto (fora da página do próprio pomodoro) #}
+{% if request.resolver_match.app_name != 'pomodoro' %}
+<aside id="mini-pomodoro" class="mini-pomodoro" aria-label="Pomodoro em andamento" hidden>
+    <div class="mini-linha">
+        <svg viewBox="0 0 40 40" class="mini-anel" aria-hidden="true">
+            <circle class="mini-anel-fundo" cx="20" cy="20" r="17" />
+            <circle class="mini-anel-progresso" id="mini-anel" cx="20" cy="20" r="17" />
+        </svg>
+        <div class="mini-texto">
+            <span class="mini-modo" id="mini-modo">foco</span>
+            <strong class="mini-tempo" id="mini-tempo">25:00</strong>
+            <small class="mini-ciclo" id="mini-ciclo"></small>
+        </div>
+        <div class="mini-botoes">
+            <button type="button" class="mini-btn" id="mini-alternar" title="Pausar">
+                <span id="mini-icone-pausar">{% include "componentes/icone.html" with nome="pausa" %}</span>
+                <span id="mini-icone-continuar" hidden>{% include "componentes/icone.html" with nome="play" %}</span>
+            </button>
+            <button type="button" class="mini-btn" id="mini-pular" title="Pular para o próximo">
+                {% include "componentes/icone.html" with nome="pular" %}
+            </button>
+            <a href="{% url 'pomodoro:index' %}" class="mini-btn" title="Abrir o pomodoro">
+                {% include "componentes/icone.html" with nome="pomodoro" %}
+            </a>
+            <button type="button" class="mini-btn" id="mini-fechar" title="Dispensar" hidden>✕</button>
+        </div>
+    </div>
+    <div class="mini-aviso" id="mini-aviso" hidden>
+        <p><strong>Ainda no foco?</strong> Falta 1 minuto.</p>
+        <div class="mini-aviso-botoes">
+            <button type="button" class="btn btn-claro" data-estender="5">+5</button>
+            <button type="button" class="btn btn-claro" data-estender="15">+15</button>
+            <button type="button" class="btn" id="mini-livre-btn">sem limite</button>
+            <button type="button" class="btn-texto" id="mini-fazer-pausa">pausa</button>
+        </div>
+    </div>
+    <div class="mini-aviso mini-livre" id="mini-livre" hidden>
+        <span><strong>Foco livre</strong> · tempo extra</span>
+        <button type="button" class="btn" id="mini-encerrar">✓ encerrar</button>
+    </div>
+</aside>
+<script src="{% static 'js/pomodoro-mini.js' %}" defer></script>
+{% endif %}
 </body>
 </html>
