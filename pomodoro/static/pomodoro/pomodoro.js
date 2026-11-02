@@ -157,6 +157,11 @@ function terminar() {
         registrarSessao(minutos);
     }
     trocarModo(proximoModo());
+
+    // Automático: o próximo bloco já começa sozinho.
+    // Só para quando a meta de ciclos foi batida e a última pausa acabou.
+    const metaBatida = modo === 'foco' && focosConcluidos >= tempos.ciclos;
+    if (!metaBatida) iniciar();
 }
 
 // ===== "Ainda no foco?" =====
