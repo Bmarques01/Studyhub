@@ -1,4 +1,6 @@
-from django.core.validators import RegexValidator
+from decimal import ROUND_UP, Decimal
+
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 
 validar_cor = RegexValidator(r'^#[0-9a-fA-F]{6}$', 'Use uma cor no formato #rrggbb.')
@@ -72,11 +74,47 @@ class Disciplina(models.Model):
     arquivada = models.BooleanField(default=False)  # some das listas, mas o histórico fica
     criada_em = models.DateTimeField(auto_now_add=True)
 
+    # Notas (de 0 a 10). Vazias até você lançar.
+    nota_ga = models.DecimalField('Grau A', max_digits=4, decimal_places=2, null=True, blank=True,
+                                  validators=[MinValueValidator(0), MaxValueValidator(10)])
+    nota_gb = models.DecimalField('Grau B', max_digits=4, decimal_places=2, null=True, blank=True,
+                                  validators=[MinValueValidator(0), MaxValueValidator(10)])
+
+    # Regra da faculdade: Grau Final = GA × 0,33 + GB × 0,67, aprova com 6,0
+    PESO_GA = Decimal('0.33')
+    PESO_GB = Decimal('0.67')
+    MEDIA_APROVACAO = Decimal('6.0')
+
     class Meta:
         ordering = ['nome']
 
     def __str__(self):
         return self.nome
+
+    @property
+    def grau_final(self):
+        """Nota final, se GA e GB já foram lançados; senão None."""
+        if self.nota_ga is None or self.nota_gb is None:
+            return None
+        return (self.nota_ga * self.PESO_GA + self.nota_gb * self.PESO_GB).quantize(Decimal('0.01'))
+
+    @property
+    def gb_necessario(self):
+        """Quanto precisa tirar no GB para chegar na média, sabendo o GA.
+        Arredonda para cima (6,4925 vira 6,50), para garantir a aprovação."""
+        if self.nota_ga is None:
+            return None
+        falta = (self.MEDIA_APROVACAO - self.nota_ga * self.PESO_GA) / self.PESO_GB
+        return max(Decimal('0'), falta.quantize(Decimal('0.01'), rounding=ROUND_UP))
+
+    @property
+    def situacao(self):
+        """'aprovada', 'reprovada', 'possivel' (dá para passar), 'impossivel' (GB > 10) ou 'sem_notas'."""
+        if self.grau_final is not None:
+            return 'aprovada' if self.grau_final >= self.MEDIA_APROVACAO else 'reprovada'
+        if self.gb_necessario is not None:
+            return 'impossivel' if self.gb_necessario > 10 else 'possivel'
+        return 'sem_notas'
 
 
 class Topico(models.Model):

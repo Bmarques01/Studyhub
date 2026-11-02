@@ -288,3 +288,145 @@
 .btn-texto-perigo:hover {
     text-decoration: underline;
 }
+
+/* ===== Semestre/módulo que abre e fecha (<details>) ===== */
+details.grupo {
+    border-left: none;
+    padding-left: 0;
+    gap: 0;
+}
+
+.grupo-resumo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    list-style: none;  /* esconde o triângulo padrão do navegador */
+    user-select: none;
+}
+
+.grupo-resumo::-webkit-details-marker {
+    display: none;
+}
+
+.grupo-resumo:hover {
+    background: var(--rosa-fundo);
+}
+
+.grupo-resumo h3 {
+    font-family: var(--fonte-mono);
+    font-size: 0.95rem;
+    color: var(--rosa-forte);
+}
+
+.seta {
+    display: inline-block;
+    width: 14px;
+    font-size: 1.2rem;
+    line-height: 1;
+    color: var(--rosa);
+    transition: transform 0.2s;
+}
+
+details[open] > .grupo-resumo .seta {
+    transform: rotate(90deg);
+}
+
+.grupo-info {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: #8a6b7c;
+}
+
+.grupo-corpo {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 0 8px 36px;
+}
+
+.grupo-solto {
+    border-left: none;
+    padding-left: 0;
+}
+
+.periodo-edicao {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.grupo-edicao {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ===== Cartões de disciplina (clicáveis) ===== */
+.cartoes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.cartao-disciplina {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--rosa-fundo);
+    border: 1px solid transparent;
+    border-left: 4px solid var(--cor);
+    color: var(--texto);
+    text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.cartao-disciplina:hover,
+.cartao-disciplina:focus-visible {
+    transform: translateY(-2px);
+    border-color: var(--rosa-bebe);
+    border-left-color: var(--cor);
+    background: var(--branco);
+    box-shadow: var(--sombra);
+    outline: none;
+}
+
+.cartao-nome {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.cartao-nome .bolinha {
+    background: var(--cor);
+}
+
+.cartao-info {
+    font-size: 0.8rem;
+    color: #8a6b7c;
+}
+
+.cartao-evento {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--vinho);
+}
+
+.disciplina-nome a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.disciplina-nome a:hover {
+    color: var(--rosa-forte);
+}

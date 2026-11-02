@@ -1,0 +1,44 @@
+{# Conteúdo de um semestre/módulo (ou do grupo "sem período"). Usado com {% include %}. #}
+{% load tempo %}
+
+{# ----- Modo leitura: cartões clicáveis ----- #}
+<div class="so-ver">
+    {% if grupo.disciplinas %}
+        <div class="cartoes">
+            {% for d in grupo.disciplinas %}
+                <a href="{% url 'estudos:disciplina' d.id %}" class="cartao-disciplina" style="--cor: {{ d.cor }}">
+                    <span class="cartao-nome"><i class="bolinha"></i>{{ d.nome }}</span>
+                    <span class="cartao-info">
+                        {{ d.minutos|horas }} estudados · {{ d.topicos.all|length }} tópico{{ d.topicos.all|length|pluralize }}
+                    </span>
+                    {% if d.proximo %}
+                        <span class="cartao-evento">
+                            <i class="marca tipo-{{ d.proximo.tipo }}"></i>{{ d.proximo.titulo }} · {{ d.proximo.quando }}
+                        </span>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="vazio">Nenhuma disciplina ainda · use o ✎ da categoria para adicionar.</p>
+    {% endif %}
+</div>
+
+{# ----- Modo edição: lista editável + adicionar ----- #}
+<div class="so-edicao grupo-edicao">
+    <ul class="disciplinas">
+        {% for disciplina in grupo.disciplinas %}
+            {% include "estudos/_disciplina.html" %}
+        {% endfor %}
+    </ul>
+
+    <form method="post" action="{% url 'estudos:criar_disciplina' %}" class="form-linha">
+        {% csrf_token %}
+        {# "local" diz onde a disciplina vai ficar: p:ID = período, c:ID = categoria sem período #}
+        <input type="hidden" name="local"
+               value="{% if grupo.periodo %}p:{{ grupo.periodo.id }}{% else %}c:{{ cat.id }}{% endif %}">
+        <input type="color" name="cor" value="#e0609a" title="Cor da disciplina">
+        <input type="text" name="nome" placeholder="Nova disciplina" required maxlength="100">
+        <button class="btn">+ disciplina</button>
+    </form>
+</div>

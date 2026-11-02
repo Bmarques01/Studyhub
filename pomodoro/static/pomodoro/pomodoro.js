@@ -194,9 +194,14 @@ selDisciplina.addEventListener('change', () => {
 });
 selTopico.addEventListener('change', lembrarEscolha);
 
-// Ao abrir a página, volta para a última disciplina/tópico usados (se ainda existirem)
+// Ao abrir a página: se veio de "estudar agora" numa disciplina, usa ela;
+// senão, volta para a última disciplina/tópico usados (se ainda existirem)
 const escolhaSalva = JSON.parse(localStorage.getItem('pomodoro-escolha') || '{}');
-if (escolhaSalva.disciplina && TOPICOS[escolhaSalva.disciplina]) {
+if (secao.dataset.disciplinaInicial) {
+    selDisciplina.value = secao.dataset.disciplinaInicial;
+    preencherTopicos();
+    lembrarEscolha();
+} else if (escolhaSalva.disciplina && TOPICOS[escolhaSalva.disciplina]) {
     selDisciplina.value = escolhaSalva.disciplina;
     preencherTopicos();
     if (TOPICOS[escolhaSalva.disciplina].some(t => String(t.id) === escolhaSalva.topico)) {

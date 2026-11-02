@@ -3,7 +3,7 @@
     <div class="editavel">
         <div class="modo-ver disciplina-linha">
             <span class="bolinha"></span>
-            <span class="disciplina-nome">{{ disciplina.nome }}</span>
+            <span class="disciplina-nome"><a href="{% url 'estudos:disciplina' disciplina.id %}">{{ disciplina.nome }}</a></span>
 
             <div class="acoes so-edicao">
                 <button type="button" class="btn-icone" data-editar title="Editar">✎</button>

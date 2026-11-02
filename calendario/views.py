@@ -81,7 +81,9 @@ def index(request):
     # Data que já vem preenchida no formulário: hoje, ou o 1º dia do mês que está sendo visto
     data_inicial = hoje if (hoje.year, hoje.month) == (primeiro.year, primeiro.month) else primeiro
 
+    pedida = request.GET.get('disciplina', '')
     return render(request, 'calendario/index.html', {
+        'disciplina_inicial': int(pedida) if pedida.isdigit() else None,
         'primeiro': primeiro,
         'grade': grade,
         'dias_semana': DIAS_SEMANA,

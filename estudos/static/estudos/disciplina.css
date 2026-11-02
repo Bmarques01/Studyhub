@@ -1,0 +1,216 @@
+/* Página da disciplina. Usa a base do dashboard (dashboard.css) e acrescenta o que é dela. */
+
+.voltar {
+    font-family: var(--fonte-mono);
+    font-size: 0.8rem;
+    color: var(--rosa-forte);
+    text-decoration: none;
+}
+
+.voltar:hover {
+    text-decoration: underline;
+}
+
+.disciplina-titulo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.bolinha-grande {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--cor);
+    flex-shrink: 0;
+}
+
+/* Grade: 12 colunas, como no dashboard */
+.d-semanas { grid-column: span 7; }
+.d-notas { grid-column: span 5; }
+.d-topicos { grid-column: span 7; }
+.d-proximos { grid-column: span 5; }
+.d-historico { grid-column: span 7; }
+.d-ferramentas { grid-column: span 5; }
+
+@media (max-width: 1100px) {
+    .d-semanas, .d-notas, .d-topicos, .d-proximos, .d-historico, .d-ferramentas {
+        grid-column: span 12;
+    }
+}
+
+.kpi-valor {
+    font-size: 2rem;
+}
+
+/* Gráfico com 8 colunas (semanas) */
+.plot.oito {
+    grid-template-columns: repeat(8, 1fr);
+}
+
+.disciplina-pagina .eixo-y,
+.disciplina-pagina .grade,
+.disciplina-pagina .barras {
+    height: 180px;
+}
+
+.disciplina-pagina .barra {
+    width: 20px;
+}
+
+/* ===== Notas ===== */
+.notas-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.notas-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.notas-form input {
+    width: 90px;
+    padding: 10px 12px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    font-family: var(--fonte-texto);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--texto);
+    text-align: center;
+    outline: none;
+}
+
+.notas-form input:focus {
+    border-color: var(--rosa);
+}
+
+.notas-resultado {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: var(--rosa-fundo);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.nota-grande {
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* situação: ícone + texto, nunca só a cor */
+.situacao-aprovada strong { color: #2f855a; }
+.situacao-reprovada strong,
+.situacao-impossivel strong { color: #b0436f; }
+.situacao-possivel .nota-grande {
+    background: var(--degrade);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* ===== Tópicos ===== */
+.aviso-topico {
+    margin-left: 6px;
+    font-family: var(--fonte-mono);
+    font-size: 0.68rem;
+    color: #b0436f;
+}
+
+.sem-topico .ranking-nome {
+    color: var(--texto-suave);
+    font-style: italic;
+}
+
+.sem-topico .ranking-barra {
+    background: var(--rosa-claro);
+}
+
+/* ===== Histórico ===== */
+.historico {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.historico li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--g-grade);
+    font-size: 0.9rem;
+}
+
+.historico li:last-child {
+    border-bottom: none;
+}
+
+.historico-data {
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+    white-space: nowrap;
+}
+
+.historico-nome {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.historico-nome small {
+    color: var(--texto-suave);
+    font-size: 0.78rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* ===== Ferramentas ===== */
+.ferramentas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.ferramenta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 18px 10px;
+    border-radius: 14px;
+    background: var(--rosa-fundo);
+    color: var(--vinho);
+    text-align: center;
+    text-decoration: none;
+}
+
+.ferramenta .icone {
+    width: 26px;
+    height: 26px;
+}
+
+.ferramenta small {
+    font-family: var(--fonte-mono);
+    font-size: 0.68rem;
+    color: var(--texto-suave);
+}
+
+.ferramenta.em-breve {
+    opacity: 0.55;
+}

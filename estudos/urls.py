@@ -15,6 +15,8 @@ urlpatterns = [
     path('periodos/<int:periodo_id>/editar/', views.editar_periodo, name='editar_periodo'),
     path('periodos/<int:periodo_id>/excluir/', views.excluir_periodo, name='excluir_periodo'),
 
+    path('disciplinas/<int:disciplina_id>/', views.disciplina_detalhe, name='disciplina'),
+    path('disciplinas/<int:disciplina_id>/notas/', views.salvar_notas, name='salvar_notas'),
     path('disciplinas/nova/', views.criar_disciplina, name='criar_disciplina'),
     path('disciplinas/<int:disciplina_id>/editar/', views.editar_disciplina, name='editar_disciplina'),
     path('disciplinas/<int:disciplina_id>/arquivar/', views.arquivar_disciplina, name='arquivar_disciplina'),

@@ -1,8 +1,16 @@
+from datetime import timedelta
+
 from django.contrib import messages
+from django.db.models import Count, Max, Sum
+from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .forms import CategoriaForm, DisciplinaForm, PeriodoForm, TopicoForm
+from calendario.models import Evento
+from pomodoro.models import SessaoPomodoro
+
+from .forms import CategoriaForm, DisciplinaForm, NotasForm, PeriodoForm, TopicoForm
 from .models import Categoria, Disciplina, Periodo, Topico
 
 
@@ -70,12 +78,112 @@ def salvar_ou_avisar(request, form):
 # ===== Página =====
 
 def index(request):
+    estrutura = estrutura_de_estudos()
+
+    # Números para os cartões: minutos estudados e próximo evento de cada disciplina
+    minutos = dict(SessaoPomodoro.objects.filter(disciplina__isnull=False)
+                   .values('disciplina').annotate(total=Sum('duracao_minutos'))
+                   .values_list('disciplina', 'total'))
+    proximo = {}
+    for evento in Evento.objects.filter(data__gte=timezone.localdate(), concluido=False,
+                                        disciplina__isnull=False):
+        proximo.setdefault(evento.disciplina_id, evento)  # já vem em ordem de data: fica o primeiro
+
+    for item in estrutura:
+        periodos = [g for g in item['grupos'] if g['periodo']]
+        for grupo in item['grupos']:
+            for d in grupo['disciplinas']:
+                d.minutos = minutos.get(d.id, 0)
+                d.proximo = proximo.get(d.id)
+            grupo['minutos'] = sum(d.minutos for d in grupo['disciplinas'])
+            # o semestre/módulo mais recente começa aberto
+            grupo['recente'] = bool(periodos) and grupo is periodos[-1]
+
     return render(request, 'estudos/index.html', {
-        'estrutura': estrutura_de_estudos(),
+        'estrutura': estrutura,
         'tipos': Categoria.TIPOS,
         # para a lista "mover para..." na edição de disciplina
         'todas_categorias': Categoria.objects.prefetch_related('periodos'),
     })
+
+
+# ===== Página da disciplina =====
+
+def disciplina_detalhe(request, disciplina_id):
+    disciplina = get_object_or_404(
+        Disciplina.objects.select_related('categoria', 'periodo'), id=disciplina_id)
+    hoje = timezone.localdate()
+    sessoes = SessaoPomodoro.objects.filter(disciplina=disciplina)
+
+    resumo = sessoes.aggregate(total=Sum('duracao_minutos'), quantidade=Count('id'),
+                               ultima=Max('concluida_em'))
+    minutos_mes = sessoes.filter(concluida_em__date__gte=hoje.replace(day=1)).aggregate(
+        total=Sum('duracao_minutos'))['total'] or 0
+    ultimo_dia = timezone.localtime(resumo['ultima']).date() if resumo['ultima'] else None
+
+    # --- Últimas 8 semanas (colunas), semanas começando na segunda ---
+    inicio_semana = hoje - timedelta(days=hoje.weekday())
+    inicio = inicio_semana - timedelta(weeks=7)
+    por_dia = (sessoes.filter(concluida_em__date__gte=inicio)
+               .annotate(dia=TruncDate('concluida_em')).values('dia')
+               .annotate(total=Sum('duracao_minutos')))
+    semanas = [{'inicio': inicio + timedelta(weeks=i), 'minutos': 0} for i in range(8)]
+    for linha in por_dia:
+        semanas[(linha['dia'] - inicio).days // 7]['minutos'] += linha['total']
+    topo = max(60, -(-max(s['minutos'] for s in semanas) // 60) * 60)  # arredonda para cima, em horas
+    for semana in semanas:
+        semana['altura'] = semana['minutos'] / topo * 100
+        semana['atual'] = semana['inicio'] == inicio_semana
+
+    # --- Tempo por tópico (inclui tópicos ainda não estudados) ---
+    por_topico = {
+        linha['topico']: linha
+        for linha in sessoes.filter(topico__isnull=False).values('topico')
+        .annotate(total=Sum('duracao_minutos'), ultima=Max('concluida_em'))
+    }
+    topicos = []
+    for topico in disciplina.topicos.all():
+        linha = por_topico.get(topico.id, {})
+        ultima = linha.get('ultima')
+        topicos.append({
+            'topico': topico,
+            'minutos': linha.get('total', 0),
+            'dias_sem_estudar': (hoje - timezone.localtime(ultima).date()).days if ultima else None,
+        })
+    topicos.sort(key=lambda t: -t['minutos'])
+    sem_topico = sessoes.filter(topico__isnull=True).aggregate(total=Sum('duracao_minutos'))['total'] or 0
+    maior = max([t['minutos'] for t in topicos] + [sem_topico, 1])
+    for t in topicos:
+        t['largura'] = t['minutos'] / maior * 100
+
+    return render(request, 'estudos/disciplina.html', {
+        'disciplina': disciplina,
+        'hoje': hoje,
+        'minutos_total': resumo['total'] or 0,
+        'minutos_mes': minutos_mes,
+        'quantidade_sessoes': resumo['quantidade'],
+        'ultimo_dia': ultimo_dia,
+        'dias_desde_ultimo': (hoje - ultimo_dia).days if ultimo_dia else None,
+        'semanas': semanas,
+        'marcas_eixo': [topo, topo // 2, 0],
+        'topicos': topicos,
+        'sem_topico': sem_topico,
+        'largura_sem_topico': sem_topico / maior * 100,
+        'proximos': Evento.objects.filter(disciplina=disciplina, data__gte=hoje, concluido=False),
+        'historico': sessoes.select_related('topico')[:8],
+    })
+
+
+@require_POST
+def salvar_notas(request, disciplina_id):
+    disciplina = get_object_or_404(Disciplina, id=disciplina_id)
+    form = NotasForm(request.POST, instance=disciplina)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Notas salvas.')
+    else:
+        avisar_erros(request, form)
+    return redirect('estudos:disciplina', disciplina_id=disciplina.id)
 
 
 # ===== Categorias =====

@@ -38,7 +38,7 @@
             {% for rotulo, disciplinas in opcoes %}
                 <optgroup label="{{ rotulo }}">
                     {% for d in disciplinas %}
-                        <option value="{{ d.id }}" {% if evento.disciplina_id == d.id %}selected{% endif %}>{{ d.nome }}</option>
+                        <option value="{{ d.id }}" {% if evento.disciplina_id == d.id or not evento and disciplina_inicial == d.id %}selected{% endif %}>{{ d.nome }}</option>
                     {% endfor %}
                 </optgroup>
             {% endfor %}

@@ -34,3 +34,17 @@ document.addEventListener('click', evento => {
     alternar(secao, ligar);
     if (ligar) secao.querySelector('.categoria-editar input[name="nome"]').focus();
 });
+
+// Semestres/módulos abertos ou fechados: o navegador lembra (localStorage).
+// Na primeira visita, vale o padrão do servidor (só o mais recente aberto).
+const CHAVE_GRUPOS = 'estudos-grupos-abertos';
+const estadoGrupos = JSON.parse(localStorage.getItem(CHAVE_GRUPOS) || '{}');
+
+document.querySelectorAll('details.grupo[data-periodo]').forEach(grupo => {
+    const id = grupo.dataset.periodo;
+    if (id in estadoGrupos) grupo.open = estadoGrupos[id];
+    grupo.addEventListener('toggle', () => {
+        estadoGrupos[id] = grupo.open;
+        localStorage.setItem(CHAVE_GRUPOS, JSON.stringify(estadoGrupos));
+    });
+});

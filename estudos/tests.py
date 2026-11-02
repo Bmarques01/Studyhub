@@ -1,5 +1,9 @@
+from decimal import Decimal
+
 from django.test import TestCase
 from django.urls import reverse
+
+from pomodoro.models import SessaoPomodoro
 
 from .models import Categoria, Disciplina, Periodo, Topico
 
@@ -114,3 +118,88 @@ class EstudosTests(TestCase):
         self.assertFalse(Periodo.objects.exists())
         self.assertFalse(Disciplina.objects.exists())
         self.assertFalse(Topico.objects.exists())
+
+
+class NotasTests(TestCase):
+    """Regra: Grau Final = GA × 0,33 + GB × 0,67, aprova com 6,0."""
+
+    def disciplina(self, ga=None, gb=None):
+        categoria = Categoria.objects.create(nome='CC', tipo='graduacao')
+        return Disciplina(categoria=categoria, nome='Redes 2',
+                          nota_ga=None if ga is None else Decimal(ga),
+                          nota_gb=None if gb is None else Decimal(gb))
+
+    def test_sem_notas(self):
+        d = self.disciplina()
+        self.assertEqual(d.situacao, 'sem_notas')
+        self.assertIsNone(d.gb_necessario)
+
+    def test_gb_necessario(self):
+        d = self.disciplina(ga='5')
+        # (6 - 5×0,33) / 0,67 = 6,4925... → arredonda para cima: 6,50
+        self.assertEqual(d.gb_necessario, Decimal('6.50'))
+        self.assertEqual(d.situacao, 'possivel')
+
+    def test_ga_alto_ja_garante(self):
+        self.assertEqual(self.disciplina(ga='10').gb_necessario, Decimal('4.03'))
+
+    def test_ga_zero_ainda_da_para_passar(self):
+        # Com esses pesos, o pior caso (GA = 0) pede 8,96 no GB: sempre é possível passar
+        d = self.disciplina(ga='0')
+        self.assertEqual(d.gb_necessario, Decimal('8.96'))
+        self.assertEqual(d.situacao, 'possivel')
+
+    def test_grau_final(self):
+        aprovada = self.disciplina(ga='7', gb='6')
+        self.assertEqual(aprovada.grau_final, Decimal('6.33'))  # 2,31 + 4,02
+        self.assertEqual(aprovada.situacao, 'aprovada')
+        reprovada = self.disciplina(ga='4', gb='5')
+        self.assertEqual(reprovada.grau_final, Decimal('4.67'))  # 1,32 + 3,35
+        self.assertEqual(reprovada.situacao, 'reprovada')
+
+
+class PaginaDisciplinaTests(TestCase):
+    def setUp(self):
+        categoria = Categoria.objects.create(nome='Ciência da Computação', tipo='graduacao')
+        periodo = Periodo.objects.create(categoria=categoria, nome='5º semestre', ordem=1)
+        self.redes = Disciplina.objects.create(categoria=categoria, periodo=periodo, nome='Redes 2')
+        self.enlace = Topico.objects.create(disciplina=self.redes, nome='Serviços de Enlace')
+        Topico.objects.create(disciplina=self.redes, nome='Roteamento')
+
+    def test_pagina_abre_com_dados(self):
+        SessaoPomodoro.objects.create(duracao_minutos=25, disciplina=self.redes, topico=self.enlace)
+        SessaoPomodoro.objects.create(duracao_minutos=50, disciplina=self.redes)
+        resposta = self.client.get(reverse('estudos:disciplina', args=[self.redes.id]))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.context['minutos_total'], 75)
+        self.assertEqual(resposta.context['sem_topico'], 50)
+        self.assertEqual(resposta.context['semanas'][-1]['minutos'], 75)
+        self.assertContains(resposta, 'nunca estudado')  # Roteamento
+        self.assertContains(resposta, '5º semestre')
+
+    def test_salvar_notas(self):
+        self.client.post(reverse('estudos:salvar_notas', args=[self.redes.id]), {'nota_ga': '5', 'nota_gb': ''})
+        self.redes.refresh_from_db()
+        self.assertEqual(self.redes.nota_ga, Decimal('5'))
+        resposta = self.client.get(reverse('estudos:disciplina', args=[self.redes.id]))
+        self.assertContains(resposta, '6,50')
+
+    def test_nota_acima_de_10_e_recusada(self):
+        self.client.post(reverse('estudos:salvar_notas', args=[self.redes.id]), {'nota_ga': '11', 'nota_gb': ''})
+        self.redes.refresh_from_db()
+        self.assertIsNone(self.redes.nota_ga)
+
+    def test_cartao_na_pagina_estudos(self):
+        resposta = self.client.get(reverse('estudos:index'))
+        self.assertContains(resposta, reverse('estudos:disciplina', args=[self.redes.id]))
+        self.assertContains(resposta, 'class="cartao-disciplina"')
+
+    def test_estudar_agora_escolhe_disciplina_no_pomodoro(self):
+        resposta = self.client.get(reverse('pomodoro:index') + f'?disciplina={self.redes.id}')
+        self.assertContains(resposta, f'data-disciplina-inicial="{self.redes.id}"')
+        resposta = self.client.get(reverse('pomodoro:index') + '?disciplina=999')
+        self.assertContains(resposta, 'data-disciplina-inicial=""')
+
+    def test_adicionar_prova_escolhe_disciplina_no_calendario(self):
+        resposta = self.client.get(reverse('calendario:index') + f'?disciplina={self.redes.id}')
+        self.assertContains(resposta, f'<option value="{self.redes.id}" selected>')

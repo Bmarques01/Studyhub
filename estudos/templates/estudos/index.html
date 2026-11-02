@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static tempo %}
 
 {% block titulo %}Estudos{% endblock %}
 
@@ -61,51 +61,42 @@
                 </div>
             </header>
 
-            {# ----- Um bloco por semestre/módulo (e um "sem período") ----- #}
+            {# ----- Semestres/módulos: fechados, abrem ao clicar ----- #}
             {% for grupo in item.grupos %}
-                <div class="grupo">
-                    {% if grupo.periodo %}
-                        <div class="grupo-topo editavel">
-                            <div class="modo-ver">
-                                <h3>{{ grupo.periodo.nome }}</h3>
-                                <div class="acoes so-edicao">
-                                    <button type="button" class="btn-icone" data-editar title="Renomear">✎</button>
-                                    <form method="post" action="{% url 'estudos:excluir_periodo' grupo.periodo.id %}"
-                                          onsubmit="return confirm('Excluir &quot;{{ grupo.periodo.nome|escapejs }}&quot;? As disciplinas dele NÃO serão apagadas, só ficam sem {{ cat.nome_periodo }}.');">
-                                        {% csrf_token %}
-                                        <button class="btn-icone" title="Excluir">✕</button>
-                                    </form>
-                                </div>
+                {% if grupo.periodo %}
+                    <details class="grupo" data-periodo="{{ grupo.periodo.id }}" {% if grupo.recente %}open{% endif %}>
+                        <summary class="grupo-resumo">
+                            <span class="seta" aria-hidden="true">›</span>
+                            <h3>{{ grupo.periodo.nome }}</h3>
+                            <span class="grupo-info">
+                                {{ grupo.disciplinas|length }} disciplina{{ grupo.disciplinas|length|pluralize }}
+                                · {{ grupo.minutos|horas }}
+                            </span>
+                        </summary>
+
+                        <div class="grupo-corpo">
+                            <div class="so-edicao periodo-edicao">
+                                <form method="post" action="{% url 'estudos:editar_periodo' grupo.periodo.id %}" class="form-linha">
+                                    {% csrf_token %}
+                                    <input type="text" name="nome" value="{{ grupo.periodo.nome }}" required maxlength="100"
+                                           aria-label="Nome do {{ cat.nome_periodo }}">
+                                    <button class="btn btn-claro">renomear</button>
+                                </form>
+                                <form method="post" action="{% url 'estudos:excluir_periodo' grupo.periodo.id %}"
+                                      onsubmit="return confirm('Excluir &quot;{{ grupo.periodo.nome|escapejs }}&quot;? As disciplinas dele NÃO serão apagadas, só ficam sem {{ cat.nome_periodo }}.');">
+                                    {% csrf_token %}
+                                    <button class="btn-texto-perigo">excluir {{ cat.nome_periodo }}</button>
+                                </form>
                             </div>
-                            <form method="post" action="{% url 'estudos:editar_periodo' grupo.periodo.id %}" class="modo-edicao form-linha">
-                                {% csrf_token %}
-                                <input type="text" name="nome" value="{{ grupo.periodo.nome }}" required maxlength="100">
-                                <button class="btn">salvar</button>
-                                <button type="button" class="btn btn-claro" data-cancelar>cancelar</button>
-                            </form>
+                            {% include "estudos/_grupo.html" %}
                         </div>
-                    {% elif cat.divisao %}
-                        <div class="grupo-topo"><h3 class="sem-periodo">sem {{ cat.nome_periodo }}</h3></div>
-                    {% endif %}
-
-                    <ul class="disciplinas">
-                        {% for disciplina in grupo.disciplinas %}
-                            {% include "estudos/_disciplina.html" %}
-                        {% empty %}
-                            <li class="vazio">Nenhuma disciplina ainda{% if not grupo.disciplinas %}<span class="so-ver"> · use o ✎ para adicionar</span>{% endif %}.</li>
-                        {% endfor %}
-                    </ul>
-
-                    <form method="post" action="{% url 'estudos:criar_disciplina' %}" class="form-linha so-edicao">
-                        {% csrf_token %}
-                        {# "local" diz onde a disciplina vai ficar: p:ID = período, c:ID = categoria sem período #}
-                        <input type="hidden" name="local"
-                               value="{% if grupo.periodo %}p:{{ grupo.periodo.id }}{% else %}c:{{ cat.id }}{% endif %}">
-                        <input type="color" name="cor" value="#e0609a" title="Cor da disciplina">
-                        <input type="text" name="nome" placeholder="Nova disciplina" required maxlength="100">
-                        <button class="btn">+ disciplina</button>
-                    </form>
-                </div>
+                    </details>
+                {% else %}
+                    <div class="grupo grupo-solto">
+                        {% if cat.divisao %}<h3 class="sem-periodo">sem {{ cat.nome_periodo }}</h3>{% endif %}
+                        {% include "estudos/_grupo.html" %}
+                    </div>
+                {% endif %}
             {% endfor %}
 
             {% if cat.divisao %}

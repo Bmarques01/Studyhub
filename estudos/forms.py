@@ -23,6 +23,12 @@ class DisciplinaForm(forms.ModelForm):
         fields = ['nome', 'cor']
 
 
+class NotasForm(forms.ModelForm):
+    class Meta:
+        model = Disciplina
+        fields = ['nota_ga', 'nota_gb']
+
+
 class TopicoForm(forms.ModelForm):
     class Meta:
         model = Topico

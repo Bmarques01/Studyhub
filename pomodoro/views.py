@@ -30,7 +30,12 @@ def index(request):
         for _, disciplinas in opcoes for d in disciplinas
     }
 
+    # Vindo da página da disciplina ("estudar agora"): ?disciplina=ID
+    pedida = request.GET.get('disciplina', '')
+    disciplina_inicial = int(pedida) if pedida.isdigit() and int(pedida) in topicos_por_disciplina else ''
+
     return render(request, 'pomodoro/index.html', {
+        'disciplina_inicial': disciplina_inicial,
         'sessoes_hoje': sessoes,
         'minutos_hoje': sessoes.aggregate(total=Sum('duracao_minutos'))['total'] or 0,
         'opcoes': opcoes,

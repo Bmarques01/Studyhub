@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% load static tempo l10n %}
+
+{% block titulo %}{{ disciplina.nome }}{% endblock %}
+
+{% block head %}
+{# reaproveita os estilos e os balõezinhos (tooltips) do dashboard #}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'estudos/disciplina.css' %}">
+<script src="{% static 'dashboard/dashboard.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash disciplina-pagina" style="--cor: {{ disciplina.cor }}">
+
+    {# ===== Topo ===== #}
+    <header class="dash-topo">
+        <div>
+            <a href="{% url 'estudos:index' %}" class="voltar">‹ estudos</a>
+            <h1 class="disciplina-titulo"><i class="bolinha-grande"></i>{{ disciplina.nome }}</h1>
+            <p class="dash-data">
+                {{ disciplina.categoria.nome }}{% if disciplina.periodo %} · {{ disciplina.periodo.nome }}{% endif %}
+                {% if disciplina.arquivada %} · <span class="etiqueta">arquivada</span>{% endif %}
+            </p>
+        </div>
+        <div class="dash-topo-acoes">
+            <a href="{% url 'calendario:index' %}?disciplina={{ disciplina.id }}" class="btn btn-claro">+ prova/entrega</a>
+            <a href="{% url 'pomodoro:index' %}?disciplina={{ disciplina.id }}" class="btn btn-com-icone">
+                {% include "componentes/icone.html" with nome="play" %} Estudar agora
+            </a>
+        </div>
+    </header>
+
+    <div class="dash-grade">
+
+        {# ===== Números ===== #}
+        <section class="card kpi">
+            <h2 class="kpi-rotulo">total estudado</h2>
+            <p class="kpi-valor">{{ minutos_total|horas }}</p>
+            <p class="kpi-delta">desde o começo</p>
+        </section>
+        <section class="card kpi">
+            <h2 class="kpi-rotulo">este mês</h2>
+            <p class="kpi-valor">{{ minutos_mes|horas }}</p>
+            <p class="kpi-delta">{{ hoje|date:"F"|lower }}</p>
+        </section>
+        <section class="card kpi">
+            <h2 class="kpi-rotulo">pomodoros</h2>
+            <p class="kpi-valor">{{ quantidade_sessoes }}</p>
+            <p class="kpi-delta">sessões concluídas</p>
+        </section>
+        <section class="card kpi">
+            <h2 class="kpi-rotulo">último estudo</h2>
+            <p class="kpi-valor">
+                {% if dias_desde_ultimo is None %}—{% elif dias_desde_ultimo == 0 %}hoje{% elif dias_desde_ultimo == 1 %}ontem{% else %}há {{ dias_desde_ultimo }}d{% endif %}
+            </p>
+            <p class="kpi-delta">{% if ultimo_dia %}{{ ultimo_dia|date:"d/m/Y" }}{% else %}ainda não estudou{% endif %}</p>
+        </section>
+
+        {# ===== Gráfico: últimas 8 semanas ===== #}
+        <section class="card d-semanas">
+            <header class="card-topo">
+                <h2 class="rotulo">por semana</h2>
+                <span class="sub">últimas 8 semanas</span>
+            </header>
+            <div class="grafico">
+                <div class="eixo-y" aria-hidden="true">
+                    {% for marca in marcas_eixo %}<span>{{ marca|horas }}</span>{% endfor %}
+                </div>
+                <div class="plot oito">
+                    <div class="grade" aria-hidden="true"><span></span><span></span><span></span></div>
+                    {% for s in semanas %}
+                        <div class="dia {% if s.atual %}hoje{% endif %}" tabindex="0"
+                             data-tip-titulo="semana de {{ s.inicio|date:'d/m' }}"
+                             data-tip-valor="{{ s.minutos|horas }}"
+                             aria-label="semana de {{ s.inicio|date:'d/m' }}: {{ s.minutos|horas }}">
+                            <div class="barras">
+                                <span class="barra atual" style="height: {{ s.altura|floatformat:'1u' }}%">
+                                    {% if s.atual and s.minutos %}<em class="rotulo-barra">{{ s.minutos|horas }}</em>{% endif %}
+                                </span>
+                            </div>
+                            <span class="dia-nome">{{ s.inicio|date:"d/m" }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <details class="ver-tabela">
+                <summary>ver como tabela</summary>
+                <table>
+                    <thead><tr><th>semana de</th><th>estudado</th></tr></thead>
+                    <tbody>
+                        {% for s in semanas %}<tr><td>{{ s.inicio|date:"d/m" }}</td><td>{{ s.minutos|horas }}</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </details>
+        </section>
+
+        {# ===== Notas ===== #}
+        <section class="card d-notas">
+            <header class="card-topo">
+                <h2 class="rotulo">notas</h2>
+                <span class="sub">GF = GA × 0,33 + GB × 0,67 · média 6,0</span>
+            </header>
+
+            <form method="post" action="{% url 'estudos:salvar_notas' disciplina.id %}" class="notas-form">
+                {% csrf_token %}
+                <label>
+                    <span>GA</span>
+                    <input type="number" name="nota_ga" step="0.01" min="0" max="10" placeholder="—"
+                           value="{{ disciplina.nota_ga|default_if_none:''|unlocalize }}">
+                </label>
+                <label>
+                    <span>GB</span>
+                    <input type="number" name="nota_gb" step="0.01" min="0" max="10" placeholder="—"
+                           value="{{ disciplina.nota_gb|default_if_none:''|unlocalize }}">
+                </label>
+                <button class="btn btn-claro">salvar</button>
+            </form>
+
+            <div class="notas-resultado situacao-{{ disciplina.situacao }}">
+                {% if disciplina.situacao == 'aprovada' %}
+                    <span class="nota-grande">{{ disciplina.grau_final }}</span>
+                    <span>grau final · <strong>✓ aprovada</strong></span>
+                {% elif disciplina.situacao == 'reprovada' %}
+                    <span class="nota-grande">{{ disciplina.grau_final }}</span>
+                    <span>grau final · <strong>✕ abaixo de 6,0</strong></span>
+                {% elif disciplina.situacao == 'possivel' %}
+                    <span class="nota-grande">{{ disciplina.gb_necessario }}</span>
+                    <span>é o mínimo que você precisa no <strong>GB</strong> para passar
+                        {% if disciplina.gb_necessario == 0 %}(já está garantido! ✓){% endif %}</span>
+                {% elif disciplina.situacao == 'impossivel' %}
+                    <span class="nota-grande">{{ disciplina.gb_necessario }}</span>
+                    <span>seria preciso no GB: <strong>✕ acima de 10</strong></span>
+                {% else %}
+                    <span>Lance a nota do <strong>GA</strong> para ver quanto você precisa no GB.</span>
+                {% endif %}
+            </div>
+        </section>
+
+        {# ===== Tópicos ===== #}
+        <section class="card d-topicos">
+            <header class="card-topo">
+                <h2 class="rotulo">tópicos</h2>
+                <span class="sub">tempo estudado em cada um</span>
+            </header>
+            {% if topicos or sem_topico %}
+                <ul class="ranking">
+                    {% for t in topicos %}
+                        <li>
+                            <span class="ranking-nome">
+                                {{ t.topico.nome }}
+                                {% if t.dias_sem_estudar is None %}
+                                    <small class="aviso-topico">nunca estudado</small>
+                                {% elif t.dias_sem_estudar >= 14 %}
+                                    <small class="aviso-topico">há {{ t.dias_sem_estudar }} dias</small>
+                                {% endif %}
+                            </span>
+                            <span class="ranking-trilho">
+                                {% if t.minutos %}<span class="ranking-barra" style="width: {{ t.largura|floatformat:'1u' }}%"></span>{% endif %}
+                            </span>
+                            <span class="ranking-valor">{{ t.minutos|horas }}</span>
+                        </li>
+                    {% endfor %}
+                    {% if sem_topico %}
+                        <li class="sem-topico">
+                            <span class="ranking-nome">sem tópico</span>
+                            <span class="ranking-trilho"><span class="ranking-barra" style="width: {{ largura_sem_topico|floatformat:'1u' }}%"></span></span>
+                            <span class="ranking-valor">{{ sem_topico|horas }}</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            {% else %}
+                <p class="vazio-card">Nenhum tópico cadastrado. Adicione em Estudos, pelo ✎ da categoria.</p>
+            {% endif %}
+        </section>
+
+        {# ===== Provas e entregas ===== #}
+        <section class="card d-proximos">
+            <header class="card-topo">
+                <h2 class="rotulo">provas e entregas</h2>
+                <a href="{% url 'calendario:index' %}?disciplina={{ disciplina.id }}" class="sub">+ adicionar</a>
+            </header>
+            {% include "calendario/_proximos.html" %}
+        </section>
+
+        {# ===== Histórico ===== #}
+        <section class="card d-historico">
+            <header class="card-topo">
+                <h2 class="rotulo">últimas sessões</h2>
+            </header>
+            {% if historico %}
+                <ul class="historico">
+                    {% for s in historico %}
+                        <li>
+                            <span class="historico-data">{{ s.concluida_em|date:"d/m H:i" }}</span>
+                            <span class="historico-nome">
+                                {{ s.topico.nome|default:"sem tópico" }}
+                                {% if s.tarefa %}<small>{{ s.tarefa }}</small>{% endif %}
+                            </span>
+                            <span class="ranking-valor">{{ s.duracao_minutos|horas }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="vazio-card">
+                    Nenhum pomodoro nesta disciplina ainda.<br>
+                    <a href="{% url 'pomodoro:index' %}?disciplina={{ disciplina.id }}">Estudar agora →</a>
+                </p>
+            {% endif %}
+        </section>
+
+        {# ===== Ferramentas (chegam nas próximas etapas) ===== #}
+        <section class="card d-ferramentas">
+            <header class="card-topo">
+                <h2 class="rotulo">ferramentas</h2>
+            </header>
+            <div class="ferramentas">
+                <span class="ferramenta em-breve">
+                    {% include "componentes/icone.html" with nome="flashcards" %}
+                    <strong>Flashcards</strong><small>em breve</small>
+                </span>
+                <span class="ferramenta em-breve">
+                    {% include "componentes/icone.html" with nome="cadernos" %}
+                    <strong>Cadernos</strong><small>em breve</small>
+                </span>
+                <span class="ferramenta em-breve">
+                    {% include "componentes/icone.html" with nome="erros" %}
+                    <strong>Erros</strong><small>em breve</small>
+                </span>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
