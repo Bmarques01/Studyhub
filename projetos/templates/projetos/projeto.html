@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static tempo %}
+
+{% block titulo %}{{ projeto.nome }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'projetos/projetos.css' %}">
+<script src="{% static 'projetos/projetos.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="projeto-pagina" style="--cor: {{ projeto.cor }}" data-csrf="{{ csrf_token }}">
+
+    {# ===== Topo ===== #}
+    <header class="projeto-topo">
+        <div>
+            <a href="{% url 'projetos:index' %}" class="voltar">‹ projetos</a>
+            <h1 class="projeto-titulo">
+                <i class="bolinha-projeto"></i>{{ projeto.nome }}
+                <span class="etiqueta status-{{ projeto.status }}">{{ projeto.get_status_display|lower }}</span>
+            </h1>
+            {% if projeto.descricao %}<p class="projeto-desc">{{ projeto.descricao }}</p>{% endif %}
+            <div class="projeto-meta">
+                {% for t in projeto.lista_tecnologias %}<span class="tec">{{ t }}</span>{% endfor %}
+                {% if projeto.link_repositorio %}<a href="{{ projeto.link_repositorio }}" target="_blank" rel="noopener" class="link-externo">repositório ↗</a>{% endif %}
+                {% if projeto.link_deploy %}<a href="{{ projeto.link_deploy }}" target="_blank" rel="noopener" class="link-externo">site ↗</a>{% endif %}
+            </div>
+        </div>
+        <div class="projeto-acoes">
+            <a href="{% url 'pomodoro:index' %}?projeto={{ projeto.id }}" class="btn btn-com-icone">
+                {% include "componentes/icone.html" with nome="play" %} Trabalhar agora
+            </a>
+        </div>
+    </header>
+
+    {# ===== Números ===== #}
+    <section class="card resumo-projeto">
+        <div class="resumo-item resumo-progresso">
+            <span class="kpi-rotulo">progresso</span>
+            <span class="progresso-linha">
+                <span class="medidor-projeto grande"><span style="width: {{ progresso }}%"></span></span>
+                <strong>{{ progresso }}%</strong>
+            </span>
+            <small>{{ feitas }} de {{ total }} funcionalidade{{ total|pluralize }} feita{{ feitas|pluralize }}</small>
+        </div>
+        <div class="resumo-item">
+            <span class="kpi-rotulo">tempo total</span>
+            <strong>{{ minutos_total|horas }}</strong>
+        </div>
+        <div class="resumo-item">
+            <span class="kpi-rotulo">esta semana</span>
+            <strong>{{ minutos_semana|horas }}</strong>
+        </div>
+    </section>
+
+    {# ===== Kanban ===== #}
+    <section class="kanban" aria-label="Quadro Kanban">
+        {% for coluna in colunas %}
+            <div class="coluna coluna-{{ coluna.status }}">
+                <header class="coluna-topo">
+                    <h2>{{ coluna.nome }}</h2>
+                    <span class="contador">{{ coluna.cartoes|length }}</span>
+                </header>
+                <ul class="kanban-lista" data-status="{{ coluna.status }}">
+                    {% for f in coluna.cartoes %}{% include "projetos/_cartao.html" %}{% endfor %}
+                </ul>
+                {% if coluna.status != 'feito' %}
+                    <form method="post" action="{% url 'projetos:criar_funcionalidade' projeto.id %}" class="novo-cartao">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="{{ coluna.status }}">
+                        <input type="hidden" name="tipo" value="funcionalidade">
+                        <input type="hidden" name="prioridade" value="media">
+                        <input type="text" name="titulo" placeholder="+ adicionar" required maxlength="150"
+                               aria-label="Nova funcionalidade em {{ coluna.nome }}">
+                    </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </section>
+    <p class="dica-kanban">Arraste os cartões entre as colunas. Clique num cartão para ver detalhes, checklist e tempo.</p>
+
+    <div class="projeto-baixo">
+        {# ===== Diário de bordo ===== #}
+        <section class="card diario" id="diario">
+            <header class="card-topo">
+                <h2 class="rotulo">diário de bordo</h2>
+            </header>
+            <form method="post" action="{% url 'projetos:criar_entrada' projeto.id %}" class="form-diario">
+                {% csrf_token %}
+                <input type="date" name="data" value="{{ hoje|date:'Y-m-d' }}" required aria-label="Data">
+                <textarea name="fiz" rows="2" placeholder="O que eu fiz hoje..."></textarea>
+                <textarea name="aprendi" rows="2" placeholder="O que eu aprendi..."></textarea>
+                <textarea name="travei" rows="2" placeholder="Onde eu travei / o que ficou pendente..."></textarea>
+                <button class="btn">anotar</button>
+            </form>
+
+            <ul class="entradas">
+                {% for e in diario %}
+                    <li class="entrada">
+                        <header>
+                            <strong>{{ e.data|date:"D, d/m/Y"|lower }}</strong>
+                            <form method="post" action="{% url 'projetos:excluir_entrada' e.id %}"
+                                  onsubmit="return confirm('Apagar esta anotação?');">
+                                {% csrf_token %}
+                                <button class="btn-icone" title="Apagar">✕</button>
+                            </form>
+                        </header>
+                        {% if e.fiz %}<p><span class="entrada-rotulo">fiz</span>{{ e.fiz|linebreaksbr }}</p>{% endif %}
+                        {% if e.aprendi %}<p><span class="entrada-rotulo">aprendi</span>{{ e.aprendi|linebreaksbr }}</p>{% endif %}
+                        {% if e.travei %}<p><span class="entrada-rotulo travei">travei</span>{{ e.travei|linebreaksbr }}</p>{% endif %}
+                    </li>
+                {% empty %}
+                    <li class="vazio-card">Nenhuma anotação ainda.</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        {# ===== Editar projeto ===== #}
+        <section class="card">
+            <details class="editar-projeto">
+                <summary class="rotulo">editar projeto</summary>
+                <form method="post" action="{% url 'projetos:editar_projeto' projeto.id %}" class="form-projeto">
+                    {% csrf_token %}
+                    <label>nome <input type="text" name="nome" value="{{ projeto.nome }}" required maxlength="100"></label>
+                    <label>descrição <textarea name="descricao" rows="3">{{ projeto.descricao }}</textarea></label>
+                    <div class="campos-lado">
+                        <label>status
+                            <select name="status">
+                                {% for valor, texto in status_projeto %}
+                                    <option value="{{ valor }}" {% if valor == projeto.status %}selected{% endif %}>{{ texto }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label>cor <input type="color" name="cor" value="{{ projeto.cor }}"></label>
+                    </div>
+                    <label>tecnologias <small>(separe por vírgula)</small>
+                        <input type="text" name="tecnologias" value="{{ projeto.tecnologias }}" placeholder="Python, Django, JavaScript">
+                    </label>
+                    <label>repositório <input type="url" name="link_repositorio" value="{{ projeto.link_repositorio }}" placeholder="https://github.com/..."></label>
+                    <label>site publicado <input type="url" name="link_deploy" value="{{ projeto.link_deploy }}" placeholder="https://..."></label>
+                    <button class="btn">salvar</button>
+                </form>
+                <form method="post" action="{% url 'projetos:excluir_projeto' projeto.id %}" class="excluir-projeto"
+                      onsubmit="return confirm('Excluir o projeto &quot;{{ projeto.nome|escapejs }}&quot; com todas as funcionalidades e o diário?');">
+                    {% csrf_token %}
+                    <button class="btn-texto-perigo">excluir projeto</button>
+                </form>
+            </details>
+        </section>
+    </div>
+</div>
+{% endblock %}

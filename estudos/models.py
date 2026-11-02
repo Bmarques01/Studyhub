@@ -14,7 +14,6 @@ class Categoria(models.Model):
     TIPOS = [
         ('graduacao', 'Graduação'),
         ('pos', 'Pós-graduação'),
-        ('projetos', 'Projetos'),
         ('outro', 'Outro'),
     ]
 
@@ -22,7 +21,6 @@ class Categoria(models.Model):
     DIVISAO_POR_TIPO = {
         'graduacao': 'semestre',  # semestre letivo: 2026/1, 2026/2...
         'pos': 'modulo',
-        'projetos': '',  # ainda sem divisão
         'outro': '',
     }
 

@@ -1,0 +1,574 @@
+:root {
+    --texto-suave: #8a6b7c;
+}
+
+.sub {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+}
+
+.card-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.kpi-rotulo {
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.voltar {
+    font-family: var(--fonte-mono);
+    font-size: 0.8rem;
+    color: var(--rosa-forte);
+    text-decoration: none;
+}
+
+.voltar:hover { text-decoration: underline; }
+
+/* ===== Lista de projetos ===== */
+.projetos {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.projetos-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.projetos-topo .rotulo { font-size: 1.4rem; }
+
+.grade-projetos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.cartao-projeto {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px 24px;
+    border-top: 4px solid var(--cor);
+    color: var(--texto);
+    text-decoration: none;
+    transition: transform 0.15s;
+}
+
+.cartao-projeto:hover { transform: translateY(-3px); }
+
+.cartao-projeto-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.15rem;
+}
+
+.cartao-projeto-desc {
+    font-size: 0.88rem;
+    color: var(--texto-suave);
+}
+
+.cartao-projeto-info {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+}
+
+.status-ativo { background: var(--rosa-bebe); }
+.status-ideia, .status-pausado { background: #f0eaf0; }
+.status-concluido { background: #e8e4fb; }
+
+.tecnologias, .projeto-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.tec {
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--rosa-fundo);
+    border: 1px solid var(--rosa-bebe);
+    font-family: var(--fonte-mono);
+    font-size: 0.72rem;
+    color: var(--vinho);
+}
+
+.progresso-linha {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.medidor-projeto {
+    flex: 1;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--rosa-bebe);
+    overflow: hidden;
+}
+
+.medidor-projeto.grande { height: 10px; }
+
+.medidor-projeto span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--degrade);
+}
+
+.progresso-num {
+    font-family: var(--fonte-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+/* ===== Página do projeto ===== */
+.projeto-pagina, .funcionalidade-pagina {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.projeto-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.projeto-titulo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 4px 0 6px;
+    font-size: 1.8rem;
+}
+
+.projeto-titulo .etiqueta { font-size: 0.75rem; }
+
+.bolinha-projeto {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--cor);
+}
+
+.projeto-desc {
+    max-width: 720px;
+    margin-bottom: 10px;
+    color: var(--texto-suave);
+}
+
+.link-externo {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--rosa-forte);
+    text-decoration: none;
+}
+
+.btn-com-icone {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 18px;
+}
+
+.btn-com-icone .icone {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.resumo-projeto {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 24px;
+    padding: 20px 24px;
+}
+
+.resumo-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.resumo-item strong { font-size: 1.5rem; }
+.resumo-item small { font-size: 0.78rem; color: var(--texto-suave); }
+
+/* ===== Kanban ===== */
+.kanban {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    align-items: start;
+}
+
+@media (max-width: 1000px) {
+    .kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.coluna {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border-radius: var(--raio);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--rosa-bebe);
+}
+
+.coluna-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+}
+
+.coluna-topo h2 {
+    font-family: var(--fonte-mono);
+    font-size: 0.85rem;
+    color: var(--vinho);
+}
+
+.coluna-fazendo .coluna-topo h2 { color: var(--rosa-forte); }
+
+.contador {
+    min-width: 24px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--rosa-bebe);
+    font-family: var(--fonte-mono);
+    font-size: 0.72rem;
+    text-align: center;
+}
+
+.kanban-lista {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 60px;  /* coluna vazia continua aceitando cartões */
+    padding: 2px;
+    border-radius: 12px;
+    transition: background 0.15s;
+}
+
+.kanban-lista.recebendo {
+    background: var(--rosa-fundo);
+    outline: 2px dashed var(--rosa-claro);
+}
+
+.cartao {
+    border-radius: 12px;
+    background: var(--branco);
+    border: 1px solid var(--rosa-bebe);
+    box-shadow: 0 2px 6px rgba(224, 96, 154, 0.08);
+    cursor: grab;
+}
+
+.cartao.arrastando {
+    opacity: 0.45;
+}
+
+.cartao-link {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 13px;
+    color: var(--texto);
+    text-decoration: none;
+}
+
+.cartao:hover {
+    border-color: var(--rosa-claro);
+}
+
+.cartao-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+}
+
+.cartao-titulo {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.coluna-feito .cartao-titulo {
+    color: var(--texto-suave);
+}
+
+.cartao-rodape {
+    display: flex;
+    gap: 12px;
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    color: var(--texto-suave);
+}
+
+.tipo {
+    padding: 1px 7px;
+    border-radius: 6px;
+    background: var(--rosa-fundo);
+    font-family: var(--fonte-mono);
+    font-size: 0.66rem;
+    color: var(--vinho);
+}
+
+.tipo-bug { background: #fbe3e8; color: #9b2c4a; }
+.tipo-melhoria { background: #ece6fb; color: #4b3a8c; }
+.tipo-refatoracao { background: #f1ecee; color: #5a4a52; }
+
+.prioridade {
+    font-family: var(--fonte-mono);
+    font-size: 0.66rem;
+    color: var(--texto-suave);
+    white-space: nowrap;
+}
+
+.prioridade-alta .prioridade {
+    color: var(--rosa-forte);
+    font-weight: 700;
+}
+
+.novo-cartao input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px dashed var(--rosa-claro);
+    border-radius: 10px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--texto);
+    outline: none;
+}
+
+.novo-cartao input:focus {
+    border-style: solid;
+    border-color: var(--rosa);
+    background: var(--branco);
+}
+
+.dica-kanban {
+    margin-top: -10px;
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    color: var(--texto-suave);
+}
+
+/* ===== Diário e edição ===== */
+.projeto-baixo {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 1000px) {
+    .projeto-baixo { grid-template-columns: 1fr; }
+}
+
+.form-diario, .form-projeto {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-diario textarea, .form-projeto textarea,
+.form-diario input[type="date"], .form-projeto input, .form-projeto select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    background: var(--branco);
+    font-family: var(--fonte-texto);
+    font-size: 0.92rem;
+    color: var(--texto);
+    outline: none;
+    resize: vertical;
+}
+
+.form-projeto input[type="color"] {
+    width: 60px;
+    padding: 2px;
+}
+
+.form-diario textarea:focus, .form-projeto textarea:focus, .form-projeto input:focus {
+    border-color: var(--rosa);
+}
+
+.form-diario input[type="date"] { width: auto; }
+.form-diario .btn, .form-projeto .btn { align-self: flex-end; }
+
+.form-projeto label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.campos-lado {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.entradas {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.entrada {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--rosa-fundo);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.entrada header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-family: var(--fonte-mono);
+    font-size: 0.78rem;
+}
+
+.entrada p + p { margin-top: 6px; }
+
+.entrada-rotulo {
+    display: inline-block;
+    min-width: 62px;
+    margin-right: 8px;
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--rosa-forte);
+}
+
+.entrada-rotulo.travei { color: #b0436f; }
+
+.editar-projeto summary {
+    cursor: pointer;
+    margin-bottom: 14px;
+}
+
+.excluir-projeto {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rosa-bebe);
+}
+
+.btn-texto-perigo {
+    border: none;
+    background: none;
+    color: #b0436f;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-texto-perigo:hover { text-decoration: underline; }
+
+.vazio-card {
+    list-style: none;
+    color: var(--texto-suave);
+    font-size: 0.9rem;
+}
+
+/* ===== Página da funcionalidade ===== */
+.funcionalidade-grade {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.editar-funcionalidade { grid-column: span 2; }
+
+@media (max-width: 1000px) {
+    .funcionalidade-grade { grid-template-columns: 1fr; }
+    .editar-funcionalidade { grid-column: span 1; }
+}
+
+.checklist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.checklist li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rosa-bebe);
+}
+
+.checklist li.feita .tarefa-texto {
+    text-decoration: line-through;
+    color: var(--texto-suave);
+}
+
+.tarefa-texto { flex: 1; }
+
+.check.marcado {
+    display: grid;
+    place-items: center;
+    border-color: var(--rosa-forte);
+    background: var(--rosa-forte);
+    color: var(--branco);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.nova-tarefa { margin-top: 14px; }
+
+.tempo-grande {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.passou { color: #b0436f; }
+
+.funcionalidade-pagina .medidor-projeto {
+    margin-top: 10px;
+}
+
+.sessoes-func {
+    list-style: none;
+    margin-top: 16px;
+}
+
+.sessoes-func li {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--rosa-bebe);
+    font-family: var(--fonte-mono);
+    font-size: 0.78rem;
+}

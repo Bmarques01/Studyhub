@@ -1,6 +1,7 @@
 from django.db import models
 
 from estudos.models import Disciplina, Topico
+from projetos.models import Funcionalidade, Projeto
 
 
 class SessaoPomodoro(models.Model):
@@ -12,6 +13,11 @@ class SessaoPomodoro(models.Model):
                                    related_name='sessoes')
     topico = models.ForeignKey(Topico, on_delete=models.SET_NULL, null=True, blank=True,
                                related_name='sessoes')
+    # Ou, em vez de disciplina/tópico, um projeto e uma funcionalidade dele
+    projeto = models.ForeignKey(Projeto, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='sessoes')
+    funcionalidade = models.ForeignKey(Funcionalidade, on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='sessoes')
     tarefa = models.CharField(max_length=200, blank=True)  # opcional: "no que você focou"
     concluida_em = models.DateTimeField(auto_now_add=True)  # preenchido automaticamente
 

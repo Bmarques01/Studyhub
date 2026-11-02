@@ -38,12 +38,14 @@
             <a href="{% url 'curso:index' %}" class="menu-item {% if app == 'curso' %}ativo{% endif %}">
                 {% include "componentes/icone.html" with nome="curso" %} Curso
             </a>
+            <a href="{% url 'projetos:index' %}" class="menu-item {% if app == 'projetos' %}ativo{% endif %}">
+                {% include "componentes/icone.html" with nome="projetos" %} Projetos
+            </a>
             <a href="{% url 'calendario:index' %}" class="menu-item {% if app == 'calendario' %}ativo{% endif %}">
                 {% include "componentes/icone.html" with nome="calendario" %} Calendário
             </a>
 
             <span class="menu-secao">em breve</span>
-            <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="projetos" %} Projetos</span>
             <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="cadernos" %} Cadernos</span>
             <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="flashcards" %} Flashcards</span>
             <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="erros" %} Erros</span>

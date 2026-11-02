@@ -35,12 +35,12 @@ class EstudosTests(TestCase):
         self.client.post(reverse('estudos:criar_periodo', args=[cloud.id]), {'nome': ''})
         self.assertEqual(cloud.periodos.get().nome, 'Módulo 1')
 
-    def test_projetos_e_outro_nao_tem_divisao(self):
-        projetos = Categoria.objects.create(nome='Projetos', tipo='projetos')
-        self.assertEqual(projetos.divisao, '')
+    def test_outro_nao_tem_divisao(self):
         self.assertEqual(self.livres.divisao, '')  # tipo padrão = outro
         resposta = self.client.get(reverse('estudos:index'))
-        self.assertContains(resposta, 'projetos</span>')
+        self.assertContains(resposta, 'outro</span>')
+        # projetos agora têm página própria, não são mais tipo de categoria
+        self.assertNotIn('projetos', dict(Categoria.TIPOS))
 
     def test_criar_disciplina_dentro_do_periodo(self):
         periodo = Periodo.objects.create(categoria=self.grad, nome='5º semestre')

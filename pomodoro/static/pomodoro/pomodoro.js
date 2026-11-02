@@ -247,6 +247,15 @@ function tocarSom(tipo = 'fim') {
     }
 }
 
+// O que está escolhido: disciplina + tópico, ou projeto ("p:5") + funcionalidade
+function escolhaAtual() {
+    const valor = selDisciplina.value;
+    if (valor.startsWith('p:')) {
+        return { projeto_id: valor.slice(2), funcionalidade_id: selTopico.value || null };
+    }
+    return { disciplina_id: valor || null, topico_id: selTopico.value || null };
+}
+
 // Envia a sessão concluída para o Django salvar no banco
 async function registrarSessao(minutos) {
     try {
@@ -258,8 +267,7 @@ async function registrarSessao(minutos) {
             },
             body: JSON.stringify({
                 duracao_minutos: minutos,
-                disciplina_id: selDisciplina.value || null,
-                topico_id: selTopico.value || null,
+                ...escolhaAtual(),
                 tarefa: campoTarefa.value.trim(),
             }),
         });
@@ -300,7 +308,8 @@ function adicionarNaLista(dados) {
 // ===== Escolha de disciplina e tópico =====
 function preencherTopicos() {
     const topicos = TOPICOS[selDisciplina.value] || [];
-    selTopico.replaceChildren(new Option('Sem tópico', ''));
+    const vazio = selDisciplina.value.startsWith('p:') ? 'Sem funcionalidade' : 'Sem tópico';
+    selTopico.replaceChildren(new Option(vazio, ''));
     topicos.forEach(t => selTopico.add(new Option(t.nome, t.id)));
     selTopico.disabled = topicos.length === 0;
 }
@@ -324,6 +333,7 @@ const escolhaSalva = JSON.parse(localStorage.getItem('pomodoro-escolha') || '{}'
 if (secao.dataset.disciplinaInicial) {
     selDisciplina.value = secao.dataset.disciplinaInicial;
     preencherTopicos();
+    if (secao.dataset.segundaInicial) selTopico.value = secao.dataset.segundaInicial;
     lembrarEscolha();
 } else if (escolhaSalva.disciplina && TOPICOS[escolhaSalva.disciplina]) {
     selDisciplina.value = escolhaSalva.disciplina;

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static tempo %}
+
+{% block titulo %}Projetos{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'projetos/projetos.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+<div class="projetos">
+    <div class="projetos-topo">
+        <h1 class="rotulo">projetos</h1>
+        <form method="post" action="{% url 'projetos:criar_projeto' %}" class="form-linha">
+            {% csrf_token %}
+            <input type="text" name="nome" placeholder="Novo projeto" required maxlength="100">
+            <input type="hidden" name="status" value="ativo">
+            <input type="hidden" name="cor" value="#a77bf3">
+            <button class="btn">+ projeto</button>
+        </form>
+    </div>
+
+    <div class="grade-projetos">
+        {% for p in projetos %}
+            <a href="{% url 'projetos:projeto' p.id %}" class="card cartao-projeto" style="--cor: {{ p.cor }}">
+                <span class="cartao-projeto-topo">
+                    <strong>{{ p.nome }}</strong>
+                    <span class="etiqueta status-{{ p.status }}">{{ p.get_status_display|lower }}</span>
+                </span>
+                {% if p.descricao %}<span class="cartao-projeto-desc">{{ p.descricao|truncatechars:110 }}</span>{% endif %}
+                {% if p.lista_tecnologias %}
+                    <span class="tecnologias">
+                        {% for t in p.lista_tecnologias %}<span class="tec">{{ t }}</span>{% endfor %}
+                    </span>
+                {% endif %}
+                <span class="progresso-linha">
+                    <span class="medidor-projeto"><span style="width: {{ p.progresso }}%"></span></span>
+                    <span class="progresso-num">{{ p.progresso }}%</span>
+                </span>
+                <span class="cartao-projeto-info">
+                    {{ p.feitas }} de {{ p.total }} funcionalidade{{ p.total|pluralize }}
+                    {% if p.fazendo %} · {{ p.fazendo }} em andamento{% endif %}
+                    · {{ p.minutos|horas }}
+                </span>
+            </a>
+        {% empty %}
+            <section class="card vazio-card">Nenhum projeto ainda. Crie o primeiro aí em cima.</section>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

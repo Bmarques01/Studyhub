@@ -7,5 +7,6 @@ urlpatterns = [
     path('estudos/', include('estudos.urls')),
     path('calendario/', include('calendario.urls')),
     path('curso/', include('curso.urls')),
+    path('projetos/', include('projetos.urls')),
     path('', include('dashboard.urls')),  # página inicial = dashboard
 ]

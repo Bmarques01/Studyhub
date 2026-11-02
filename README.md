@@ -9,11 +9,12 @@ Plataforma pessoal de estudos, feita com Django. Junta num só lugar as ferramen
 - **Estudos**: categorias por tipo (graduação em semestres, pós em módulos, projetos) → Disciplina → Tópico, com cor por disciplina
 - **Calendário**: provas, trabalhos e entregas no mês, com lista de próximos e marcação de feito
 - **Curso**: grade curricular com % concluído (por carga horária), projeção do semestre, progresso por bloco, mapa da grade clicável, pré-requisitos (o que está liberado e o que está travado) e média geral
+- **Projetos**: quadro Kanban com arrastar e soltar (backlog, a fazer, fazendo, feito), funcionalidades com tipo, prioridade, checklist e estimativa, tempo por funcionalidade pelo pomodoro e diário de bordo
 - **Disciplina**: página própria com horas estudadas, gráfico semanal, tempo por tópico, notas GA/GB com cálculo do que falta, provas e entregas
 
 ## Próximos passos
 
-- Projetos (quadro de tarefas e diário de bordo)
+- Versões/changelog e integração com o GitHub nos projetos
 - Cadernos digitais com resumos gerados por IA a partir de slides
 - Flashcards com repetição espaçada
 - Caderno de erros

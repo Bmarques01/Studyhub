@@ -202,7 +202,7 @@
         {# ===== Tempo por disciplina ===== #}
         <section class="card por-disciplina">
             <header class="card-topo">
-                <h2 class="rotulo">por disciplina</h2>
+                <h2 class="rotulo">por disciplina e projeto</h2>
                 <span class="sub">este mês</span>
             </header>
             {% if por_disciplina %}
@@ -210,8 +210,8 @@
                     {% for linha in por_disciplina %}
                         <li>
                             <span class="ranking-nome">
-                                <i class="bolinha" style="background: {{ linha.disciplina__cor|default:'#c9b8c1' }}"></i>
-                                {{ linha.disciplina__nome|default:"Sem disciplina" }}
+                                <i class="bolinha" style="background: {{ linha.disciplina__cor|default:linha.projeto__cor|default:'#c9b8c1' }}"></i>
+                                {{ linha.disciplina__nome|default:linha.projeto__nome|default:"Sem disciplina" }}
                             </span>
                             <span class="ranking-trilho">
                                 <span class="ranking-barra" style="width: {{ linha.largura|floatformat:'1u' }}%"></span>

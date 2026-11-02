@@ -12,7 +12,8 @@
 <section class="pomodoro"
          data-url-registrar="{% url 'pomodoro:registrar' %}"
          data-csrf="{{ csrf_token }}"
-         data-disciplina-inicial="{{ disciplina_inicial }}">
+         data-disciplina-inicial="{{ disciplina_inicial }}"
+         data-segunda-inicial="{{ segunda_inicial }}">
 
     <div class="card relogio-card">
         {# Tempos sempre à mão, no topo. Ficam salvos no navegador. #}
@@ -60,7 +61,7 @@
 
         <div class="escolha-estudo">
             <select id="disciplina" title="Disciplina">
-                <option value="">Sem disciplina</option>
+                <option value="">Sem disciplina/projeto</option>
                 {% for rotulo, disciplinas in opcoes %}
                     <optgroup label="{{ rotulo }}">
                         {% for d in disciplinas %}
@@ -68,9 +69,16 @@
                         {% endfor %}
                     </optgroup>
                 {% endfor %}
+                {% if projetos %}
+                    <optgroup label="Projetos">
+                        {% for projeto, funcionalidades in projetos %}
+                            <option value="p:{{ projeto.id }}">{{ projeto.nome }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endif %}
             </select>
             <select id="topico" title="Tópico" disabled>
-                <option value="">Sem tópico</option>
+                <option value="">Sem tópico/funcionalidade</option>
             </select>
         </div>
         {% if not tem_disciplinas %}
@@ -102,14 +110,16 @@
         </p>
         <ul id="lista-sessoes" class="lista-sessoes">
             {% for sessao in sessoes_hoje %}
-                <li {% if sessao.disciplina %}style="--cor: {{ sessao.disciplina.cor }}"{% endif %}>
+                {% with principal=sessao.disciplina|default:sessao.projeto %}
+                <li {% if principal %}style="--cor: {{ principal.cor }}"{% endif %}>
                     <span class="hora">{{ sessao.concluida_em|time:"H:i" }}</span>
                     <span class="nome">
-                        <strong>{{ sessao.disciplina.nome|default:"Foco" }}{% if sessao.topico %} · {{ sessao.topico.nome }}{% endif %}</strong>
+                        <strong>{{ principal.nome|default:"Foco" }}{% if sessao.topico %} · {{ sessao.topico.nome }}{% elif sessao.funcionalidade %} · {{ sessao.funcionalidade.titulo }}{% endif %}</strong>
                         {% if sessao.tarefa %}<small>{{ sessao.tarefa }}</small>{% endif %}
                     </span>
                     <span class="min">{{ sessao.duracao_minutos }} min</span>
                 </li>
+                {% endwith %}
             {% empty %}
                 <li class="vazio">Nenhum pomodoro ainda. Bora começar?</li>
             {% endfor %}

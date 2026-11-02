@@ -138,7 +138,7 @@ def index(request):
     por_disciplina = list(
         SessaoPomodoro.objects
         .filter(concluida_em__date__gte=inicio_mes)
-        .values('disciplina__nome', 'disciplina__cor')
+        .values('disciplina__nome', 'disciplina__cor', 'projeto__nome', 'projeto__cor')
         .annotate(total=Sum('duracao_minutos'))
         .order_by('-total')
     )

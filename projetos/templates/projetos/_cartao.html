@@ -1,0 +1,22 @@
+{# Um cartão do Kanban. Arraste para mudar de coluna; clique para abrir. #}
+{% load tempo %}
+<li class="cartao prioridade-{{ f.prioridade }}" draggable="true" data-id="{{ f.id }}"
+    data-url-mover="{% url 'projetos:mover' f.id %}">
+    <a href="{% url 'projetos:funcionalidade' f.id %}" class="cartao-link" draggable="false">
+        <span class="cartao-topo">
+            <span class="tipo tipo-{{ f.tipo }}">{{ f.get_tipo_display|lower }}</span>
+            <span class="prioridade" title="Prioridade {{ f.get_prioridade_display|lower }}">
+                {% if f.prioridade == 'alta' %}▲ alta{% elif f.prioridade == 'baixa' %}▼ baixa{% else %}■ média{% endif %}
+            </span>
+        </span>
+        <span class="cartao-titulo">{{ f.titulo }}</span>
+        {% if f.total_tarefas or f.minutos %}
+            <span class="cartao-rodape">
+                {% if f.total_tarefas %}
+                    <span title="Tarefas feitas">☑ {{ f.tarefas_feitas }}/{{ f.total_tarefas }}</span>
+                {% endif %}
+                {% if f.minutos %}<span title="Tempo trabalhado">⏱ {{ f.minutos|horas }}</span>{% endif %}
+            </span>
+        {% endif %}
+    </a>
+</li>

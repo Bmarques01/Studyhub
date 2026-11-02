@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'dashboard',
     'calendario',
     'curso',
+    'projetos',
 ]
 
 MIDDLEWARE = [

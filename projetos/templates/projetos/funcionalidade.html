@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load static tempo l10n %}
+
+{% block titulo %}{{ item.titulo }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'projetos/projetos.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+<div class="funcionalidade-pagina" style="--cor: {{ item.projeto.cor }}">
+    <header class="projeto-topo">
+        <div>
+            <a href="{% url 'projetos:projeto' item.projeto.id %}" class="voltar">‹ {{ item.projeto.nome }}</a>
+            <h1 class="projeto-titulo">{{ item.titulo }}</h1>
+            <p class="projeto-desc">
+                <span class="tipo tipo-{{ item.tipo }}">{{ item.get_tipo_display|lower }}</span>
+                · {{ item.get_status_display|lower }} · prioridade {{ item.get_prioridade_display|lower }}
+                {% if item.concluida_em %} · concluída em {{ item.concluida_em|date:"d/m/Y" }}{% endif %}
+            </p>
+        </div>
+        {% if item.status != 'feito' %}
+            <div class="projeto-acoes">
+                <a href="{% url 'pomodoro:index' %}?funcionalidade={{ item.id }}" class="btn btn-com-icone">
+                    {% include "componentes/icone.html" with nome="play" %} Trabalhar nisso
+                </a>
+            </div>
+        {% endif %}
+    </header>
+
+    <div class="funcionalidade-grade">
+        {# ===== Checklist ===== #}
+        <section class="card">
+            <header class="card-topo">
+                <h2 class="rotulo">tarefas</h2>
+                {% if tarefas %}<span class="sub">{{ item.tarefas.all|length }} no total</span>{% endif %}
+            </header>
+            <ul class="checklist">
+                {% for t in tarefas %}
+                    <li class="{% if t.feita %}feita{% endif %}">
+                        <form method="post" action="{% url 'projetos:alternar_tarefa' t.id %}">
+                            {% csrf_token %}
+                            <button class="check {% if t.feita %}marcado{% endif %}"
+                                    aria-label="{% if t.feita %}Desmarcar{% else %}Marcar{% endif %} {{ t.texto }}">{% if t.feita %}✓{% endif %}</button>
+                        </form>
+                        <span class="tarefa-texto">{{ t.texto }}</span>
+                        <form method="post" action="{% url 'projetos:excluir_tarefa' t.id %}">
+                            {% csrf_token %}
+                            <button class="btn-icone" title="Remover tarefa">✕</button>
+                        </form>
+                    </li>
+                {% empty %}
+                    <li class="vazio-card">Quebre a funcionalidade em passos menores.</li>
+                {% endfor %}
+            </ul>
+            <form method="post" action="{% url 'projetos:criar_tarefa' item.id %}" class="form-linha nova-tarefa">
+                {% csrf_token %}
+                <input type="text" name="texto" placeholder="Nova tarefa (ex.: criar o model)" required maxlength="200">
+                <button class="btn btn-claro">+ tarefa</button>
+            </form>
+        </section>
+
+        {# ===== Tempo ===== #}
+        <section class="card">
+            <header class="card-topo">
+                <h2 class="rotulo">tempo</h2>
+            </header>
+            <p class="tempo-grande">{{ minutos|horas }}</p>
+            {% if estimativa_min %}
+                <p class="sub">estimativa: {{ estimativa_min|horas }} · {{ pct_estimativa }}% usado
+                    {% if pct_estimativa > 100 %}<strong class="passou">(passou da estimativa)</strong>{% endif %}</p>
+                <div class="medidor-projeto"><span style="width: {% if pct_estimativa > 100 %}100{% else %}{{ pct_estimativa }}{% endif %}%"></span></div>
+            {% else %}
+                <p class="sub">Coloque uma estimativa abaixo para comparar com o tempo real.</p>
+            {% endif %}
+            {% if sessoes %}
+                <ul class="sessoes-func">
+                    {% for s in sessoes %}
+                        <li><span>{{ s.concluida_em|date:"d/m H:i" }}</span><span>{{ s.duracao_minutos|horas }}</span></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+
+        {# ===== Editar ===== #}
+        <section class="card editar-funcionalidade">
+            <header class="card-topo">
+                <h2 class="rotulo">detalhes</h2>
+            </header>
+            <form method="post" class="form-projeto">
+                {% csrf_token %}
+                <label>título <input type="text" name="titulo" value="{{ item.titulo }}" required maxlength="150"></label>
+                <label>descrição <textarea name="descricao" rows="4" placeholder="O que essa funcionalidade precisa fazer?">{{ item.descricao }}</textarea></label>
+                <div class="campos-lado">
+                    <label>tipo
+                        <select name="tipo">
+                            {% for valor, texto in tipos %}<option value="{{ valor }}" {% if valor == item.tipo %}selected{% endif %}>{{ texto }}</option>{% endfor %}
+                        </select>
+                    </label>
+                    <label>prioridade
+                        <select name="prioridade">
+                            {% for valor, texto in prioridades %}<option value="{{ valor }}" {% if valor == item.prioridade %}selected{% endif %}>{{ texto }}</option>{% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <div class="campos-lado">
+                    <label>coluna
+                        <select name="status">
+                            {% for valor, texto in status %}<option value="{{ valor }}" {% if valor == item.status %}selected{% endif %}>{{ texto }}</option>{% endfor %}
+                        </select>
+                    </label>
+                    <label>estimativa (horas)
+                        <input type="number" name="estimativa_horas" step="0.5" min="0" placeholder="—"
+                               value="{{ item.estimativa_horas|default_if_none:''|unlocalize }}">
+                    </label>
+                </div>
+                <button class="btn">salvar</button>
+            </form>
+            <form method="post" action="{% url 'projetos:excluir_funcionalidade' item.id %}" class="excluir-projeto"
+                  onsubmit="return confirm('Excluir &quot;{{ item.titulo|escapejs }}&quot;?');">
+                {% csrf_token %}
+                <button class="btn-texto-perigo">excluir funcionalidade</button>
+            </form>
+        </section>
+    </div>
+</div>
+{% endblock %}
