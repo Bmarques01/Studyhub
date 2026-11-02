@@ -147,14 +147,7 @@ button, input {
 }
 
 .usuaria strong {
-    display: block;
     font-size: 0.95rem;
-}
-
-.usuaria small {
-    font-family: var(--fonte-mono);
-    font-size: 0.7rem;
-    color: var(--rosa-forte);
 }
 
 .avatar {
