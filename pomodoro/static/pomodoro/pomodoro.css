@@ -18,29 +18,60 @@
     gap: 24px;
 }
 
-/* ===== Abas de modo ===== */
-.modos {
+/* ===== Tempos no topo ===== */
+.tempos-topo {
     display: flex;
-    gap: 6px;
-    padding: 6px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    padding: 10px 16px;
+    border-radius: 16px;
     background: var(--rosa-fundo);
-    border-radius: 999px;
-}
-
-.modo {
-    border: none;
-    background: none;
-    padding: 10px 20px;
-    border-radius: 999px;
-    font-weight: 600;
+    font-family: var(--fonte-mono);
+    font-size: 0.78rem;
     color: var(--vinho);
-    cursor: pointer;
-    transition: all 0.2s;
 }
 
-.modo.ativo {
-    background: var(--rosa-forte);
-    color: var(--branco);
+.tempos-topo label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tempos-topo input {
+    width: 52px;
+    padding: 5px 4px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 8px;
+    background: var(--branco);
+    font-family: var(--fonte-texto);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--texto);
+    text-align: center;
+    outline: none;
+}
+
+.tempos-topo input:focus {
+    border-color: var(--rosa);
+}
+
+.tempos-topo small {
+    color: var(--texto-suave, #8a6b7c);
+}
+
+.modo-atual {
+    font-family: var(--fonte-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--rosa-forte);
+}
+
+.relogio-card.pausa .modo-atual {
+    color: var(--lilas);
 }
 
 /* ===== Relógio com anel ===== */
@@ -95,7 +126,6 @@
 
 /* Cores diferentes nas pausas */
 .relogio-card.pausa .anel-progresso { stroke: var(--lilas); }
-.relogio-card.pausa .modo.ativo { background: var(--lilas); }
 
 /* ===== Escolha de disciplina e tópico ===== */
 .escolha-estudo {
@@ -187,6 +217,16 @@
     background: var(--rosa-bebe);
 }
 
+.btn-redondo {
+    display: grid;
+    place-items: center;
+}
+
+.btn-redondo .icone {
+    width: 20px;
+    height: 20px;
+}
+
 .dica {
     font-family: var(--fonte-mono);
     font-size: 0.75rem;
@@ -198,36 +238,6 @@ kbd {
     background: var(--rosa-bebe);
     border-radius: 6px;
     padding: 2px 6px;
-}
-
-/* ===== Configurações ===== */
-.config {
-    width: 100%;
-    color: var(--vinho);
-}
-
-.config summary {
-    cursor: pointer;
-    text-align: center;
-    font-family: var(--fonte-mono);
-    font-size: 0.85rem;
-}
-
-.config-campos {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 16px;
-}
-
-.config-campos input {
-    width: 60px;
-    padding: 6px;
-    border: 2px solid var(--rosa-bebe);
-    border-radius: 10px;
-    text-align: center;
-    color: var(--texto);
 }
 
 /* ===== Resumo do dia ===== */

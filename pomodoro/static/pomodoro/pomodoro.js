@@ -2,7 +2,7 @@
 // Tempos em minutos e quantidade de ciclos (focos) até a pausa longa.
 // Ficam salvos no navegador (localStorage).
 const TEMPOS_PADRAO = { foco: 25, pausa_curta: 5, pausa_longa: 15, ciclos: 4 };
-const NOMES = { foco: 'Foco', pausa_curta: 'Pausa curta', pausa_longa: 'Pausa longa' };
+const NOMES = { foco: 'Foco', pausa_curta: 'Pausa', pausa_longa: 'Pausa longa' };
 
 const tempos = { ...TEMPOS_PADRAO, ...JSON.parse(localStorage.getItem('pomodoro-tempos') || '{}') };
 
@@ -14,7 +14,7 @@ const elCiclo = document.getElementById('ciclo');
 const anel = document.getElementById('anel');
 const campoTarefa = document.getElementById('tarefa');
 const btnIniciar = document.getElementById('btn-iniciar');
-const botoesModo = document.querySelectorAll('.modo');
+const elModo = document.getElementById('modo-atual');
 const selDisciplina = document.getElementById('disciplina');
 const selTopico = document.getElementById('topico');
 
@@ -76,7 +76,7 @@ function atualizarTela() {
     elCiclo.textContent = `Ciclo ${(focosConcluidos % tempos.ciclos) + 1} de ${tempos.ciclos}`;
     btnIniciar.textContent = rodando ? 'Pausar' : (decorridoMs() > 0 ? 'Continuar' : 'Iniciar');
 
-    botoesModo.forEach(b => b.classList.toggle('ativo', b.dataset.modo === modo));
+    elModo.textContent = NOMES[modo].toLowerCase();
     card.classList.toggle('pausa', modo !== 'foco');
     card.classList.toggle('livre', livre);
     barraLivre.hidden = !livre;
@@ -138,7 +138,7 @@ function terminar() {
     // registra o tempo que você realmente focou (pode ser mais que o previsto)
     const minutos = Math.max(1, Math.round(Math.min(decorridoMs(), LIMITE_MS) / UM_MINUTO));
     pausar();
-    tocarSom();
+    tocarSom('fim');
     if (modo === 'foco') {
         focosConcluidos++;
         registrarSessao(minutos);
@@ -150,7 +150,7 @@ function terminar() {
 function perguntarSeContinua() {
     avisou = true;
     aviso.hidden = false;
-    tocarSom(1);  // um "plim" só, mais discreto
+    tocarSom('aviso');  // versão curta e mais baixa
     notificar();
 }
 
@@ -186,21 +186,47 @@ function notificar() {
     };
 }
 
-// "Plins" suaves, gerados pelo próprio navegador (sem arquivo de áudio)
-function tocarSom(vezes = 3) {
-    if (!audio) return;
-    [0, 0.35, 0.7].slice(0, vezes).forEach(atraso => {
-        const t = audio.currentTime + atraso;
+// ===== Som =====
+// Um "sininho" gerado pelo próprio navegador (sem arquivo de áudio).
+// Cada nota soma o som principal com dois harmônicos mais baixos, que somem devagar:
+// fica com cara de sino/marimba, mais presente que um bipe, sem ser estridente.
+const MELODIAS = {
+    // mi → sol → dó, subindo; tocada 2 vezes no fim de um bloco
+    fim: { notas: [659.25, 783.99, 1046.5], volume: 0.32, repetir: 2 },
+    // sol → dó, curtinha e mais baixa, para o aviso de 1 minuto
+    aviso: { notas: [783.99, 1046.5], volume: 0.18, repetir: 1 },
+};
+
+let volumeGeral = null;
+
+function nota(frequencia, inicio, volume) {
+    const duracao = 1.4;
+    [[1, 1], [2, 0.3], [3, 0.08]].forEach(([multiplo, peso]) => {
         const osc = audio.createOscillator();
-        const volume = audio.createGain();
-        osc.frequency.value = 880;
-        volume.gain.setValueAtTime(0.0001, t);
-        volume.gain.exponentialRampToValueAtTime(0.3, t + 0.02);
-        volume.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
-        osc.connect(volume).connect(audio.destination);
-        osc.start(t);
-        osc.stop(t + 0.3);
+        const ganho = audio.createGain();
+        osc.frequency.value = frequencia * multiplo;
+        ganho.gain.setValueAtTime(0.0001, inicio);
+        ganho.gain.exponentialRampToValueAtTime(volume * peso, inicio + 0.012);  // ataque rápido
+        ganho.gain.exponentialRampToValueAtTime(0.0001, inicio + duracao / multiplo);  // some devagar
+        osc.connect(ganho).connect(volumeGeral);
+        osc.start(inicio);
+        osc.stop(inicio + duracao);
     });
+}
+
+function tocarSom(tipo = 'fim') {
+    if (!audio) return;
+    if (!volumeGeral) {
+        volumeGeral = audio.createGain();
+        volumeGeral.gain.value = 0.8;
+        volumeGeral.connect(audio.destination);
+    }
+    const { notas, volume, repetir } = MELODIAS[tipo];
+    for (let vez = 0; vez < repetir; vez++) {
+        notas.forEach((frequencia, i) => {
+            nota(frequencia, audio.currentTime + vez * 1.1 + i * 0.16, volume);
+        });
+    }
 }
 
 // Envia a sessão concluída para o Django salvar no banco
@@ -307,8 +333,10 @@ document.getElementById('btn-pular').addEventListener('click', () => {
     trocarModo(modo === 'foco' ? 'pausa_curta' : 'foco');
 });
 
-botoesModo.forEach(botao => {
-    botao.addEventListener('click', () => trocarModo(botao.dataset.modo));
+// Botão do sino: toca o som do alarme para você ouvir como é
+document.getElementById('btn-testar-som').addEventListener('click', () => {
+    audio ??= new AudioContext();
+    tocarSom('fim');
 });
 
 document.addEventListener('keydown', evento => {

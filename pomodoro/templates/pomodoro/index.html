@@ -15,10 +15,15 @@
          data-disciplina-inicial="{{ disciplina_inicial }}">
 
     <div class="card relogio-card">
-        <div class="modos">
-            <button class="modo ativo" data-modo="foco">Foco</button>
-            <button class="modo" data-modo="pausa_curta">Pausa curta</button>
-            <button class="modo" data-modo="pausa_longa">Pausa longa</button>
+        {# Tempos sempre à mão, no topo. Ficam salvos no navegador. #}
+        <div class="tempos-topo">
+            <label>foco <input type="number" id="cfg-foco" min="1" max="180"> <small>min</small></label>
+            <label>pausa <input type="number" id="cfg-pausa_curta" min="1" max="60"> <small>min</small></label>
+            <label>pausa longa <input type="number" id="cfg-pausa_longa" min="1" max="60"> <small>min</small></label>
+            <label title="Quantos focos até a pausa longa">ciclos <input type="number" id="cfg-ciclos" min="1" max="12"></label>
+            <button type="button" class="btn-icone" id="btn-testar-som" title="Ouvir o som do alarme">
+                {% include "componentes/icone.html" with nome="sino" %}
+            </button>
         </div>
 
         <div class="relogio">
@@ -34,6 +39,7 @@
                 <circle class="anel-progresso" id="anel" cx="100" cy="100" r="90" />
             </svg>
             <div class="relogio-texto">
+                <div class="modo-atual" id="modo-atual">foco</div>
                 <div class="tempo" id="tempo">25:00</div>
                 <div class="ciclo" id="ciclo">Ciclo 1 de 4</div>
             </div>
@@ -81,21 +87,16 @@
                placeholder="Anotação (opcional): o que vai fazer agora?">
 
         <div class="controles">
-            <button id="btn-reiniciar" class="btn-redondo" title="Reiniciar">↺</button>
+            <button id="btn-reiniciar" class="btn-redondo" title="Recomeçar este bloco" aria-label="Recomeçar este bloco">
+                {% include "componentes/icone.html" with nome="recomecar" %}
+            </button>
             <button id="btn-iniciar" class="btn-principal">Iniciar</button>
-            <button id="btn-pular" class="btn-redondo" title="Pular para o próximo">⏭</button>
+            <button id="btn-pular" class="btn-redondo" title="Pular para o próximo (foco ↔ pausa)" aria-label="Pular para o próximo">
+                {% include "componentes/icone.html" with nome="pular" %}
+            </button>
         </div>
         <p class="dica">Dica: aperte <kbd>espaço</kbd> para iniciar/pausar</p>
 
-        <details class="config">
-            <summary>ajustar tempos</summary>
-            <div class="config-campos">
-                <label>Foco <input type="number" id="cfg-foco" min="1" max="180"> min</label>
-                <label>Pausa curta <input type="number" id="cfg-pausa_curta" min="1" max="60"> min</label>
-                <label>Pausa longa <input type="number" id="cfg-pausa_longa" min="1" max="60"> min</label>
-                <label>Ciclos até a pausa longa <input type="number" id="cfg-ciclos" min="1" max="12"></label>
-            </div>
-        </details>
     </div>
 
     <aside class="card resumo-dia">
