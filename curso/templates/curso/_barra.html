@@ -1,0 +1,21 @@
+{# Barra dividida: concluída · compensada · cursando · falta. Usa a variável "partes". #}
+{# "fina" = sem textos dentro (os números ficam ao lado). #}
+<div class="barra-segmentada {% if fina %}fina{% endif %}" role="img"
+     aria-label="{{ partes.concluida }}h concluídas, {{ partes.compensada }}h compensadas, {{ partes.cursando }}h cursando, faltam {{ partes.falta }}h">
+    {% if partes.concluida %}
+        <span class="seg concluida" style="width: {{ partes.pct_concluida|floatformat:'2u' }}%"
+              title="concluída: {{ partes.concluida }}h">{% if not fina and partes.pct_concluida > 9 %}{{ partes.pct_concluida|floatformat:0 }}%{% endif %}</span>
+    {% endif %}
+    {% if partes.compensada %}
+        <span class="seg compensada" style="width: {{ partes.pct_compensada|floatformat:'2u' }}%"
+              title="compensada: {{ partes.compensada }}h">{% if not fina and partes.pct_compensada > 9 %}{{ partes.pct_compensada|floatformat:0 }}%{% endif %}</span>
+    {% endif %}
+    {% if partes.cursando %}
+        <span class="seg cursando" style="width: {{ partes.pct_cursando|floatformat:'2u' }}%"
+              title="cursando: {{ partes.cursando }}h">{% if not fina and partes.pct_cursando > 9 %}{{ partes.pct_cursando|floatformat:0 }}%{% endif %}</span>
+    {% endif %}
+    {% if partes.falta %}
+        <span class="seg falta" style="width: {{ partes.pct_falta|floatformat:'2u' }}%"
+              title="falta: {{ partes.falta }}h">{% if not fina and partes.pct_falta > 9 %}{{ partes.pct_falta|floatformat:0 }}%{% endif %}</span>
+    {% endif %}
+</div>

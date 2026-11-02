@@ -6,5 +6,6 @@ urlpatterns = [
     path('pomodoro/', include('pomodoro.urls')),
     path('estudos/', include('estudos.urls')),
     path('calendario/', include('calendario.urls')),
+    path('curso/', include('curso.urls')),
     path('', include('dashboard.urls')),  # página inicial = dashboard
 ]

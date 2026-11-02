@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load static l10n %}
+
+{% block titulo %}Curso{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'curso/curso.css' %}">
+<script src="{% static 'curso/curso.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="curso">
+
+    {# ===== Progresso geral ===== #}
+    <section class="card curso-hero">
+        <div class="hero-topo">
+            <div>
+                <p class="rotulo">curso</p>
+                <h1>{{ grade.nome }}</h1>
+                <p class="sub">{{ grade.instituicao }}</p>
+            </div>
+            <div class="hero-numero">
+                <span class="hero">{{ total.pct_feito|floatformat:1 }}%</span>
+                <span class="sub">concluído · {{ total.feito }}h de {{ total.exigido }}h</span>
+            </div>
+        </div>
+
+        {% with partes=total %}{% include "curso/_barra.html" %}{% endwith %}
+
+        <div class="legenda-situacoes">
+            <span><i class="chave concluida"></i>✓ concluída · {{ total.concluida }}h</span>
+            <span><i class="chave compensada"></i>≈ compensada · {{ total.compensada }}h</span>
+            <span><i class="chave cursando"></i>▶ cursando · {{ total.cursando }}h</span>
+            <span><i class="chave falta"></i>falta · {{ total.falta }}h</span>
+        </div>
+
+        <div class="hero-rodape">
+            {% if total.cursando %}
+                <p>Ao terminar {{ letivo_atual }}, com o que você está cursando: <strong>{{ total.pct_projecao|floatformat:1 }}%</strong></p>
+            {% endif %}
+            <p>Média geral: <strong>{% if media is not None %}{{ media|floatformat:2 }}{% else %}—{% endif %}</strong>
+               {% if media is None %}<small>(lance as notas finais nas disciplinas concluídas)</small>{% endif %}</p>
+        </div>
+    </section>
+
+    {# ===== Por bloco ===== #}
+    <div class="blocos">
+        {% for nome, partes in blocos %}
+            <section class="card bloco">
+                <h2 class="kpi-rotulo">{{ nome|lower }}</h2>
+                <p class="bloco-valor">{{ partes.feito }}h <small>de {{ partes.exigido }}h</small></p>
+                {% with fina=True %}{% include "curso/_barra.html" %}{% endwith %}
+                <p class="sub">{{ partes.pct_feito|floatformat:0 }}%{% if partes.cursando %} · {{ partes.cursando }}h cursando{% endif %}</p>
+            </section>
+        {% endfor %}
+        <section class="card bloco">
+            <h2 class="kpi-rotulo">complementares</h2>
+            <p class="bloco-valor">0h <small>de {{ grade.horas_complementares }}h</small></p>
+            <div class="barra-segmentada fina"><span class="seg falta" style="width: 100%"></span></div>
+            <p class="sub">registro de atividades em breve</p>
+        </section>
+    </div>
+
+    {# ===== Mapa da grade ===== #}
+    <section class="card">
+        <header class="card-topo">
+            <h2 class="rotulo">mapa da grade</h2>
+            <div class="legenda-situacoes pequena">
+                <span>✓ concluída</span><span>≈ compensada</span><span>▶ cursando</span>
+                <span>○ liberada</span><span>🔒 falta pré-requisito</span><span>✕ reprovada</span>
+                <small>clique numa disciplina para mudar</small>
+            </div>
+        </header>
+        <div class="mapa-grade">
+            {% for coluna in mapa %}
+                <div class="mapa-coluna">
+                    <div class="mapa-cabecalho">
+                        <strong>{{ coluna.semestre }}º</strong>
+                        <small>{{ coluna.horas_feitas }}/{{ coluna.horas }}h</small>
+                    </div>
+                    {% for d in coluna.disciplinas %}{% include "curso/_celula.html" %}{% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# ===== Matrícula: liberadas e travadas ===== #}
+    <div class="duas-colunas">
+        <section class="card">
+            <header class="card-topo">
+                <h2 class="rotulo">liberadas para cursar</h2>
+                <span class="sub">obrigatórias com pré-requisitos cumpridos</span>
+            </header>
+            <ul class="lista-grade">
+                {% for d in liberadas %}
+                    <li>
+                        <span class="lista-semestre">{{ d.semestre }}º</span>
+                        <span class="lista-nome">{{ d.nome }}</span>
+                        {% with n=d.libera.all|length %}
+                            {% if n %}<span class="destrava" title="É pré-requisito de {{ n }} disciplina{{ n|pluralize }}">destrava {{ n }}</span>{% endif %}
+                        {% endwith %}
+                        <span class="lista-horas">{{ d.carga_horaria }}h</span>
+                    </li>
+                {% empty %}
+                    <li class="vazio-card">Nenhuma no momento.</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="card">
+            <header class="card-topo">
+                <h2 class="rotulo">travadas</h2>
+                <span class="sub">esperando pré-requisito</span>
+            </header>
+            <ul class="lista-grade">
+                {% for d in travadas %}
+                    <li>
+                        <span class="lista-semestre">{{ d.semestre }}º</span>
+                        <span class="lista-nome">
+                            {{ d.nome }}
+                            <small>falta: {% for p in d.pendentes %}{{ p.nome }}{% if p.situacao == 'cursando' %} (cursando){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</small>
+                        </span>
+                    </li>
+                {% empty %}
+                    <li class="vazio-card">Nada travado.</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+
+    {# ===== Optativas e transversais ===== #}
+    <div class="duas-colunas">
+        <section class="card">
+            <header class="card-topo">
+                <h2 class="rotulo">optativas</h2>
+                <span class="sub">escolha até completar {{ grade.horas_optativas }}h</span>
+            </header>
+            <div class="celulas-soltas">
+                {% for d in optativas %}{% if d.situacao != 'nao_cursada' %}{% include "curso/_celula.html" %}{% endif %}{% endfor %}
+            </div>
+            <details class="ver-todas">
+                <summary>ver todas ({{ optativas|length }})</summary>
+                <div class="celulas-soltas">
+                    {% for d in optativas %}{% if d.situacao == 'nao_cursada' %}{% include "curso/_celula.html" %}{% endif %}{% endfor %}
+                </div>
+            </details>
+        </section>
+
+        <section class="card">
+            <header class="card-topo">
+                <h2 class="rotulo">transversais</h2>
+                <span class="sub">escolha até completar {{ grade.horas_transversais }}h</span>
+            </header>
+            <div class="celulas-soltas">
+                {% for d in transversais %}{% if d.situacao != 'nao_cursada' %}{% include "curso/_celula.html" %}{% endif %}{% endfor %}
+            </div>
+            <details class="ver-todas">
+                <summary>ver todas ({{ transversais|length }})</summary>
+                <div class="celulas-soltas">
+                    {% for d in transversais %}{% if d.situacao == 'nao_cursada' %}{% include "curso/_celula.html" %}{% endif %}{% endfor %}
+                </div>
+            </details>
+        </section>
+    </div>
+</div>
+
+{# ===== Janela para mudar a situação (preenchida pelo curso.js) ===== #}
+<dialog id="dialogo-situacao" class="dialogo">
+    <form method="post" id="form-situacao">
+        {% csrf_token %}
+        <header>
+            <small id="dlg-codigo" class="sub"></small>
+            <h2 id="dlg-nome"></h2>
+        </header>
+
+        <fieldset class="opcoes-situacao">
+            <legend class="sub">situação</legend>
+            {% for valor, texto in situacoes %}
+                <label class="situacao-opcao">
+                    <input type="radio" name="situacao" value="{{ valor }}">
+                    <span><i class="chave {{ valor }}"></i>{{ texto }}</span>
+                </label>
+            {% endfor %}
+        </fieldset>
+
+        <div class="dlg-campos">
+            <label>
+                <span class="sub">semestre cursado</span>
+                <input type="text" name="semestre_cursado" maxlength="7" placeholder="{{ letivo_atual }}">
+            </label>
+            <label>
+                <span class="sub">nota final</span>
+                <input type="number" name="nota_final" step="0.01" min="0" max="10" placeholder="—">
+            </label>
+        </div>
+
+        <p class="sub" id="dlg-requisitos"></p>
+        <p class="dlg-dica sub">Marcar como <strong>cursando</strong> coloca a disciplina em Estudos, no semestre {{ letivo_atual }}.</p>
+
+        <footer>
+            <a id="dlg-estudos" class="link-estudos" hidden>abrir em Estudos →</a>
+            <button type="button" class="btn btn-claro" data-fechar>cancelar</button>
+            <button class="btn">salvar</button>
+        </footer>
+    </form>
+</dialog>
+{% endblock %}

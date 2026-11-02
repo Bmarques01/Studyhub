@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block titulo %}Curso{% endblock %}
+
+{% block conteudo %}
+<section class="card">
+    <h1 class="rotulo">curso</h1>
+    <p style="margin-top: 12px">
+        Nenhuma grade curricular cadastrada ainda. Para importar a grade de Ciência da Computação, rode no terminal:
+    </p>
+    <pre style="margin-top: 12px; font-family: var(--fonte-mono)">python manage.py importar_grade --categoria ID_DA_CATEGORIA</pre>
+</section>
+{% endblock %}

@@ -2,6 +2,7 @@ from decimal import ROUND_UP, Decimal
 
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
+from django.utils import timezone
 
 validar_cor = RegexValidator(r'^#[0-9a-fA-F]{6}$', 'Use uma cor no formato #rrggbb.')
 
@@ -19,7 +20,7 @@ class Categoria(models.Model):
 
     # O tipo decide como a categoria se divide. Para mudar a regra, é só mexer aqui.
     DIVISAO_POR_TIPO = {
-        'graduacao': 'semestre',
+        'graduacao': 'semestre',  # semestre letivo: 2026/1, 2026/2...
         'pos': 'modulo',
         'projetos': '',  # ainda sem divisão
         'outro': '',
@@ -46,6 +47,17 @@ class Categoria(models.Model):
         return {'semestre': 'semestre', 'modulo': 'módulo'}.get(self.divisao, '')
 
 
+def semestre_letivo(dia):
+    """Semestre letivo de uma data: janeiro a junho = /1, julho a dezembro = /2. Ex.: '2026/2'."""
+    return f'{dia.year}/{1 if dia.month <= 6 else 2}'
+
+
+def proximo_letivo(nome):
+    """'2026/1' → '2026/2' → '2027/1'."""
+    ano, semestre = map(int, nome.split('/'))
+    return f'{ano}/2' if semestre == 1 else f'{ano + 1}/1'
+
+
 class Periodo(models.Model):
     """Um semestre ou módulo dentro de uma categoria. Ex.: 5º semestre, Módulo 2."""
 
@@ -59,6 +71,16 @@ class Periodo(models.Model):
 
     def __str__(self):
         return f'{self.categoria} · {self.nome}'
+
+    @classmethod
+    def letivo_atual(cls, categoria):
+        """O período do semestre letivo de hoje (ex.: '2026/2') nesta categoria; cria se não existir."""
+        nome = semestre_letivo(timezone.localdate())
+        periodo = categoria.periodos.filter(nome=nome).first()
+        if periodo is None:
+            periodo = cls.objects.create(categoria=categoria, nome=nome,
+                                         ordem=categoria.periodos.count() + 1)
+        return periodo
 
 
 class Disciplina(models.Model):

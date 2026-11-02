@@ -35,6 +35,9 @@
                 {% include "componentes/icone.html" with nome="estudos" %} Estudos
             </a>
 
+            <a href="{% url 'curso:index' %}" class="menu-item {% if app == 'curso' %}ativo{% endif %}">
+                {% include "componentes/icone.html" with nome="curso" %} Curso
+            </a>
             <a href="{% url 'calendario:index' %}" class="menu-item {% if app == 'calendario' %}ativo{% endif %}">
                 {% include "componentes/icone.html" with nome="calendario" %} Calendário
             </a>

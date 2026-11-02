@@ -214,3 +214,28 @@
 .ferramenta.em-breve {
     opacity: 0.55;
 }
+
+/* ===== Ligação com a grade do curso ===== */
+.link-grade {
+    font-family: var(--fonte-mono);
+    font-size: 0.78rem;
+    color: var(--rosa-forte);
+    text-decoration: none;
+}
+
+.link-grade:hover {
+    text-decoration: underline;
+}
+
+.aviso-concluir {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: var(--raio);
+    background: var(--branco);
+    border: 2px solid var(--rosa-claro);
+    box-shadow: var(--sombra);
+}

@@ -21,6 +21,7 @@
             <p class="dash-data">
                 {{ disciplina.categoria.nome }}{% if disciplina.periodo %} · {{ disciplina.periodo.nome }}{% endif %}
                 {% if disciplina.arquivada %} · <span class="etiqueta">arquivada</span>{% endif %}
+                {% if na_grade %} · <a href="{% url 'curso:index' %}#d{{ na_grade.id }}" class="link-grade">{{ na_grade.codigo }} · {{ na_grade.carga_horaria }}h · {{ na_grade.get_situacao_display|lower }}</a>{% endif %}
             </p>
         </div>
         <div class="dash-topo-acoes">
@@ -30,6 +31,18 @@
             </a>
         </div>
     </header>
+
+    {% if na_grade and disciplina.situacao == 'aprovada' and na_grade.situacao != 'concluida' %}
+        <form method="post" action="{% url 'curso:situacao' na_grade.id %}" class="aviso-concluir">
+            {% csrf_token %}
+            <input type="hidden" name="situacao" value="concluida">
+            <input type="hidden" name="nota_final" value="{{ disciplina.grau_final|unlocalize }}">
+            <input type="hidden" name="semestre_cursado" value="{{ na_grade.semestre_cursado|default:disciplina.periodo.nome|default:'' }}">
+            <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+            <span>🎉 Grau Final <strong>{{ disciplina.grau_final }}</strong>: você passou! Marcar como concluída na grade do curso?</span>
+            <button class="btn">marcar como concluída</button>
+        </form>
+    {% endif %}
 
     <div class="dash-grade">
 

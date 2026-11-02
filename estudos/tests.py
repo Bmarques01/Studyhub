@@ -2,10 +2,11 @@ from decimal import Decimal
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from pomodoro.models import SessaoPomodoro
 
-from .models import Categoria, Disciplina, Periodo, Topico
+from .models import Categoria, Disciplina, Periodo, Topico, proximo_letivo, semestre_letivo
 
 
 class EstudosTests(TestCase):
@@ -27,7 +28,8 @@ class EstudosTests(TestCase):
         url = reverse('estudos:criar_periodo', args=[self.grad.id])
         self.client.post(url, {'nome': ''})
         self.client.post(url, {'nome': ''})
-        self.assertEqual(list(self.grad.periodos.values_list('nome', flat=True)), ['1º semestre', '2º semestre'])
+        atual = semestre_letivo(timezone.localdate())
+        self.assertEqual(list(self.grad.periodos.values_list('nome', flat=True)), [atual, proximo_letivo(atual)])
 
         cloud = Categoria.objects.create(nome='Cloud', tipo='pos')
         self.client.post(reverse('estudos:criar_periodo', args=[cloud.id]), {'nome': ''})
@@ -118,6 +120,15 @@ class EstudosTests(TestCase):
         self.assertFalse(Periodo.objects.exists())
         self.assertFalse(Disciplina.objects.exists())
         self.assertFalse(Topico.objects.exists())
+
+
+class SemestreLetivoTests(TestCase):
+    def test_semestre_letivo(self):
+        from datetime import date
+        self.assertEqual(semestre_letivo(date(2026, 3, 10)), '2026/1')
+        self.assertEqual(semestre_letivo(date(2026, 8, 1)), '2026/2')
+        self.assertEqual(proximo_letivo('2026/1'), '2026/2')
+        self.assertEqual(proximo_letivo('2026/2'), '2027/1')
 
 
 class NotasTests(TestCase):

@@ -103,7 +103,7 @@
                 <form method="post" action="{% url 'estudos:criar_periodo' cat.id %}" class="form-linha novo-periodo so-edicao">
                     {% csrf_token %}
                     <input type="text" name="nome" maxlength="100"
-                           placeholder="Nome do {{ cat.nome_periodo }} (opcional, ex.: {% if cat.divisao == 'modulo' %}Módulo 1{% else %}1º semestre{% endif %})">
+                           placeholder="Nome do {{ cat.nome_periodo }} (opcional, ex.: {% if cat.divisao == 'modulo' %}Módulo 1{% else %}2026/2{% endif %})">
                     <button class="btn btn-claro">+ {{ cat.nome_periodo }}</button>
                 </form>
             {% endif %}

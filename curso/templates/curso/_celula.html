@@ -1,0 +1,20 @@
+{# Uma disciplina no mapa da grade. Clicar abre a janela para mudar a situação. #}
+{% load l10n %}
+<button type="button" id="d{{ d.id }}"
+        class="celula-grade situacao-{{ d.situacao }}{% if d.situacao == 'nao_cursada' or d.situacao == 'reprovada' %}{% if d.pendentes %} travada{% else %} liberada{% endif %}{% endif %}"
+        data-url="{% url 'curso:situacao' d.id %}"
+        data-nome="{{ d.nome }}"
+        data-codigo="{{ d.codigo }}"
+        data-horas="{{ d.carga_horaria }}"
+        data-situacao="{{ d.situacao }}"
+        data-semestre-cursado="{{ d.semestre_cursado }}"
+        data-nota="{{ d.nota_final|default_if_none:''|unlocalize }}"
+        data-requisitos="{% for p in d.pre_requisitos.all %}{{ p.nome }}{% if p.feita %} ✓{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}"
+        {% if d.disciplina %}data-estudos="{% url 'estudos:disciplina' d.disciplina.id %}"{% endif %}
+        aria-label="{{ d.nome }}: {{ d.get_situacao_display }}{% if d.pendentes %}, falta pré-requisito{% endif %}">
+    <span class="celula-icone" aria-hidden="true">
+        {% if d.situacao == 'concluida' %}✓{% elif d.situacao == 'compensada' %}≈{% elif d.situacao == 'cursando' %}▶{% elif d.situacao == 'reprovada' %}✕{% elif d.pendentes %}🔒{% else %}○{% endif %}
+    </span>
+    <span class="celula-nome">{{ d.nome }}</span>
+    <span class="celula-info">{{ d.carga_horaria }}h{% if d.nota_final is not None %} · {{ d.nota_final }}{% endif %}</span>
+</button>

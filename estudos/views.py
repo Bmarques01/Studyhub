@@ -11,7 +11,7 @@ from calendario.models import Evento
 from pomodoro.models import SessaoPomodoro
 
 from .forms import CategoriaForm, DisciplinaForm, NotasForm, PeriodoForm, TopicoForm
-from .models import Categoria, Disciplina, Periodo, Topico
+from .models import Categoria, Disciplina, Periodo, Topico, proximo_letivo, semestre_letivo
 
 
 # ===== Funções de apoio =====
@@ -158,6 +158,7 @@ def disciplina_detalhe(request, disciplina_id):
 
     return render(request, 'estudos/disciplina.html', {
         'disciplina': disciplina,
+        'na_grade': getattr(disciplina, 'na_grade', None),  # a disciplina correspondente na grade do curso
         'hoje': hoje,
         'minutos_total': resumo['total'] or 0,
         'minutos_mes': minutos_mes,
@@ -220,9 +221,15 @@ def criar_periodo(request, categoria_id):
     quantidade = categoria.periodos.count()
     nome = request.POST.get('nome', '').strip()
     if not nome:
-        # Sem nome? Sugere o próximo: "3º semestre", "Módulo 2"...
-        n = quantidade + 1
-        nome = f'Módulo {n}' if categoria.divisao == 'modulo' else f'{n}º semestre'
+        if categoria.divisao == 'modulo':
+            # Sem nome? Próximo módulo: "Módulo 1", "Módulo 2"...
+            nome = f'Módulo {quantidade + 1}'
+        else:
+            # Graduação: semestre letivo atual ("2026/2"); se já existir, o seguinte
+            existentes = set(categoria.periodos.values_list('nome', flat=True))
+            nome = semestre_letivo(timezone.localdate())
+            while nome in existentes:
+                nome = proximo_letivo(nome)
     Periodo.objects.create(categoria=categoria, nome=nome[:100], ordem=quantidade + 1)
     return redirect('estudos:index')
 

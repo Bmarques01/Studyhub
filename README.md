@@ -8,6 +8,8 @@ Plataforma pessoal de estudos, feita com Django. Junta num só lugar as ferramen
 - **Pomodoro**: tempos e número de ciclos configuráveis, com cada sessão ligada a uma disciplina e a um tópico
 - **Estudos**: categorias por tipo (graduação em semestres, pós em módulos, projetos) → Disciplina → Tópico, com cor por disciplina
 - **Calendário**: provas, trabalhos e entregas no mês, com lista de próximos e marcação de feito
+- **Curso**: grade curricular com % concluído (por carga horária), projeção do semestre, progresso por bloco, mapa da grade clicável, pré-requisitos (o que está liberado e o que está travado) e média geral
+- **Disciplina**: página própria com horas estudadas, gráfico semanal, tempo por tópico, notas GA/GB com cálculo do que falta, provas e entregas
 
 ## Próximos passos
 
@@ -23,6 +25,7 @@ python -m venv .venv
 .venv\Scripts\activate          # Windows
 pip install -r requirements.txt
 python manage.py migrate
+python manage.py importar_grade --categoria ID   # opcional: grade de CC da Unisinos
 python manage.py runserver
 ```
 
