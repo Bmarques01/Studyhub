@@ -245,3 +245,15 @@
     padding-top: 16px;
     border-top: 1px solid var(--g-grade);
 }
+
+/* nome do tópico pode quebrar linha; o aviso ("nunca estudado") vai embaixo, sem cortar */
+.d-topicos .ranking-nome {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    white-space: normal;
+}
+
+.d-topicos .aviso-topico {
+    margin-left: 0;
+}
