@@ -1,0 +1,437 @@
+:root {
+    --texto-suave: #8a6b7c;
+}
+
+.sub {
+    font-size: 0.82rem;
+    color: var(--texto-suave);
+}
+
+.sub a { color: var(--rosa-forte); }
+
+.voltar {
+    font-family: var(--fonte-mono);
+    font-size: 0.8rem;
+    color: var(--rosa-forte);
+    text-decoration: none;
+}
+
+/* ===== Fontes dos cadernos ===== */
+.fonte-moderna { --fonte-caderno: 'Space Grotesk', sans-serif; --tamanho-caderno: 1rem; }
+.fonte-arredondada { --fonte-caderno: 'Nunito', sans-serif; --tamanho-caderno: 1rem; }
+.fonte-livro { --fonte-caderno: 'Lora', serif; --tamanho-caderno: 1.02rem; }
+.fonte-manuscrita { --fonte-caderno: 'Caveat', cursive; --tamanho-caderno: 1.35rem; }
+.fonte-escolar { --fonte-caderno: 'Patrick Hand', cursive; --tamanho-caderno: 1.18rem; }
+.fonte-codigo { --fonte-caderno: 'JetBrains Mono', monospace; --tamanho-caderno: 0.92rem; }
+
+.capa-etiqueta strong[class^="fonte-"] { font-family: var(--fonte-caderno); }
+
+/* ===== Estante (lista de cadernos) ===== */
+.estante {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.estante .rotulo { font-size: 1.4rem; }
+
+.grade-cadernos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 22px;
+}
+
+.novo-caderno {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+}
+
+.novo-caderno .rotulo { font-size: 0.95rem; }
+
+.novo-caderno input[type="text"], .novo-caderno select { width: 100%; }
+
+.linha-cor {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+}
+
+/* Capa do caderno: um "livrinho" com lombada */
+.capa {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    aspect-ratio: 3 / 4;
+    padding: 22px 18px 16px 30px;
+    border-radius: 6px 16px 16px 6px;
+    background: var(--capa);
+    color: var(--texto);
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(74, 42, 61, 0.18);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.capa:hover {
+    transform: translateY(-4px) rotate(-1deg);
+    box-shadow: 0 16px 30px rgba(74, 42, 61, 0.24);
+}
+
+.capa-lombada {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 14px;
+    border-radius: 6px 0 0 6px;
+    background: rgba(0, 0, 0, 0.14);
+}
+
+.capa-etiqueta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.capa-etiqueta strong {
+    font-size: 1.15rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.capa-etiqueta small, .capa-info {
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.capa-info {
+    align-self: flex-start;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.85);
+    font-family: var(--fonte-mono);
+}
+
+/* ===== Página do caderno ===== */
+.caderno-pagina {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1000px) {
+    .caderno-pagina { grid-template-columns: 1fr; }
+}
+
+.caderno-lateral {
+    position: sticky;
+    top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.mini-capa {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 16px;
+    border-radius: 6px 14px 14px 6px;
+    border-left: 10px solid rgba(0, 0, 0, 0.14);
+    background: var(--capa);
+    box-shadow: 0 6px 16px rgba(74, 42, 61, 0.15);
+}
+
+.mini-capa strong, .mini-capa a, .mini-capa small {
+    padding: 0 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    align-self: flex-start;
+}
+
+.mini-capa strong { font-size: 1.05rem; }
+.mini-capa a, .mini-capa small { font-size: 0.78rem; color: var(--vinho); text-decoration: none; }
+
+.btn-largo { width: 100%; }
+
+.lista-paginas {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 45vh;
+    overflow-y: auto;
+}
+
+.lista-paginas a {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border-left: 3px solid transparent;
+    color: var(--texto);
+    text-decoration: none;
+}
+
+.lista-paginas a:hover { background: var(--branco); }
+
+.lista-paginas a.ativa {
+    background: var(--branco);
+    border-left-color: var(--capa);
+    font-weight: 600;
+}
+
+.titulo-na-lista {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.9rem;
+}
+
+.lista-paginas small {
+    font-family: var(--fonte-mono);
+    font-size: 0.68rem;
+    color: var(--texto-suave);
+    font-weight: 400;
+}
+
+/* ===== Aparência ===== */
+.aparencia {
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--branco);
+    border: 1px solid var(--rosa-bebe);
+}
+
+.aparencia summary {
+    cursor: pointer;
+    font-family: var(--fonte-mono);
+    font-size: 0.78rem;
+    color: var(--vinho);
+}
+
+.form-aparencia {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.form-aparencia label, .form-aparencia legend {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: var(--fonte-mono);
+    font-size: 0.72rem;
+    color: var(--texto-suave);
+}
+
+.form-aparencia fieldset { border: none; }
+
+.form-aparencia input[type="text"], .form-aparencia select { width: 100%; }
+
+.opcoes-papel {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.opcao-papel { align-items: center; cursor: pointer; }
+.opcao-papel input { position: absolute; opacity: 0; }
+
+.amostra-papel {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    border: 2px solid var(--rosa-bebe);
+    background-color: #fff;
+}
+
+.opcao-papel input:checked + .amostra-papel { border-color: var(--rosa-forte); }
+.opcao-papel input:focus-visible + .amostra-papel { outline: 2px solid var(--lilas); }
+.opcao-papel small { font-size: 0.62rem; }
+
+.cores {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.cores input[type="color"] { width: 100%; }
+
+.btn-texto-perigo {
+    border: none;
+    background: none;
+    color: #b0436f;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ===== Tipos de papel (folha e amostras) ===== */
+.papel-pautado .ql-editor, .amostra-papel.papel-pautado {
+    background-image: linear-gradient(transparent calc(2em - 1px), #f1d3e0 calc(2em - 1px));
+    background-size: 100% 2em;
+}
+
+.papel-quadriculado .ql-editor, .amostra-papel.papel-quadriculado {
+    background-image:
+        linear-gradient(#f6e1ea 1px, transparent 1px),
+        linear-gradient(90deg, #f6e1ea 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+.papel-pontilhado .ql-editor, .amostra-papel.papel-pontilhado {
+    background-image: radial-gradient(#e6bcd0 1.3px, transparent 1.6px);
+    background-size: 24px 24px;
+}
+
+.amostra-papel.papel-pautado { background-size: 100% 8px; background-image: linear-gradient(transparent 7px, #f1d3e0 7px); }
+.amostra-papel.papel-quadriculado, .amostra-papel.papel-pontilhado { background-size: 8px 8px; }
+
+/* ===== Folha e editor ===== */
+.folha-area {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.folha-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* seletor mais específico para vencer o estilo geral de input[type="text"] do base.css */
+input.titulo-pagina[type="text"] {
+    flex: 1;
+    min-width: 240px;
+    padding: 4px 0;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    font-family: var(--fonte-caderno);
+    font-size: calc(var(--tamanho-caderno) * 1.9);
+    font-weight: 700;
+    color: var(--titulos);
+    outline: none;
+}
+
+input.titulo-pagina[type="text"]:focus { border-bottom-color: var(--rosa-claro); }
+
+.folha-acoes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.folha-acoes select { max-width: 200px; }
+
+.status-salvo {
+    font-family: var(--fonte-mono);
+    font-size: 0.72rem;
+    color: var(--texto-suave);
+    white-space: nowrap;
+}
+
+.status-salvo.salvando { color: var(--lilas); }
+.status-salvo.erro { color: #b0436f; font-weight: 700; }
+
+.folha {
+    border-radius: 18px;
+    background: var(--branco);
+    border-top: 6px solid var(--capa);
+    box-shadow: var(--sombra);
+    overflow: hidden;
+}
+
+.folha-vazia {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 60px 20px;
+    color: var(--texto-suave);
+}
+
+/* Barra de ferramentas do Quill no estilo do site */
+.folha .ql-toolbar.ql-snow {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border: none;
+    border-bottom: 1px solid var(--rosa-bebe);
+    background: var(--branco);
+    padding: 10px 14px;
+}
+
+.folha .ql-container.ql-snow {
+    border: none;
+    font-family: var(--fonte-caderno);
+    font-size: var(--tamanho-caderno);
+}
+
+.folha .ql-editor {
+    min-height: 65vh;
+    padding: 2em 3em 4em;
+    line-height: 2em;  /* casa com as linhas do papel pautado */
+    color: var(--texto);
+    background-attachment: local;  /* o papel rola junto com o texto */
+}
+
+.folha .ql-editor p,
+.folha .ql-editor li { line-height: 2em; }
+
+.folha .ql-editor h1,
+.folha .ql-editor h2,
+.folha .ql-editor h3 {
+    color: var(--titulos);
+    line-height: 2em;
+}
+
+.folha .ql-editor h1 { font-size: 1.8em; line-height: 2em; }
+.folha .ql-editor h2 { font-size: 1.4em; }
+.folha .ql-editor h3 { font-size: 1.15em; }
+
+.folha .ql-editor blockquote {
+    border-left: 4px solid var(--capa);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--vinho);
+}
+
+.folha .ql-editor .ql-code-block-container {
+    margin: 0.5em 0;
+    padding: 0.8em 1em;
+    border-radius: 10px;
+    background: #2d1b26;
+    color: #ffe0ec;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+.folha .ql-editor a { color: var(--rosa-forte); }
+
+.folha .ql-editor.ql-blank::before {
+    color: #c9a9b9;
+    font-style: normal;
+}
+
+.folha .ql-snow .ql-stroke { stroke: var(--vinho); }
+.folha .ql-snow .ql-fill { fill: var(--vinho); }
+.folha .ql-snow button:hover .ql-stroke,
+.folha .ql-snow button.ql-active .ql-stroke { stroke: var(--rosa-forte); }
+.folha .ql-snow button:hover .ql-fill,
+.folha .ql-snow button.ql-active .ql-fill { fill: var(--rosa-forte); }

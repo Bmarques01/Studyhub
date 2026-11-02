@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}{% if pagina %}{{ pagina.titulo }} · {% endif %}{{ caderno.nome }}{% endblock %}
+
+{% block head %}
+{% include "cadernos/_fontes.html" %}
+{# Quill: o editor de texto (carregado da internet, como as fontes) #}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" defer></script>
+<link rel="stylesheet" href="{% static 'cadernos/cadernos.css' %}">
+<script src="{% static 'cadernos/cadernos.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+{# As escolhas de aparência do caderno viram classes e variáveis CSS #}
+<div class="caderno-pagina fonte-{{ caderno.fonte }} papel-{{ caderno.papel }}"
+     style="--capa: {{ caderno.cor_capa }}; --destaque: {{ caderno.cor_destaque }}; --titulos: {{ caderno.cor_titulos }}"
+     data-csrf="{{ csrf_token }}"
+     {% if pagina %}data-url-salvar="{% url 'cadernos:salvar_pagina' pagina.id %}" data-pagina="{{ pagina.id }}"{% endif %}>
+
+    {# ===== Lateral: páginas e aparência ===== #}
+    <aside class="caderno-lateral">
+        <a href="{% url 'cadernos:index' %}" class="voltar">‹ cadernos</a>
+        <div class="mini-capa">
+            <strong>{{ caderno.nome }}</strong>
+            {% if caderno.disciplina %}
+                <a href="{% url 'estudos:disciplina' caderno.disciplina.id %}">{{ caderno.disciplina.nome }}</a>
+            {% else %}
+                <small>caderno livre</small>
+            {% endif %}
+        </div>
+
+        <form method="post" action="{% url 'cadernos:criar_pagina' caderno.id %}">
+            {% csrf_token %}
+            <button class="btn btn-largo">+ nova página</button>
+        </form>
+
+        <ul class="lista-paginas">
+            {% for p in paginas %}
+                <li>
+                    <a href="{% url 'cadernos:pagina' p.id %}" class="{% if pagina and p.id == pagina.id %}ativa{% endif %}"
+                       data-pagina="{{ p.id }}">
+                        <span class="titulo-na-lista">{{ p.titulo }}</span>
+                        <small>{{ p.criada_em|date:"d/m/Y" }}</small>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <details class="aparencia">
+            <summary>aparência do caderno</summary>
+            <form method="post" action="{% url 'cadernos:editar_caderno' caderno.id %}" class="form-aparencia">
+                {% csrf_token %}
+                <label>nome <input type="text" name="nome" value="{{ caderno.nome }}" required maxlength="100"></label>
+                <label>disciplina
+                    <select name="disciplina">
+                        <option value="">Sem disciplina</option>
+                        {% for rotulo, disciplinas in opcoes %}
+                            <optgroup label="{{ rotulo }}">
+                                {% for d in disciplinas %}
+                                    <option value="{{ d.id }}" {% if d.id == caderno.disciplina_id %}selected{% endif %}>{{ d.nome }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        {% endfor %}
+                    </select>
+                </label>
+                <fieldset>
+                    <legend>papel</legend>
+                    <div class="opcoes-papel">
+                        {% for valor, texto in papeis %}
+                            <label class="opcao-papel">
+                                <input type="radio" name="papel" value="{{ valor }}" {% if valor == caderno.papel %}checked{% endif %}>
+                                <span class="amostra-papel papel-{{ valor }}"></span>
+                                <small>{{ texto }}</small>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+                <label>fonte
+                    <select name="fonte">
+                        {% for valor, texto in fontes %}
+                            <option value="{{ valor }}" {% if valor == caderno.fonte %}selected{% endif %}>{{ texto }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <div class="cores">
+                    <label>capa <input type="color" name="cor_capa" value="{{ caderno.cor_capa }}"></label>
+                    <label>títulos <input type="color" name="cor_titulos" value="{{ caderno.cor_titulos }}"></label>
+                    <label>marca-texto <input type="color" name="cor_destaque" value="{{ caderno.cor_destaque }}"></label>
+                </div>
+                <button class="btn">salvar aparência</button>
+            </form>
+            <form method="post" action="{% url 'cadernos:excluir_caderno' caderno.id %}"
+                  onsubmit="return confirm('Excluir o caderno &quot;{{ caderno.nome|escapejs }}&quot; com TODAS as páginas?');">
+                {% csrf_token %}
+                <button class="btn-texto-perigo">excluir caderno</button>
+            </form>
+        </details>
+    </aside>
+
+    {# ===== Folha ===== #}
+    <section class="folha-area">
+        {% if pagina %}
+            <div class="folha-topo">
+                <input type="text" id="titulo-pagina" class="titulo-pagina" value="{{ pagina.titulo }}"
+                       maxlength="150" aria-label="Título da página">
+                <div class="folha-acoes">
+                    <span class="status-salvo" id="status-salvo" aria-live="polite">salvo ✓</span>
+                    {% if topicos %}
+                        <select id="topico-pagina" aria-label="Tópico da página">
+                            <option value="">Sem tópico</option>
+                            {% for t in topicos %}
+                                <option value="{{ t.id }}" {% if t.id == pagina.topico_id %}selected{% endif %}>{{ t.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                    {% if caderno.disciplina %}
+                        <a href="{% url 'pomodoro:index' %}?{% if pagina.topico %}topico={{ pagina.topico_id }}{% else %}disciplina={{ caderno.disciplina_id }}{% endif %}"
+                           class="btn btn-claro" title="Abrir o pomodoro nesta disciplina/tópico">▶ estudar isso</a>
+                    {% endif %}
+                    <form method="post" action="{% url 'cadernos:excluir_pagina' pagina.id %}"
+                          onsubmit="return confirm('Excluir a página &quot;{{ pagina.titulo|escapejs }}&quot;?');">
+                        {% csrf_token %}
+                        <button class="btn-icone" title="Excluir página">✕</button>
+                    </form>
+                </div>
+            </div>
+            <div class="folha">
+                <div id="editor"></div>
+            </div>
+            {{ pagina.conteudo|json_script:"conteudo-pagina" }}
+        {% else %}
+            <div class="folha folha-vazia">
+                <p>Este caderno ainda não tem páginas.</p>
+                <form method="post" action="{% url 'cadernos:criar_pagina' caderno.id %}">
+                    {% csrf_token %}
+                    <button class="btn">+ criar a primeira página</button>
+                </form>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

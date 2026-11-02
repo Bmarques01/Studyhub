@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'calendario',
     'curso',
     'projetos',
+    'cadernos',
 ]
 
 MIDDLEWARE = [

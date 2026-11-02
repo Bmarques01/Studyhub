@@ -240,10 +240,11 @@
                     {% include "componentes/icone.html" with nome="flashcards" %}
                     <strong>Flashcards</strong><small>em breve</small>
                 </span>
-                <span class="ferramenta em-breve">
+                <a href="{% url 'cadernos:index' %}?disciplina={{ disciplina.id }}" class="ferramenta">
                     {% include "componentes/icone.html" with nome="cadernos" %}
-                    <strong>Cadernos</strong><small>em breve</small>
-                </span>
+                    <strong>Cadernos</strong>
+                    <small>{% with n=disciplina.cadernos.count %}{% if n %}{{ n }} caderno{{ n|pluralize }}{% else %}criar o primeiro{% endif %}{% endwith %}</small>
+                </a>
                 <span class="ferramenta em-breve">
                     {% include "componentes/icone.html" with nome="erros" %}
                     <strong>Erros</strong><small>em breve</small>

@@ -257,3 +257,7 @@
 .d-topicos .aviso-topico {
     margin-left: 0;
 }
+
+a.ferramenta:hover {
+    background: var(--rosa-bebe);
+}

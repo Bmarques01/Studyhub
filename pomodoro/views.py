@@ -44,6 +44,10 @@ def index(request):
         inicial = request.GET['disciplina']
     elif f"p:{request.GET.get('projeto', '')}" in segunda_lista:
         inicial = f"p:{request.GET['projeto']}"
+    elif request.GET.get('topico', '').isdigit():
+        topico = Topico.objects.filter(id=request.GET['topico']).first()
+        if topico and str(topico.disciplina_id) in segunda_lista:
+            inicial, segunda_inicial = str(topico.disciplina_id), topico.id
     elif request.GET.get('funcionalidade', '').isdigit():
         funcionalidade = Funcionalidade.objects.filter(id=request.GET['funcionalidade']).first()
         if funcionalidade and f'p:{funcionalidade.projeto_id}' in segunda_lista:

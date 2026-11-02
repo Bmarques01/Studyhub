@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Cadernos{% endblock %}
+
+{% block head %}
+{% include "cadernos/_fontes.html" %}
+<link rel="stylesheet" href="{% static 'cadernos/cadernos.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+<div class="estante">
+    <div class="estante-topo">
+        <div>
+            <h1 class="rotulo">cadernos</h1>
+            {% if filtro %}
+                <p class="sub">de {{ filtro.nome }} · <a href="{% url 'cadernos:index' %}">ver todos</a></p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grade-cadernos">
+        {# ===== Novo caderno ===== #}
+        <form method="post" action="{% url 'cadernos:criar_caderno' %}" class="novo-caderno card">
+            {% csrf_token %}
+            <span class="rotulo">novo caderno</span>
+            <input type="text" name="nome" placeholder="Nome (ex.: Redes 2, Ideias...)" required maxlength="100">
+            <select name="disciplina" aria-label="Disciplina">
+                <option value="">Sem disciplina (caderno livre)</option>
+                {% for rotulo, disciplinas in opcoes %}
+                    <optgroup label="{{ rotulo }}">
+                        {% for d in disciplinas %}
+                            <option value="{{ d.id }}" {% if filtro and filtro.id == d.id %}selected{% endif %}>{{ d.nome }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+            <label class="linha-cor">cor da capa <input type="color" name="cor_capa" value="#e0609a"></label>
+            <button class="btn">criar caderno</button>
+        </form>
+
+        {# ===== Cadernos (capas) ===== #}
+        {% for c in cadernos %}
+            <a href="{% url 'cadernos:caderno' c.id %}" class="capa" style="--capa: {{ c.cor_capa }}">
+                <span class="capa-lombada"></span>
+                <span class="capa-etiqueta">
+                    <strong class="fonte-{{ c.fonte }}">{{ c.nome }}</strong>
+                    {% if c.disciplina %}<small>{{ c.disciplina.nome }}</small>{% else %}<small>caderno livre</small>{% endif %}
+                </span>
+                <span class="capa-info">
+                    {{ c.total_paginas }} página{{ c.total_paginas|pluralize }} · {{ c.atualizado_em|date:"d/m" }}
+                </span>
+            </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
