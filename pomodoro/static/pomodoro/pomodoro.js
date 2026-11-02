@@ -204,8 +204,8 @@ function notificar() {
 // Cada nota soma o som principal com dois harmônicos mais baixos, que somem devagar:
 // fica com cara de sino/marimba, mais presente que um bipe, sem ser estridente.
 const MELODIAS = {
-    // mi → sol → dó, subindo; tocada 2 vezes no fim de um bloco
-    fim: { notas: [659.25, 783.99, 1046.5], volume: 0.32, repetir: 2 },
+    // mi → sol → dó, subindo; tocada 3 vezes no fim de um bloco
+    fim: { notas: [659.25, 783.99, 1046.5], volume: 0.32, repetir: 3 },
     // sol → dó, curtinha e mais baixa, para o aviso de 1 minuto
     aviso: { notas: [783.99, 1046.5], volume: 0.18, repetir: 1 },
 };
@@ -346,11 +346,6 @@ document.getElementById('btn-pular').addEventListener('click', () => {
     trocarModo(proximoModo());
 });
 
-// Botão do sino: toca o som do alarme para você ouvir como é
-document.getElementById('btn-testar-som').addEventListener('click', () => {
-    audio ??= new AudioContext();
-    tocarSom('fim');
-});
 
 document.addEventListener('keydown', evento => {
     const digitando = ['INPUT', 'SELECT'].includes(evento.target.tagName);
