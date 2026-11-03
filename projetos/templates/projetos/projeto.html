@@ -19,7 +19,7 @@
                 <i class="bolinha-projeto"></i>{{ projeto.nome }}
                 <span class="etiqueta status-{{ projeto.status }}">{{ projeto.get_status_display|lower }}</span>
             </h1>
-            {% if projeto.descricao %}<p class="projeto-desc">{{ projeto.descricao }}</p>{% endif %}
+            {% if projeto.descricao %}<p class="projeto-desc">{{ projeto.descricao|linebreaksbr }}</p>{% endif %}
             <div class="projeto-meta">
                 {% for t in projeto.lista_tecnologias %}<span class="tec">{{ t }}</span>{% endfor %}
                 {% if projeto.link_repositorio %}<a href="{{ projeto.link_repositorio }}" target="_blank" rel="noopener" class="link-externo">repositório ↗</a>{% endif %}
