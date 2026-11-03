@@ -31,10 +31,14 @@
             {% endif %}
         </div>
 
-        <form method="post" action="{% url 'cadernos:criar_pagina' caderno.id %}">
-            {% csrf_token %}
-            <button class="btn btn-largo">+ nova página</button>
-        </form>
+        <div class="novos-botoes">
+            <form method="post" action="{% url 'cadernos:criar_pagina' caderno.id %}">
+                {% csrf_token %}
+                <button class="btn btn-largo" title="Uma página para você escrever">+ página</button>
+            </form>
+            <button type="button" class="btn btn-claro btn-largo" data-abrir-material
+                    title="Um guia pronto em HTML (ex.: feito pelo Claude)">+ material</button>
+        </div>
 
         <ul class="lista-paginas">
             {% for p in paginas %}
@@ -42,7 +46,7 @@
                     <a href="{% url 'cadernos:pagina' p.id %}" class="{% if pagina and p.id == pagina.id %}ativa{% endif %}"
                        data-pagina="{{ p.id }}">
                         <span class="titulo-na-lista">{{ p.titulo }}</span>
-                        <small>{{ p.criada_em|date:"d/m/Y" }}</small>
+                        <small>{% if p.tipo == 'material' %}<span class="marca-material">material</span> · {% endif %}{{ p.criada_em|date:"d/m/Y" }}</small>
                     </a>
                 </li>
             {% endfor %}
@@ -126,19 +130,61 @@
                     </form>
                 </div>
             </div>
-            <div class="folha">
-                <div id="editor"></div>
-            </div>
+            {% if pagina.material %}
+                {# O guia roda isolado: sandbox sem "allow-same-origin" = não alcança nada do Studyhub #}
+                <div class="material-area">
+                    <iframe class="material-frame" src="{% url 'cadernos:material_html' pagina.id %}"
+                            sandbox="allow-scripts allow-popups allow-modals"
+                            title="Material: {{ pagina.titulo }}"></iframe>
+                    <div class="material-notas">
+                        <p class="rotulo-notas">suas anotações</p>
+                        <div class="folha">
+                            <div id="editor" data-placeholder="Anote aqui dúvidas, resumos, o que caiu na prova..."></div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="folha">
+                    <div id="editor"></div>
+                </div>
+            {% endif %}
             {{ pagina.conteudo|json_script:"conteudo-pagina" }}
         {% else %}
             <div class="folha folha-vazia">
                 <p>Este caderno ainda não tem páginas.</p>
-                <form method="post" action="{% url 'cadernos:criar_pagina' caderno.id %}">
-                    {% csrf_token %}
-                    <button class="btn">+ criar a primeira página</button>
-                </form>
+                <div class="novos-botoes lado">
+                    <form method="post" action="{% url 'cadernos:criar_pagina' caderno.id %}">
+                        {% csrf_token %}
+                        <button class="btn">+ criar a primeira página</button>
+                    </form>
+                    <button type="button" class="btn btn-claro" data-abrir-material>+ adicionar um material</button>
+                </div>
             </div>
         {% endif %}
     </section>
 </div>
+
+{# ===== Janela: material novo (colar o HTML ou enviar o arquivo) ===== #}
+<dialog id="dialogo-material" class="dialogo-caderno dialogo-material" aria-labelledby="titulo-dialogo-material">
+    <form method="post" action="{% url 'cadernos:criar_material' caderno.id %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <h2 id="titulo-dialogo-material">Novo material</h2>
+        <p class="dica-material">Um guia pronto em HTML, como os que o Claude cria para você.
+            Ele aparece igualzinho, com tabelas, "Teste-se" e calculadoras funcionando.</p>
+        <label>título <small>(vazio = usa o título do próprio material)</small>
+            <input type="text" name="titulo" maxlength="150" placeholder="Caderno de Redes II">
+        </label>
+        <label>cole o HTML
+            <textarea name="html" rows="7" class="mono" placeholder="<!DOCTYPE html>&#10;<html>..."></textarea>
+        </label>
+        <p class="ou">ou</p>
+        <label>envie o arquivo
+            <input type="file" name="arquivo" accept=".html,.htm,text/html">
+        </label>
+        <div class="dialogo-botoes">
+            <button type="button" class="btn btn-claro" data-fechar>cancelar</button>
+            <button class="btn">adicionar</button>
+        </div>
+    </form>
+</dialog>
 {% endblock %}

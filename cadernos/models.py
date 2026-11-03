@@ -42,9 +42,24 @@ class Caderno(models.Model):
 
 class Pagina(models.Model):
     """Uma página do caderno. O conteúdo fica no formato do editor (Quill "Delta", em JSON):
-    é reaberto exatamente como foi escrito e nunca vira código na página."""
+    é reaberto exatamente como foi escrito e nunca vira código na página.
+
+    Dois tipos:
+      escrita  → só o editor (o que você escreve)
+      material → um guia pronto em HTML (ex.: feito pelo Claude), mostrado numa "caixa isolada"
+                 (iframe com sandbox), + o editor como bloco de anotações suas
+    """
+
+    TIPOS = [
+        ('escrita', 'Página escrita'),
+        ('material', 'Material'),
+    ]
 
     caderno = models.ForeignKey(Caderno, on_delete=models.CASCADE, related_name='paginas')
+    tipo = models.CharField(max_length=10, choices=TIPOS, default='escrita')
+    html = models.TextField(blank=True)  # só no material: o guia como veio (nunca é posto direto na página)
+    # o que o guia guardaria no localStorage (ex.: aulas marcadas como estudadas); ver views.material_html
+    armazenamento = models.JSONField(default=dict, blank=True)
     titulo = models.CharField(max_length=150, default='Sem título')
     topico = models.ForeignKey(Topico, on_delete=models.SET_NULL, null=True, blank=True,
                                related_name='paginas')
@@ -59,3 +74,7 @@ class Pagina(models.Model):
 
     def __str__(self):
         return self.titulo
+
+    @property
+    def material(self):
+        return self.tipo == 'material'

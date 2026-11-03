@@ -109,3 +109,83 @@ class CadernoTests(TestCase):
         resposta = self.client.get(reverse('estudos:disciplina', args=[self.redes.id]))
         self.assertContains(resposta, f'/cadernos/?disciplina={self.redes.id}')
         self.assertContains(resposta, '1 caderno')
+
+
+GUIA = '<!DOCTYPE html><html><head><title>Caderno de Redes &amp; BGP</title></head><body><h1>BGP</h1><script>1</script></body></html>'
+
+
+class MaterialTests(TestCase):
+    def setUp(self):
+        self.caderno = Caderno.objects.create(nome='Redes')
+        self.url = reverse('cadernos:criar_material', args=[self.caderno.id])
+
+    def test_colar_html_usa_o_titulo_do_material(self):
+        resposta = self.client.post(self.url, {'titulo': '', 'html': GUIA})
+        material = Pagina.objects.get()
+        self.assertEqual((material.tipo, material.titulo, material.html), ('material', 'Caderno de Redes & BGP', GUIA))
+        self.assertRedirects(resposta, reverse('cadernos:pagina', args=[material.id]))
+
+    def test_enviar_arquivo_e_titulo_proprio(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        arquivo = SimpleUploadedFile('guia.html', ('﻿' + GUIA).encode('utf-8'), content_type='text/html')
+        self.client.post(self.url, {'titulo': 'Meu guia', 'arquivo': arquivo})
+        material = Pagina.objects.get()
+        self.assertEqual((material.titulo, material.html), ('Meu guia', GUIA))  # sem o BOM
+
+    def test_recusa_vazio_os_dois_ou_texto_sem_html(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self.assertContains(self.client.post(self.url, {'html': '  '}, follow=True), 'Cole o HTML')
+        self.assertContains(self.client.post(self.url, {'html': 'só texto'}, follow=True), 'não parece HTML')
+        arquivo = SimpleUploadedFile('g.html', GUIA.encode(), content_type='text/html')
+        self.assertContains(self.client.post(self.url, {'html': GUIA, 'arquivo': arquivo}, follow=True), 'não os dois')
+        self.assertFalse(Pagina.objects.exists())
+
+    def test_material_roda_isolado(self):
+        material = Pagina.objects.create(caderno=self.caderno, tipo='material', html=GUIA, titulo='Guia')
+        resposta = self.client.get(reverse('cadernos:material_html', args=[material.id]))
+        html = resposta.content.decode()
+        self.assertIn('<h1>BGP</h1><script>1</script>', html)  # o guia vai inteiro (com a ponte no <head>)
+        # mesmo aberto direto, o guia fica numa origem isolada
+        self.assertIn('sandbox allow-scripts', resposta['Content-Security-Policy'])
+        self.assertNotIn('allow-same-origin', resposta['Content-Security-Policy'])
+        self.assertEqual(resposta['X-Frame-Options'], 'SAMEORIGIN')
+        # a página do caderno mostra o iframe isolado + o bloco de anotações; o HTML não vai direto na página
+        pagina = self.client.get(reverse('cadernos:pagina', args=[material.id]))
+        self.assertContains(pagina, 'sandbox="allow-scripts allow-popups allow-modals"')
+        self.assertContains(pagina, 'suas anotações')
+        self.assertNotContains(pagina, '<h1>BGP</h1>')
+        # página escrita não tem HTML para servir
+        escrita = Pagina.objects.create(caderno=self.caderno, titulo='Notas')
+        self.assertEqual(self.client.get(reverse('cadernos:material_html', args=[escrita.id])).status_code, 404)
+
+    def test_anotacoes_do_material_salvam_e_o_html_fica(self):
+        material = Pagina.objects.create(caderno=self.caderno, tipo='material', html=GUIA, titulo='Guia')
+        self.client.post(reverse('cadernos:salvar_pagina', args=[material.id]),
+                         data=json.dumps({'conteudo': DELTA, 'texto': 'BGP usa AS'}), content_type='application/json')
+        material.refresh_from_db()
+        self.assertEqual((material.conteudo, material.html), (DELTA, GUIA))
+
+    def test_ponte_de_armazenamento(self):
+        material = Pagina.objects.create(caderno=self.caderno, tipo='material', html=GUIA, titulo='Guia')
+        url_salvar = reverse('cadernos:salvar_pagina', args=[material.id])
+        salvar = lambda dados: self.client.post(url_salvar, data=json.dumps(dados), content_type='application/json')
+        # o guia marcou uma aula como estudada → fica no banco
+        self.assertEqual(salvar({'armazenamento': {'progresso': '{"aula2":true}'}}).status_code, 200)
+        material.refresh_from_db()
+        self.assertEqual(material.armazenamento, {'progresso': '{"aula2":true}'})
+        # inválidos: valor que não é texto, ou numa página escrita
+        self.assertEqual(salvar({'armazenamento': {'x': 1}}).status_code, 400)
+        escrita = Pagina.objects.create(caderno=self.caderno, titulo='Notas')
+        self.assertEqual(self.client.post(reverse('cadernos:salvar_pagina', args=[escrita.id]),
+                                          data=json.dumps({'armazenamento': {}}),
+                                          content_type='application/json').status_code, 400)
+
+        # ao abrir, a ponte entra logo depois do <head>, com o que foi salvo
+        material.armazenamento = {'nota': '</script><script>alert(1)</script>'}
+        material.save()
+        html = self.client.get(reverse('cadernos:material_html', args=[material.id])).content.decode()
+        self.assertTrue(html.startswith('<!DOCTYPE html><html><head><script>'))
+        self.assertIn("Object.defineProperty(window, 'localStorage'", html)
+        self.assertIn('\\u003c/script>\\u003cscript>alert(1)', html)  # o texto salvo não fecha o <script>
+        self.assertEqual(html.count('<script>alert(1)'), 0)
+        self.assertTrue(html.endswith('<title>Caderno de Redes &amp; BGP</title></head><body><h1>BGP</h1><script>1</script></body></html>'))

@@ -11,7 +11,7 @@ if (area && elEditor) {
 
     const quill = new Quill(elEditor, {
         theme: 'snow',
-        placeholder: 'Comece a escrever...',
+        placeholder: elEditor.dataset.placeholder || 'Comece a escrever...',
         modules: {
             toolbar: [
                 [{ header: [1, 2, 3, false] }],
@@ -106,4 +106,33 @@ if (area && elEditor) {
     if (!quill.getText().trim() && /^(Nova página|Primeira página|Sem título)$/.test(campoTitulo.value)) {
         campoTitulo.select();
     }
+}
+
+// Janela "+ material": colar o HTML ou enviar o arquivo
+const dialogoMaterial = document.getElementById('dialogo-material');
+if (dialogoMaterial) {
+    document.querySelectorAll('[data-abrir-material]').forEach(botao => botao.addEventListener('click', () => {
+        dialogoMaterial.showModal();
+        dialogoMaterial.querySelector('textarea').focus();
+    }));
+    dialogoMaterial.querySelector('[data-fechar]').addEventListener('click', () => dialogoMaterial.close());
+}
+
+// Material: o guia (na caixa isolada) avisa quando guarda algo, ex.: uma aula marcada como estudada.
+// Só aceitamos mensagens vindas do próprio iframe do material.
+const quadroMaterial = document.querySelector('.material-frame');
+if (quadroMaterial && area) {
+    let esperaArmazenamento = null;
+    window.addEventListener('message', evento => {
+        if (evento.source !== quadroMaterial.contentWindow || evento.data?.studyhub !== 'armazenamento') return;
+        clearTimeout(esperaArmazenamento);
+        esperaArmazenamento = setTimeout(() => {
+            fetch(area.dataset.urlSalvar, {
+                method: 'POST',
+                keepalive: true,
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': area.dataset.csrf },
+                body: JSON.stringify({ armazenamento: evento.data.dados }),
+            });
+        }, 400);
+    });
 }
