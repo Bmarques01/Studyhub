@@ -570,6 +570,24 @@ input[type="color"] {
 }
 
 .mini-aviso[hidden] { display: none; }
+
+/* "🔇 som bloqueado": o clique nele já libera o som (o motor escuta qualquer clique na página) */
+.mini-som {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 7px 10px;
+    border: 1px dashed var(--rosa);
+    border-radius: 10px;
+    background: var(--rosa-fundo);
+    color: var(--vinho);
+    font-family: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+.mini-som:hover { background: var(--rosa-bebe); }
+.mini-som[hidden] { display: none; }
 .mini-aviso p { margin-bottom: 8px; }
 
 .mini-aviso-botoes {

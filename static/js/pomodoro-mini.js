@@ -29,6 +29,7 @@ if (mini && window.Pomodoro) {
         el('mini-alternar').title = estado.rodando ? 'Pausar' : 'Continuar';
         el('mini-aviso').hidden = !P.mostrarAviso();
         el('mini-livre').hidden = !estado.livre;
+        el('mini-som').hidden = P.somLiberado();
         el('mini-fechar').hidden = !esperando;
         el('mini-finalizar').hidden = esperando;  // esperando: o ✕ já faz esse papel
     }

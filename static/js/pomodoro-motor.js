@@ -237,7 +237,7 @@ window.Pomodoro = (() => {
         if (eraFoco) estado.focosConcluidos++;
         trocarModo(proximoModo());
 
-        tocarSom('fim');
+        const tocou = tocarSom('fim');
         notificar(eraFoco ? 'Foco concluído!' : 'Pausa acabou!',
                   eraFoco ? `${minutos} min de foco registrados. Hora da pausa.` : 'Bora para o próximo foco.');
         if (eraFoco) registrarSessao(minutos);
@@ -262,10 +262,12 @@ window.Pomodoro = (() => {
         } else {
             esperar();  // pausa acabou faz tempo: não inventa um foco que você não fez
         }
+        if (!tocou) deixarSomPendente('fim');  // depois de trocar de bloco (o estado novo apaga o antigo)
         avisarTelas('fim', { eraFoco, minutos });
     }
 
     function tick() {
+        tocarSomPendente();
         if (!estado.rodando) return;
         const restante = restanteMs();
 
@@ -274,7 +276,7 @@ window.Pomodoro = (() => {
             && restante <= UM_MINUTO && estado.alvoMs > UM_MINUTO) {
             estado.avisou = true;
             salvar();
-            tocarSom('aviso');
+            tocarOuDeixarPendente('aviso');
             notificar('Ainda no foco?', 'Falta 1 minuto. Quer continuar estudando ou fazer a pausa?');
         }
 
@@ -337,14 +339,20 @@ window.Pomodoro = (() => {
 
     function prepararSom() {
         try {
-            audio ??= new AudioContext();
+            if (!audio) {
+                audio = new AudioContext();
+                // quando o som for liberado (ou bloqueado), as telas atualizam o aviso 🔇
+                audio.addEventListener('statechange', () => avisarTelas('mudou'));
+            }
             if (audio.state === 'suspended') audio.resume();
         } catch { /* navegador sem som */ }
     }
-    document.addEventListener('pointerdown', prepararSom, { once: true });
-    document.addEventListener('keydown', prepararSom, { once: true });
+    // Tenta já ao abrir a página (alguns navegadores deixam) e a cada clique/tecla até conseguir.
+    prepararSom();
+    document.addEventListener('pointerdown', () => { if (!somLiberado()) prepararSom(); });
+    document.addEventListener('keydown', () => { if (!somLiberado()) prepararSom(); });
 
-    const somLiberado = () => audio && audio.state === 'running';
+    const somLiberado = () => Boolean(audio) && audio.state === 'running';
 
     // Um "sininho": nota principal + dois harmônicos mais baixos que somem devagar
     const MELODIAS = {
@@ -368,7 +376,7 @@ window.Pomodoro = (() => {
     }
 
     function tocarSom(tipo) {
-        if (!somLiberado()) return;
+        if (!somLiberado()) return false;
         if (!volumeGeral) {
             volumeGeral = audio.createGain();
             volumeGeral.gain.value = 0.8;
@@ -377,6 +385,32 @@ window.Pomodoro = (() => {
         const { notas, volume, repetir } = MELODIAS[tipo];
         for (let vez = 0; vez < repetir; vez++) {
             notas.forEach((frequencia, i) => nota(frequencia, audio.currentTime + vez * 1.1 + i * 0.16, volume));
+        }
+        return true;
+    }
+
+    // Som "pendente": a aba que percebeu o fim do bloco pode não ter permissão para tocar
+    // (por exemplo, recarregada e ainda sem clique). Ela deixa o som anotado no estado e
+    // qualquer outra aba liberada toca. Só vale por 2 minutos, para não tocar atrasado.
+    function deixarSomPendente(tipo) {
+        estado.somPendente = { tipo, em: Date.now() };
+        salvar();
+    }
+
+    function tocarOuDeixarPendente(tipo) {
+        if (!tocarSom(tipo)) deixarSomPendente(tipo);
+    }
+
+    function tocarSomPendente() {
+        const pendente = estado.somPendente;
+        if (!pendente) return;
+        if (Date.now() - pendente.em > 2 * UM_MINUTO) {
+            estado.somPendente = null;  // velho demais: descarta
+            salvar();
+        } else if (somLiberado()) {
+            estado.somPendente = null;  // salva antes de tocar: as outras abas não tocam de novo
+            salvar();
+            tocarSom(pendente.tipo);
         }
     }
 
@@ -412,6 +446,6 @@ window.Pomodoro = (() => {
         iniciar, pausar, alternar, pular, recomecar, estender, seguirSemLimite, fecharAviso, dispensar,
         finalizar, textoParaEncerrar,
         encerrar: () => terminar(), definirTempo, tick,
-        decorridoMs, textoDoTempo, textoDoCiclo, fracaoRestante, emAndamento, mostrarAviso,
+        decorridoMs, textoDoTempo, textoDoCiclo, fracaoRestante, emAndamento, mostrarAviso, somLiberado,
     };
 })();

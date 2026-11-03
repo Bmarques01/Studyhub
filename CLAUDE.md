@@ -96,6 +96,9 @@ Compartilhado: `templates/base.html` (menu lateral, mensagens, mini pomodoro), `
     previsto** do anterior. Só espera a Bruna ("pronta pra começar") se a pausa inteira já tiver passado.
   - Várias abas não registram a mesma sessão (`blocoId`). Som só toca depois de um clique na página
     (limitação do navegador); por isso também há notificação do sistema.
+  - Som entre abas: só a aba que percebe o fim do bloco toca. Se ela não pode (sem clique), grava
+    `somPendente` no estado e qualquer aba liberada toca no próximo `tick` (vale 2 min). O mini mostra
+    "🔇 som bloqueado · clique para ativar" quando a página ainda não tem permissão de som.
 
 ## Visual (decidido com a Bruna)
 
