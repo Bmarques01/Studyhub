@@ -228,8 +228,12 @@
     gap: 6px;
 }
 
+.tipo-opcao { position: relative; }  /* a bolinha escondida fica presa dentro do botão */
+
 .tipo-opcao input {
     position: absolute;
+    width: 1px;
+    height: 1px;
     opacity: 0;  /* esconde a bolinha padrão; o visual é o "botão" abaixo */
 }
 

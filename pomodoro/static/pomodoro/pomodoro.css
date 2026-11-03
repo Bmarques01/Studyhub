@@ -1,11 +1,14 @@
 .pomodoro {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    /* minmax(0, 1fr): a coluna do relógio pode encolher (sem isso ela empurra o "hoje" para fora da tela) */
+    grid-template-columns: minmax(0, 1fr) 300px;
     gap: 28px;
     align-items: start;
 }
 
-@media (max-width: 800px) {
+/* Tela estreita (ex.: monitor em pé): o "hoje" vai para baixo do relógio.
+   1200px e não 800px porque o menu lateral já ocupa uns 240px da largura. */
+@media (max-width: 1200px) {
     .pomodoro {
         grid-template-columns: 1fr;
     }
