@@ -21,6 +21,12 @@
             <div class="chip-sequencia" title="Dias seguidos com pelo menos um pomodoro">
                 🔥 <strong>{{ sequencia }}</strong> dia{{ sequencia|pluralize }} seguido{{ sequencia|pluralize }}
             </div>
+            {% if tem_flashcards %}
+                <a href="{% url 'flashcards:revisar' %}" class="chip-sequencia chip-flashcards">
+                    {% include "componentes/icone.html" with nome="flashcards" %}
+                    {% if flashcards_hoje %}<strong>{{ flashcards_hoje }}</strong> {% if flashcards_hoje == 1 %}cartão{% else %}cartões{% endif %} para revisar{% else %}✓ cartões em dia{% endif %}
+                </a>
+            {% endif %}
             <a href="{% url 'pomodoro:index' %}" class="btn btn-com-icone">
                 {% include "componentes/icone.html" with nome="play" %} Iniciar pomodoro
             </a>

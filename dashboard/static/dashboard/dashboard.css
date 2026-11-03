@@ -52,6 +52,18 @@
     font-size: 1.1rem;
 }
 
+/* Chip dos flashcards: é um link para a revisão */
+.chip-flashcards {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--texto);
+    text-decoration: none;
+}
+
+.chip-flashcards:hover { background: var(--rosa-fundo); }
+.chip-flashcards .icone { width: 17px; height: 17px; color: var(--rosa-forte); }
+
 .btn-com-icone {
     display: inline-flex;
     align-items: center;

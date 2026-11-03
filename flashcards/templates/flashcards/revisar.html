@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Revisar flashcards{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<script src="{% static 'flashcards/revisar.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash fc-revisao" id="revisao"
+     data-url-proximo="{% url 'flashcards:proximo' %}{% if filtro %}?disciplina={{ filtro.id }}{% endif %}"
+     data-url-responder="{% url 'flashcards:responder' 0 %}"
+     data-disciplina="{{ filtro.id|default:'' }}"
+     data-csrf="{{ csrf_token }}">
+
+    <header class="dash-topo">
+        <div>
+            <a href="{% url 'flashcards:index' %}{% if filtro %}?disciplina={{ filtro.id }}{% endif %}" class="voltar">‹ flashcards</a>
+            <h1>Revisar{% if filtro %} · {{ filtro.nome }}{% endif %}</h1>
+            <p class="dash-data"><span id="restantes">{{ para_revisar }}</span> para revisar</p>
+        </div>
+        <div class="dash-topo-acoes">
+            <a href="{% url 'pomodoro:index' %}{% if filtro %}?disciplina={{ filtro.id }}{% endif %}" class="btn btn-claro"
+               title="Ligue um pomodoro para o tempo de revisão contar nas suas horas">ligar pomodoro</a>
+        </div>
+    </header>
+
+    {# ===== O cartão ===== #}
+    <section class="card fc-palco" id="palco" hidden>
+        <p class="fc-onde"><i class="bolinha" id="cartao-cor"></i><span id="cartao-onde"></span>
+            <span class="etiqueta" id="cartao-novo" hidden>novo</span></p>
+
+        <div class="fc-frente" id="cartao-frente"></div>
+
+        <button type="button" class="btn fc-mostrar" id="btn-mostrar">mostrar resposta <kbd>espaço</kbd></button>
+
+        <div class="fc-verso" id="area-verso" hidden>
+            <div id="cartao-verso"></div>
+        </div>
+
+        <div class="fc-notas" id="notas" hidden>
+            <button type="button" class="fc-nota nota-1" data-nota="1"><strong>de novo</strong><small data-intervalo></small><kbd>1</kbd></button>
+            <button type="button" class="fc-nota nota-2" data-nota="2"><strong>difícil</strong><small data-intervalo></small><kbd>2</kbd></button>
+            <button type="button" class="fc-nota nota-3" data-nota="3"><strong>bom</strong><small data-intervalo></small><kbd>3</kbd></button>
+            <button type="button" class="fc-nota nota-4" data-nota="4"><strong>fácil</strong><small data-intervalo></small><kbd>4</kbd></button>
+        </div>
+    </section>
+
+    {# ===== Acabou ===== #}
+    <section class="card fc-fim" id="fim" hidden>
+        <p class="fc-fim-titulo">✓ Revisão de hoje concluída</p>
+        <p class="vazio-card" id="fim-proxima"></p>
+        <a href="{% url 'flashcards:index' %}{% if filtro %}?disciplina={{ filtro.id }}{% endif %}" class="btn btn-claro">voltar aos cartões</a>
+    </section>
+
+    <p class="mensagem error" id="erro" hidden></p>
+</div>
+{% endblock %}

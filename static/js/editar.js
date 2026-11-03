@@ -6,7 +6,8 @@ function abrirEdicao(item) {
     // fecha qualquer outro item que esteja sendo editado
     document.querySelectorAll('.editavel.editando').forEach(fecharEdicao);
     item.classList.add('editando');
-    const campo = item.querySelector('.modo-edicao input:not([type="hidden"]):not([type="color"])');
+    const campo = item.querySelector(
+        '.modo-edicao input:not([type="hidden"]):not([type="color"]), .modo-edicao textarea');
     campo.focus();
     campo.select();
 }

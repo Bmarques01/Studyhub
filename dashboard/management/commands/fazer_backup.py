@@ -5,8 +5,8 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-# Apps com os seus dados (o resto, como sessões e permissões, o Django recria sozinho)
-APPS = ['estudos', 'pomodoro', 'dashboard', 'calendario', 'curso', 'projetos', 'cadernos']
+# A mesma lista de apps da sincronização (assim um app novo não fica de fora de nenhum dos dois)
+from dashboard.sincronizacao import APPS
 
 
 class Command(BaseCommand):

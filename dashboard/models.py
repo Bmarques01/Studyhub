@@ -6,6 +6,8 @@ class Perfil(models.Model):
 
     nome = models.CharField(max_length=60, default='Bruna')
     meta_semanal_horas = models.PositiveSmallIntegerField(default=10)
+    # quantos cartões novos de flashcards entram na revisão por dia (os vencidos não têm limite)
+    flashcards_novos_por_dia = models.PositiveSmallIntegerField(default=20)
 
     class Meta:
         verbose_name_plural = 'perfil'

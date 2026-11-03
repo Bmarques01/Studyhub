@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'curso',
     'projetos',
     'cadernos',
+    'flashcards',
 ]
 
 MIDDLEWARE = [

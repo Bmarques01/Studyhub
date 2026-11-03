@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Flashcards{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<script src="{% static 'flashcards/flashcards.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+{{ topicos|json_script:"topicos-por-disciplina" }}
+<div class="dash fc">
+
+    {# ===== Topo ===== #}
+    <header class="dash-topo">
+        <div>
+            <h1>Flashcards</h1>
+            <p class="dash-data">
+                {% if filtro %}{{ filtro.nome }} · {% endif %}
+                {{ para_revisar }} para revisar agora
+            </p>
+        </div>
+        <div class="dash-topo-acoes">
+            <a href="{% url 'pomodoro:index' %}{% if filtro %}?disciplina={{ filtro.id }}{% endif %}" class="btn btn-claro"
+               title="Ligue um pomodoro para o tempo de revisão contar nas suas horas">pomodoro</a>
+            {% if para_revisar %}
+                <a href="{% url 'flashcards:revisar' %}{% if filtro %}?disciplina={{ filtro.id }}{% endif %}" class="btn btn-com-icone">
+                    {% include "componentes/icone.html" with nome="play" %} Revisar ({{ para_revisar }})
+                </a>
+            {% else %}
+                <span class="chip-sequencia">✓ tudo revisado</span>
+            {% endif %}
+        </div>
+    </header>
+
+    {# ===== Filtro por disciplina ===== #}
+    {% if filtros %}
+        <nav class="fc-filtros" aria-label="Filtrar por disciplina">
+            <a href="{% url 'flashcards:index' %}" class="fc-filtro {% if not filtro %}ativo{% endif %}">
+                todas <small>{{ total_cartoes }} · {{ para_revisar_todas }} hoje</small>
+            </a>
+            {% for d in filtros %}
+                <a href="?disciplina={{ d.id }}" class="fc-filtro {% if filtro.id == d.id %}ativo{% endif %}"
+                   style="--cor: {{ d.cor }}">
+                    <i class="bolinha"></i>{{ d.nome }}
+                    <small>{{ d.resumo.total }} · {{ d.resumo.para_revisar }} hoje</small>
+                </a>
+            {% endfor %}
+        </nav>
+    {% endif %}
+
+    <div class="fc-grade">
+        {# ===== Novo cartão ===== #}
+        <section class="card fc-novo">
+            <header class="card-topo"><h2 class="rotulo">novo cartão</h2></header>
+            <form method="post" action="{% url 'flashcards:criar' %}" class="fc-form" data-topicos>
+                {% csrf_token %}
+                <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+                {% include "flashcards/_escolha.html" %}
+                <label>frente <textarea name="frente" rows="2" required placeholder="Qual porta o BGP usa?"></textarea></label>
+                <label>verso <textarea name="verso" rows="3" required placeholder="TCP, porta 179."></textarea></label>
+                <button class="btn">+ cartão</button>
+            </form>
+        </section>
+
+        {# ===== Colar vários ===== #}
+        <section class="card fc-importar">
+            <header class="card-topo">
+                <h2 class="rotulo">colar vários</h2>
+                <span class="sub">até {{ limite_importacao }} por vez</span>
+            </header>
+            <form method="post" action="{% url 'flashcards:importar' %}" class="fc-form" data-topicos>
+                {% csrf_token %}
+                <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+                {% include "flashcards/_escolha.html" %}
+                <label>cartões
+                    <textarea name="texto" rows="7" required class="mono"
+                              placeholder="F: Qual porta o BGP usa?&#10;V: TCP, porta 179.&#10;&#10;F: O que é um sistema autônomo (AS)?&#10;V: Um conjunto de redes sob a mesma administração."></textarea>
+                </label>
+                <p class="fc-dica">Cada cartão começa com <code>F:</code> (frente) e tem um <code>V:</code> (verso).
+                    A resposta pode ter várias linhas.</p>
+                <button class="btn">importar</button>
+            </form>
+        </section>
+    </div>
+
+    {# ===== Lista de cartões ===== #}
+    <section class="card fc-lista">
+        <header class="card-topo">
+            <h2 class="rotulo">cartões{% if filtro %} de {{ filtro.nome }}{% endif %}</h2>
+            <form method="post" action="{% url 'flashcards:salvar_limite' %}" class="fc-limite">
+                {% csrf_token %}
+                <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+                <label>novos por dia
+                    <input type="number" name="flashcards_novos_por_dia" min="1" max="500" required
+                           value="{{ perfil.flashcards_novos_por_dia }}">
+                </label>
+                <button class="btn btn-claro">ok</button>
+                <small>{{ vagas }} vaga{{ vagas|pluralize }} hoje</small>
+            </form>
+        </header>
+
+        {% if cartoes %}
+            <ul class="fc-cartoes">
+                {% for c in cartoes %}
+                    <li class="fc-cartao editavel">
+                        <div class="modo-ver">
+                            <div class="fc-textos">
+                                <strong>{{ c.frente }}</strong>
+                                <span>{{ c.verso }}</span>
+                            </div>
+                            <div class="fc-meta">
+                                {% if not filtro %}<span class="fc-disc" style="--cor: {{ c.disciplina.cor }}"><i class="bolinha"></i>{{ c.disciplina.nome }}</span>{% endif %}
+                                {% if c.topico %}<span class="etiqueta">{{ c.topico.nome }}</span>{% endif %}
+                                <span class="quando {% if c.situacao == 'para revisar' %}perto{% endif %}">{{ c.situacao }}</span>
+                                <button type="button" class="btn-icone" data-editar title="Editar">✎</button>
+                                <form method="post" action="{% url 'flashcards:excluir' c.id %}"
+                                      onsubmit="return confirm('Excluir este cartão?')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+                                    <button class="btn-icone" title="Excluir">✕</button>
+                                </form>
+                            </div>
+                        </div>
+                        <form method="post" action="{% url 'flashcards:editar' c.id %}" class="modo-edicao fc-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+                            <textarea name="frente" rows="2" required aria-label="Frente">{{ c.frente }}</textarea>
+                            <textarea name="verso" rows="3" required aria-label="Verso">{{ c.verso }}</textarea>
+                            <div class="form-linha">
+                                <select name="topico" aria-label="Tópico">
+                                    <option value="">sem tópico</option>
+                                    {% for t in c.disciplina.topicos.all %}
+                                        <option value="{{ t.id }}" {% if t.id == c.topico_id %}selected{% endif %}>{{ t.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn">salvar</button>
+                                <button type="button" class="btn-texto" data-cancelar>cancelar</button>
+                            </div>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="vazio-card">Nenhum cartão {% if filtro %}de {{ filtro.nome }} {% endif %}ainda. Crie um acima ou cole vários de uma vez.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

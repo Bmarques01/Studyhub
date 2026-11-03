@@ -8,6 +8,8 @@ from django.views.decorators.http import require_POST
 
 from calendario.models import Evento
 from calendario.views import eventos_por_dia, proximos_eventos, semanas_do_mes
+from flashcards import memoria
+from flashcards.models import Flashcard
 from pomodoro.models import SessaoPomodoro
 
 from .models import Perfil
@@ -195,6 +197,8 @@ def index(request):
         'por_disciplina': por_disciplina,
         'calendario_mes': calendario_mes,
         'proximos': proximos_eventos(limite=5),
+        'tem_flashcards': Flashcard.objects.exists(),
+        'flashcards_hoje': memoria.para_revisar(),
     })
 
 

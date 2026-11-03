@@ -9,6 +9,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from calendario.models import Evento
+from flashcards import memoria
 from pomodoro.models import SessaoPomodoro
 
 from .forms import CategoriaForm, DisciplinaForm, NotasForm, PeriodoForm, TopicoForm
@@ -173,6 +174,7 @@ def disciplina_detalhe(request, disciplina_id):
         'largura_sem_topico': sem_topico / maior * 100,
         'proximos': Evento.objects.filter(disciplina=disciplina, data__gte=hoje, concluido=False),
         'historico': sessoes.select_related('topico')[:8],
+        'flashcards_hoje': memoria.para_revisar(disciplina),
     })
 
 

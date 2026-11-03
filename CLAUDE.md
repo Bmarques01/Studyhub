@@ -50,6 +50,10 @@ no `.gitignore`). Lógica em `dashboard/sincronizacao.py`:
 - O pomodoro em andamento fica no `localStorage` do navegador e não é sincronizado.
 - `manage.py fazer_backup` continua existindo para um backup avulso em `backup/`.
 - Ids são preservados (o Studyhub continua sendo o projeto 1).
+- A lista de apps exportados é `APPS` em `dashboard/sincronizacao.py` (o `fazer_backup` usa a mesma).
+  **App novo com dados → entra nessa lista.** Antes de usar o outro computador depois de uma mudança
+  de código: `git pull`, `pip install -r requirements.txt`, `migrate` e só então `receber_dados`
+  (um computador com código antigo enviaria um JSON sem as tabelas novas e apagaria esses dados).
 - **Nunca** colocar dados pessoais no repositório público (inclui o Time Tracking, que tem dados da empresa).
 
 ## Comandos
@@ -69,6 +73,7 @@ no `.gitignore`). Lógica em `dashboard/sincronizacao.py`:
 | `curso` | `Grade` + `DisciplinaGrade` (situação, pré-requisitos, nota final). % concluído por carga horária, mapa da grade, liberadas/travadas. Grade de CC da Unisinos em `grade_cc_unisinos.py`, comando `importar_grade`. |
 | `projetos` | `Projeto` → `Funcionalidade` (Kanban: backlog/a_fazer/fazendo/feito; tipo; prioridade; estimativa) → `Tarefa` (checklist); `EntradaDiario` (devlog). Arrastar e soltar salva coluna e ordem. |
 | `cadernos` | `Caderno` (capa, papel, fonte, cores; disciplina opcional) → `Pagina` (conteúdo em **Quill Delta JSON**, nunca HTML; salvamento automático). |
+| `flashcards` | `Flashcard` (disciplina obrigatória, tópico opcional, frente/verso + memória do FSRS) → `Revisao` (nota 1–4, duração). `memoria.py` faz a ponte com a biblioteca `fsrs` (sem fuzzing, para o intervalo do botão ser o real) e monta a fila: vencidos primeiro, depois novos até `Perfil.flashcards_novos_por_dia` (20). `importacao.py` lê o texto colado (`F:` / `V:`). Página com filtro por disciplina; revisão por JSON (`revisar/proximo/`, `<id>/responder/`) com atalhos espaço e 1–4. Tempo de revisão só conta se a Bruna ligar um pomodoro. |
 
 Compartilhado: `templates/base.html` (menu lateral, mensagens, mini pomodoro), `templates/componentes/icone.html`
 (ícones SVG por nome), `static/css/base.css` (paleta e componentes), `static/js/editar.js` (edição inline
@@ -151,10 +156,10 @@ DevTools Protocol pelo `WebSocket` nativo: clicar, digitar (`Input.insertText`),
    R: F
    E: O BGP é um EGP, usado entre sistemas autônomos.
    ```
-2. **IA**: resumo de slides (PDF) direto no caderno e geração de questões no formato acima. Precisa de
+2. **IA**: resumo de slides (PDF) direto no caderno e geração de questões no formato acima
+   (e de flashcards no formato `F:` / `V:`); quando existir o caderno de erros, um botão "virar flashcard". Precisa de
    chave da API da Anthropic (a Bruna ainda vai criar). Antes de escrever o código, ler a skill
    `claude-api`.
-3. **Flashcards** com repetição espaçada (FSRS), podendo nascer dos erros.
-4. **Planejador de semestres** (pré-requisitos + previsão de formatura) e **atividades complementares**
+3. **Planejador de semestres** (pré-requisitos + previsão de formatura) e **atividades complementares**
    (100h, com limite por modalidade) no app `curso`.
-5. Projetos: versões/changelog e integração com o GitHub.
+4. Projetos: versões/changelog e integração com o GitHub.
