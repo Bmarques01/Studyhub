@@ -165,7 +165,10 @@ button, input {
 .conteudo {
     flex: 1;
     min-width: 0;
-    max-width: 1240px;
+    /* Em telas wide o conteúdo cresce até 1600px e fica centralizado
+       (margin auto divide o espaço que sobra entre os dois lados). */
+    max-width: 1600px;
+    margin: 0 auto;
     padding: 36px 40px;
 }
 
