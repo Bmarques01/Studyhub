@@ -4,6 +4,7 @@
 # Banco de dados: tem os seus dados pessoais de estudo, não vai para o GitHub
 db.sqlite3
 *.sqlite3
+backup/
 
 # Arquivos gerados pelo Python
 __pycache__/

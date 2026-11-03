@@ -79,3 +79,30 @@ class DashboardTests(TestCase):
         criar_sessao(30)
         resposta = self.client.get(reverse('dashboard:index'))
         self.assertEqual(resposta.context['meta_pct'], 50)
+
+
+class BackupTests(TestCase):
+    def test_backup_gera_arquivo_que_restaura(self):
+        import io
+        import json
+        import tempfile
+        from pathlib import Path
+
+        from django.core.management import call_command
+        from django.test import override_settings
+
+        Perfil.objects.create(pk=1, meta_semanal_horas=12)
+        SessaoPomodoro.objects.create(duracao_minutos=25)
+        with tempfile.TemporaryDirectory() as pasta, override_settings(BASE_DIR=Path(pasta)):
+            call_command('fazer_backup', stdout=io.StringIO())
+            arquivo = next((Path(pasta) / 'backup').glob('studyhub-*.json'))
+            dados = json.loads(arquivo.read_text(encoding='utf-8'))
+            modelos = {item['model'] for item in dados}
+            self.assertIn('dashboard.perfil', modelos)
+            self.assertIn('pomodoro.sessaopomodoro', modelos)
+            # restaura num banco "limpo"
+            SessaoPomodoro.objects.all().delete()
+            Perfil.objects.all().delete()
+            call_command('loaddata', str(arquivo), verbosity=0)
+        self.assertEqual(Perfil.atual().meta_semanal_horas, 12)
+        self.assertEqual(SessaoPomodoro.objects.count(), 1)

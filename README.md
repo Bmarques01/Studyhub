@@ -33,6 +33,16 @@ python manage.py runserver
 
 Depois é só abrir http://127.0.0.1:8000
 
+## Levar os dados para outro computador
+
+O banco (`db.sqlite3`) não vai para o GitHub, porque tem dados pessoais. Para levar tudo:
+
+```bash
+python manage.py fazer_backup                           # gera backup/studyhub-AAAA-MM-DD.json
+# copie esse arquivo para o outro computador (pasta backup/) e, lá, depois do migrate:
+python manage.py loaddata backup/studyhub-AAAA-MM-DD.json
+```
+
 Para rodar os testes:
 
 ```bash
