@@ -143,11 +143,11 @@
                     </div>
                     <div class="campos-lado">
                         <label>início <input type="date" name="data_inicio" value="{{ projeto.data_inicio|date:'Y-m-d' }}"></label>
-                        <label>fim <small>(vazio = em andamento)</small>
+                        <label><span>fim <small>(vazio = em andamento)</small></span>
                             <input type="date" name="data_fim" value="{{ projeto.data_fim|date:'Y-m-d' }}"></label>
                     </div>
                     <label>cor <input type="color" name="cor" value="{{ projeto.cor }}"></label>
-                    <label>tecnologias <small>(separe por vírgula)</small>
+                    <label><span>tecnologias <small>(separe por vírgula)</small></span>
                         <input type="text" name="tecnologias" value="{{ projeto.tecnologias }}" placeholder="Python, Django, JavaScript">
                     </label>
                     <label>repositório <input type="url" name="link_repositorio" value="{{ projeto.link_repositorio }}" placeholder="https://github.com/..."></label>
