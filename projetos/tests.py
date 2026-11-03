@@ -15,6 +15,25 @@ class ProjetoTests(TestCase):
     def func(self, titulo, status='a_fazer', **extra):
         return Funcionalidade.objects.create(projeto=self.projeto, titulo=titulo, status=status, **extra)
 
+    def test_coluna_feito_mais_novo_em_cima(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+        agora = timezone.now()
+        antiga = self.func('Antiga', 'feito', ordem=0, concluida_em=agora - timedelta(days=10))
+        nova = self.func('Nova', 'feito', ordem=5, concluida_em=agora)
+        meio = self.func('Meio', 'feito', ordem=1, concluida_em=agora - timedelta(days=2))
+        Funcionalidade.objects.filter(id=antiga.id).update(concluida_em=None)  # dado antigo, sem data
+        resposta = self.client.get(reverse('projetos:projeto', args=[self.projeto.id]))
+        feito = next(c for c in resposta.context['colunas'] if c['status'] == 'feito')
+        self.assertEqual([f.titulo for f in feito['cartoes']], ['Nova', 'Meio', 'Antiga'])
+        # as outras colunas continuam na ordem manual
+        self.func('B', ordem=1)
+        self.func('A', ordem=0)
+        resposta = self.client.get(reverse('projetos:projeto', args=[self.projeto.id]))
+        a_fazer = next(c for c in resposta.context['colunas'] if c['status'] == 'a_fazer')
+        self.assertEqual([f.titulo for f in a_fazer['cartoes']], ['A', 'B'])
+
     def test_lista_de_tecnologias(self):
         self.assertEqual(self.projeto.lista_tecnologias, ['Python', 'Django', 'JavaScript'])
 

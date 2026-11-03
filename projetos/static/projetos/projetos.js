@@ -3,10 +3,12 @@
 
 const pagina = document.querySelector('.projeto-pagina');
 let arrastado = null;
+let origem = null;  // de onde o cartão saiu: lista e vizinho de baixo (para devolver ao lugar)
 
 document.querySelectorAll('.cartao').forEach(cartao => {
     cartao.addEventListener('dragstart', evento => {
         arrastado = cartao;
+        origem = { lista: cartao.parentElement, proximo: cartao.nextElementSibling };
         cartao.classList.add('arrastando');
         evento.dataTransfer.effectAllowed = 'move';
     });
@@ -66,6 +68,15 @@ document.querySelectorAll('.kanban-lista').forEach(lista => {
         evento.preventDefault();
         lista.classList.remove('recebendo');
         if (!arrastado) return;
+        // "feito" é ordenado pela data de conclusão (o mais novo em cima), não à mão:
+        // quem chega de outra coluna vai para o topo; dentro de "feito", volta ao lugar.
+        if (lista.dataset.status === 'feito') {
+            if (origem.lista === lista) {
+                lista.insertBefore(arrastado, origem.proximo);
+                return;  // nada mudou
+            }
+            lista.prepend(arrastado);
+        }
         atualizarContadores();
         salvar(arrastado, lista);
     });

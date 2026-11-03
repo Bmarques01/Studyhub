@@ -86,6 +86,9 @@ def projeto(request, projeto_id):
     colunas = []
     for status, nome in Funcionalidade.STATUS:
         cartoes = [f for f in funcionalidades if f.status == status]
+        if status == 'feito':
+            # "feito" vira uma pilha: o que terminou por último fica em cima (sem data vai para o fim)
+            cartoes.sort(key=lambda f: (f.concluida_em is not None, f.concluida_em, f.id), reverse=True)
         for f in cartoes:
             f.minutos = minutos_por_funcionalidade.get(f.id, 0)
         colunas.append({'status': status, 'nome': nome, 'cartoes': cartoes})
