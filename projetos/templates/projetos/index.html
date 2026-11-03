@@ -14,6 +14,10 @@
         <form method="post" action="{% url 'projetos:criar_projeto' %}" class="form-linha">
             {% csrf_token %}
             <input type="text" name="nome" placeholder="Novo projeto" required maxlength="100">
+            <select name="tipo" aria-label="Tipo do projeto">
+                <option value="pessoal">pessoal</option>
+                <option value="trabalho">trabalho</option>
+            </select>
             <input type="hidden" name="status" value="ativo">
             <input type="hidden" name="cor" value="#a77bf3">
             <button class="btn">+ projeto</button>
@@ -25,8 +29,12 @@
             <a href="{% url 'projetos:projeto' p.id %}" class="card cartao-projeto" style="--cor: {{ p.cor }}">
                 <span class="cartao-projeto-topo">
                     <strong>{{ p.nome }}</strong>
-                    <span class="etiqueta status-{{ p.status }}">{{ p.get_status_display|lower }}</span>
+                    <span class="etiquetas">
+                        <span class="etiqueta tipo-{{ p.tipo }}">{{ p.get_tipo_display|lower }}</span>
+                        <span class="etiqueta status-{{ p.status }}">{{ p.get_status_display|lower }}</span>
+                    </span>
                 </span>
+                {% include "projetos/_datas.html" with projeto=p %}
                 {% if p.descricao %}<span class="cartao-projeto-desc">{{ p.descricao|truncatechars:110 }}</span>{% endif %}
                 {% if p.lista_tecnologias %}
                     <span class="tecnologias">

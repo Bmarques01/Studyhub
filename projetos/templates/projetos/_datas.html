@@ -1,0 +1,8 @@
+{# Início e fim do projeto. Ex.: "07/10/2026 → em andamento · 28 dias" #}
+{% if projeto.data_inicio or projeto.data_fim %}
+    <span class="projeto-datas">
+        {{ projeto.data_inicio|date:"d/m/Y"|default:"?" }} →
+        {% if projeto.data_fim %}{{ projeto.data_fim|date:"d/m/Y" }}{% else %}em andamento{% endif %}
+        {% if projeto.dias is not None %}· {{ projeto.dias }} dia{{ projeto.dias|pluralize }}{% endif %}
+    </span>
+{% endif %}

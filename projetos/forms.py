@@ -6,7 +6,22 @@ from .models import EntradaDiario, Funcionalidade, Projeto, Tarefa
 class ProjetoForm(forms.ModelForm):
     class Meta:
         model = Projeto
-        fields = ['nome', 'descricao', 'status', 'cor', 'tecnologias', 'link_repositorio', 'link_deploy']
+        fields = ['nome', 'descricao', 'status', 'tipo', 'data_inicio', 'data_fim', 'cor', 'tecnologias',
+                  'link_repositorio', 'link_deploy']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tipo'].required = False  # sem escolha = pessoal
+
+    def clean_tipo(self):
+        return self.cleaned_data.get('tipo') or 'pessoal'
+
+    def clean(self):
+        dados = super().clean()
+        inicio, fim = dados.get('data_inicio'), dados.get('data_fim')
+        if inicio and fim and fim < inicio:
+            raise forms.ValidationError('A data de fim não pode ser antes da data de início.')
+        return dados
 
 
 class NovaFuncionalidadeForm(forms.ModelForm):

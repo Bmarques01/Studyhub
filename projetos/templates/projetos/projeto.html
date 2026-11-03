@@ -17,8 +17,10 @@
             <a href="{% url 'projetos:index' %}" class="voltar">‹ projetos</a>
             <h1 class="projeto-titulo">
                 <i class="bolinha-projeto"></i>{{ projeto.nome }}
+                <span class="etiqueta tipo-{{ projeto.tipo }}">{{ projeto.get_tipo_display|lower }}</span>
                 <span class="etiqueta status-{{ projeto.status }}">{{ projeto.get_status_display|lower }}</span>
             </h1>
+            {% include "projetos/_datas.html" %}
             {% if projeto.descricao %}<p class="projeto-desc">{{ projeto.descricao|linebreaksbr }}</p>{% endif %}
             <div class="projeto-meta">
                 {% for t in projeto.lista_tecnologias %}<span class="tec">{{ t }}</span>{% endfor %}
@@ -131,8 +133,20 @@
                                 {% endfor %}
                             </select>
                         </label>
-                        <label>cor <input type="color" name="cor" value="{{ projeto.cor }}"></label>
+                        <label>tipo
+                            <select name="tipo">
+                                {% for valor, texto in tipos_projeto %}
+                                    <option value="{{ valor }}" {% if valor == projeto.tipo %}selected{% endif %}>{{ texto }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
                     </div>
+                    <div class="campos-lado">
+                        <label>início <input type="date" name="data_inicio" value="{{ projeto.data_inicio|date:'Y-m-d' }}"></label>
+                        <label>fim <small>(vazio = em andamento)</small>
+                            <input type="date" name="data_fim" value="{{ projeto.data_fim|date:'Y-m-d' }}"></label>
+                    </div>
+                    <label>cor <input type="color" name="cor" value="{{ projeto.cor }}"></label>
                     <label>tecnologias <small>(separe por vírgula)</small>
                         <input type="text" name="tecnologias" value="{{ projeto.tecnologias }}" placeholder="Python, Django, JavaScript">
                     </label>

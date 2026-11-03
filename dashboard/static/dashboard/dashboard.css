@@ -715,6 +715,13 @@ a.sub:hover {
 .proj-nome:hover { color: var(--rosa-forte); }
 .proj-nome .bolinha { background: var(--cor); }
 
+.proj-tipo {
+    margin-right: auto;
+    font-family: var(--fonte-mono);
+    font-size: 0.7rem;
+    color: var(--texto-suave);
+}
+
 .proj-pct {
     font-family: var(--fonte-mono);
     font-size: 1.1rem;

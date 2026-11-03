@@ -266,6 +266,7 @@
                             <a href="{% url 'projetos:projeto' r.projeto.id %}" class="proj-nome">
                                 <i class="bolinha"></i>{{ r.projeto.nome }}
                             </a>
+                            <span class="proj-tipo">{{ r.projeto.get_tipo_display|lower }}</span>
                             <strong class="proj-pct">{{ r.porcentagem }}%</strong>
                         </header>
                         <div class="medidor proj-medidor" role="meter" aria-label="Funcionalidades feitas em {{ r.projeto.nome }}"

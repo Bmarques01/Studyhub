@@ -34,6 +34,42 @@ class ProjetoTests(TestCase):
         a_fazer = next(c for c in resposta.context['colunas'] if c['status'] == 'a_fazer')
         self.assertEqual([f.titulo for f in a_fazer['cartoes']], ['A', 'B'])
 
+    def test_tipo_e_datas(self):
+        from datetime import date, timedelta
+
+        from django.utils import timezone
+        # criar sem escolher o tipo: pessoal
+        self.client.post(reverse('projetos:criar_projeto'), {'nome': 'Novo', 'status': 'ativo', 'cor': '#a77bf3'})
+        self.assertEqual(Projeto.objects.get(nome='Novo').tipo, 'pessoal')
+
+        url = reverse('projetos:editar_projeto', args=[self.projeto.id])
+        dados = {'nome': 'Time Tracking', 'status': 'ativo', 'cor': '#6250d6', 'tipo': 'trabalho',
+                 'data_inicio': '2026-10-07', 'data_fim': ''}
+        self.client.post(url, dados)
+        self.projeto.refresh_from_db()
+        self.assertEqual((self.projeto.tipo, self.projeto.data_inicio, self.projeto.data_fim),
+                         ('trabalho', date(2026, 10, 7), None))
+        hoje = timezone.localdate()
+        self.assertEqual(self.projeto.dias, (hoje - date(2026, 10, 7)).days + 1)
+
+        # fim antes do início: não salva
+        resposta = self.client.post(url, {**dados, 'data_fim': '2026-10-01'}, follow=True)
+        self.assertContains(resposta, 'não pode ser antes')
+        self.projeto.refresh_from_db()
+        self.assertIsNone(self.projeto.data_fim)
+
+        # terminado: conta só até o fim
+        self.client.post(url, {**dados, 'data_fim': '2026-10-16'})
+        self.projeto.refresh_from_db()
+        self.assertEqual(self.projeto.dias, 10)
+
+        resposta = self.client.get(reverse('projetos:index'))
+        self.assertContains(resposta, 'trabalho')
+        self.assertContains(resposta, '07/10/2026 →')
+        resposta = self.client.get(reverse('projetos:projeto', args=[self.projeto.id]))
+        self.assertContains(resposta, '16/10/2026')
+        self.assertContains(resposta, '10 dias')
+
     def test_lista_de_tecnologias(self):
         self.assertEqual(self.projeto.lista_tecnologias, ['Python', 'Django', 'JavaScript'])
 

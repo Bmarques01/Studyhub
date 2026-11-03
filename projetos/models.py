@@ -14,10 +14,17 @@ class Projeto(models.Model):
         ('pausado', 'Pausado'),
         ('concluido', 'Concluído'),
     ]
+    TIPOS = [
+        ('pessoal', 'Pessoal'),
+        ('trabalho', 'Trabalho'),
+    ]
 
     nome = models.CharField(max_length=100)
     descricao = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS, default='ativo')
+    tipo = models.CharField(max_length=10, choices=TIPOS, default='pessoal')
+    data_inicio = models.DateField('início', null=True, blank=True)
+    data_fim = models.DateField('fim', null=True, blank=True)  # vazio = ainda em andamento
     cor = models.CharField(max_length=7, default='#a77bf3', validators=[validar_cor])
     # Tecnologias separadas por vírgula: "Python, Django, JavaScript"
     tecnologias = models.CharField(max_length=300, blank=True)
@@ -34,6 +41,14 @@ class Projeto(models.Model):
     @property
     def lista_tecnologias(self):
         return [t.strip() for t in self.tecnologias.split(',') if t.strip()]
+
+    @property
+    def dias(self):
+        """Quantos dias o projeto durou (ou dura até hoje, se ainda não terminou). None sem data de início."""
+        if not self.data_inicio:
+            return None
+        fim = min(self.data_fim or timezone.localdate(), timezone.localdate())
+        return max(0, (fim - self.data_inicio).days + 1)
 
 
 class Funcionalidade(models.Model):

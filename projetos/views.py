@@ -111,6 +111,7 @@ def projeto(request, projeto_id):
         'tipos': Funcionalidade.TIPOS,
         'prioridades': Funcionalidade.PRIORIDADES,
         'status_projeto': Projeto.STATUS,
+        'tipos_projeto': Projeto.TIPOS,
         'hoje': hoje,
     })
 

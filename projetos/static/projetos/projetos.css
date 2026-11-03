@@ -88,6 +88,21 @@
 .status-ideia, .status-pausado { background: #f0eaf0; }
 .status-concluido { background: #e8e4fb; }
 
+/* pessoal × trabalho: o texto diz o tipo; a borda só ajuda a bater o olho */
+.etiqueta.tipo-pessoal { background: var(--branco); box-shadow: inset 0 0 0 1px var(--rosa); }
+.etiqueta.tipo-trabalho { background: var(--branco); box-shadow: inset 0 0 0 1px #6250d6; color: #4b3cb0; }
+
+.etiquetas { display: inline-flex; gap: 5px; flex-shrink: 0; }
+
+/* datas: "07/10/2026 → em andamento · 28 dias" */
+.projeto-datas {
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.projeto-topo .projeto-datas { margin-top: 4px; }
+
 .tecnologias, .projeto-meta {
     display: flex;
     flex-wrap: wrap;
