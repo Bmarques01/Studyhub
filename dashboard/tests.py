@@ -52,7 +52,7 @@ class DashboardTests(TestCase):
         resposta = self.client.get(reverse('dashboard:index'))
         self.assertEqual(resposta.status_code, 200)
         self.assertContains(resposta, 'Bruna')
-        self.assertContains(resposta, 'Nenhum pomodoro este mês ainda')
+        self.assertContains(resposta, 'Nenhum pomodoro esta semana')  # filtro padrão
 
     def test_mostra_totais_e_disciplinas(self):
         categoria = Categoria.objects.create(nome='Cloud Computing')
@@ -79,6 +79,92 @@ class DashboardTests(TestCase):
         criar_sessao(30)
         resposta = self.client.get(reverse('dashboard:index'))
         self.assertEqual(resposta.context['meta_pct'], 50)
+
+
+class PeriodoTests(TestCase):
+    """O filtro do dashboard: datas de cada período e o que muda na página."""
+
+    def test_datas_dos_periodos(self):
+        from datetime import date
+
+        from .periodos import periodo
+        hoje = date(2026, 11, 3)  # uma terça-feira
+        p = periodo('semana', hoje)
+        self.assertEqual((p['inicio'], p['fim']), (date(2026, 11, 2), date(2026, 11, 8)))
+        self.assertEqual((p['anterior_inicio'], p['anterior_fim']), (date(2026, 10, 26), date(2026, 11, 1)))
+        p = periodo('semana_passada', hoje)
+        self.assertEqual((p['inicio'], p['rotulo_anterior']), (date(2026, 10, 26), 'semana retrasada'))
+        p = periodo('mes', hoje)
+        self.assertEqual((p['inicio'], p['fim'], p['anterior_fim']),
+                         (date(2026, 11, 1), date(2026, 11, 30), date(2026, 10, 31)))
+        self.assertEqual((p['rotulo_atual'], p['rotulo_anterior']), ('novembro', 'outubro'))
+        p = periodo('mes_passado', hoje)
+        self.assertEqual((p['inicio'], p['fim'], p['anterior_inicio']),
+                         (date(2026, 10, 1), date(2026, 10, 31), date(2026, 9, 1)))
+        # virada de ano e opção inválida
+        p = periodo('mes_passado', date(2027, 1, 15))
+        self.assertEqual((p['inicio'], p['anterior_inicio']), (date(2026, 12, 1), date(2026, 11, 1)))
+        self.assertEqual(periodo('qualquer', hoje)['chave'], 'semana')
+
+    def test_grafico_do_mes(self):
+        from datetime import date
+
+        from .periodos import periodo
+        from .views import grafico
+        p = periodo('mes', date(2026, 10, 15))  # outubro (31 dias) × setembro (30)
+        colunas, _ = grafico({date(2026, 10, 2): 50, date(2026, 9, 2): 20}, p, date(2026, 10, 15))
+        self.assertEqual(len(colunas), 31)
+        self.assertEqual((colunas[1]['atual'], colunas[1]['anterior']), (50, 20))
+        self.assertIsNone(colunas[20]['atual'])       # dia 21 ainda não chegou
+        self.assertIsNone(colunas[30]['anterior'])    # setembro não tem dia 31
+
+    def test_filtro_muda_disciplinas_e_fica_guardado(self):
+        categoria = Categoria.objects.create(nome='CC')
+        redes = Disciplina.objects.create(categoria=categoria, nome='Redes 2')
+        hoje = timezone.localdate()
+        dias_ate_mes_passado = (hoje - (hoje.replace(day=1) - timedelta(days=1)).replace(day=1)).days
+        criar_sessao(40, dias_atras=dias_ate_mes_passado, disciplina=redes)  # dia 1 do mês passado
+
+        nomes = lambda r: [l['disciplina__nome'] for l in r.context['por_disciplina']]
+        self.assertEqual(nomes(self.client.get(reverse('dashboard:index') + '?periodo=semana')), [])
+        resposta = self.client.get(reverse('dashboard:index') + '?periodo=mes_passado')
+        self.assertEqual(nomes(resposta), ['Redes 2'])
+        # sem ?periodo, lembra a última escolha
+        resposta = self.client.get(reverse('dashboard:index'))
+        self.assertEqual(resposta.context['periodo']['chave'], 'mes_passado')
+        self.assertContains(resposta, 'class="ativo"')
+
+    def test_resumo_dos_projetos(self):
+        from projetos.models import EntradaDiario, Funcionalidade, Projeto
+        studyhub = Projeto.objects.create(nome='Studyhub', status='ativo')
+        Projeto.objects.create(nome='Projeto pausado', status='pausado')
+        agora = timezone.now()
+        Funcionalidade.objects.create(projeto=studyhub, titulo='Flashcards', status='feito', concluida_em=agora)
+        Funcionalidade.objects.create(projeto=studyhub, titulo='Antiga', status='feito',
+                                      concluida_em=agora - timedelta(days=60))
+        Funcionalidade.objects.create(projeto=studyhub, titulo='Questionário', status='fazendo')
+        Funcionalidade.objects.create(projeto=studyhub, titulo='Planejador', status='backlog')
+        EntradaDiario.objects.create(projeto=studyhub, fiz='Fiz os flashcards')
+        SessaoPomodoro.objects.create(duracao_minutos=50, projeto=studyhub)
+
+        resposta = self.client.get(reverse('dashboard:index') + '?periodo=semana')
+        resumo, = resposta.context['projetos']  # o pausado não aparece
+        self.assertEqual((resumo['feitas_total'], resumo['total'], resumo['porcentagem']), (2, 4, 50))
+        self.assertEqual([f.titulo for f in resumo['feitas']], ['Flashcards'])  # "Antiga" fica fora da semana
+        self.assertEqual([f.titulo for f in resumo['fazendo']], ['Questionário'])
+        self.assertEqual((resumo['minutos'], resumo['diario_dias']), (50, 0))
+        self.assertContains(resposta, 'Fiz os flashcards')
+        self.assertNotContains(resposta, 'Projeto pausado')
+
+    def test_feitas_mostra_no_maximo_cinco(self):
+        from projetos.models import Funcionalidade, Projeto
+        projeto = Projeto.objects.create(nome='Studyhub', status='ativo')
+        for i in range(7):
+            Funcionalidade.objects.create(projeto=projeto, titulo=f'F{i}', status='feito', concluida_em=timezone.now())
+        resposta = self.client.get(reverse('dashboard:index') + '?periodo=semana')
+        resumo = resposta.context['projetos'][0]
+        self.assertEqual((len(resumo['feitas']), resumo['feitas_quantidade'], resumo['feitas_resto']), (5, 7, 2))
+        self.assertContains(resposta, '+ 2 outras')
 
 
 class BackupTests(TestCase):

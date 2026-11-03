@@ -37,10 +37,11 @@ function mostrar(alvo) {
     balao.replaceChildren(titulo);
 
     if (d.tipAtual !== undefined) {
-        // coluna do gráfico da semana: mostra as duas semanas juntas
+        // coluna do gráfico: mostra os dois períodos juntos (ex.: "esta semana" e "semana passada")
+        const nomes = alvo.closest('.plot')?.dataset ?? {};
         balao.append(
-            linha(d.tipAtual, 'esta semana', COR_ATUAL),
-            linha(d.tipAnterior, 'semana passada', COR_ANTERIOR),
+            linha(d.tipAtual, nomes.nomeAtual || 'esta semana', COR_ATUAL),
+            linha(d.tipAnterior, nomes.nomeAnterior || 'semana passada', COR_ANTERIOR),
         );
     } else {
         balao.append(linha(d.tipValor, 'estudados'));

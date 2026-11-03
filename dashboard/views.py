@@ -11,7 +11,9 @@ from calendario.views import eventos_por_dia, proximos_eventos, semanas_do_mes
 from flashcards import memoria
 from flashcards.models import Flashcard
 from pomodoro.models import SessaoPomodoro
+from projetos.models import Projeto
 
+from . import periodos
 from .models import Perfil
 from .templatetags.tempo import horas
 
@@ -76,6 +78,81 @@ def nivel_do_dia(minutos):
     return 4
 
 
+def periodo_escolhido(request, hoje):
+    """O filtro vem de ?periodo=...; a escolha fica guardada na sessão para a próxima visita."""
+    chave = request.GET.get('periodo')
+    if chave in dict(periodos.OPCOES):
+        request.session['dashboard_periodo'] = chave
+    else:
+        chave = request.session.get('dashboard_periodo', periodos.PADRAO)
+    return periodos.periodo(chave, hoje)
+
+
+def grafico(por_dia, periodo, hoje):
+    """Colunas do gráfico: período escolhido × período anterior.
+    Semana: uma coluna por dia da semana. Mês: uma coluna por dia do mês (dia 1 com dia 1)."""
+    colunas = []
+    if periodo['tipo'] == 'semana':
+        for i, nome in enumerate(DIAS_SEMANA):
+            dia = periodo['inicio'] + timedelta(days=i)
+            colunas.append({'nome': nome, 'data': dia, 'anterior_data': dia - timedelta(weeks=1)})
+    else:
+        tamanho_anterior = (periodo['anterior_fim'] - periodo['anterior_inicio']).days + 1
+        for i in range((periodo['fim'] - periodo['inicio']).days + 1):
+            dia = periodo['inicio'] + timedelta(days=i)
+            colunas.append({
+                'nome': str(dia.day),
+                'data': dia,
+                # outubro tem 31 dias e setembro 30: o dia 31 não tem com quem comparar
+                'anterior_data': periodo['anterior_inicio'] + timedelta(days=i) if i < tamanho_anterior else None,
+                'marca': dia.day in (1, 5, 10, 15, 20, 25, 30),  # só alguns números embaixo, para não embolar
+            })
+
+    for c in colunas:
+        c['atual'] = por_dia.get(c['data'], 0) if c['data'] <= hoje else None  # None = ainda não chegou
+        c['anterior'] = por_dia.get(c['anterior_data'], 0) if c['anterior_data'] else None
+        c['hoje'] = c['data'] == hoje
+    topo = escala(max([c['atual'] or 0 for c in colunas] + [c['anterior'] or 0 for c in colunas]))
+    for c in colunas:
+        c['altura_atual'] = (c['atual'] or 0) / topo * 100
+        c['altura_anterior'] = (c['anterior'] or 0) / topo * 100
+    return colunas, [topo, topo // 2, 0]
+
+
+MAX_FEITAS = 5  # funcionalidades "feitas no período" mostradas por projeto
+
+
+def resumo_dos_projetos(periodo, hoje):
+    """Um resumo por projeto ativo: progresso, o que está fazendo, o que terminou no período,
+    tempo de pomodoro no período e a última entrada do diário."""
+    inicio, fim = periodo['inicio'], periodo['fim']
+    resumos = []
+    for projeto in Projeto.objects.filter(status='ativo').order_by('criado_em'):
+        funcionalidades = projeto.funcionalidades.all()
+        total = funcionalidades.count()
+        feitas_total = funcionalidades.filter(status='feito').count()
+        feitas = list(funcionalidades.filter(status='feito', concluida_em__date__gte=inicio,
+                                             concluida_em__date__lte=fim).order_by('-concluida_em'))
+        minutos = (SessaoPomodoro.objects
+                   .filter(projeto=projeto, concluida_em__date__gte=inicio, concluida_em__date__lte=fim)
+                   .aggregate(total=Sum('duracao_minutos'))['total'] or 0)
+        diario = projeto.diario.order_by('-data', '-criada_em').first()
+        resumos.append({
+            'projeto': projeto,
+            'total': total,
+            'feitas_total': feitas_total,
+            'porcentagem': round(feitas_total / total * 100) if total else 0,
+            'fazendo': list(funcionalidades.filter(status='fazendo').order_by('ordem', 'id')[:3]),
+            'feitas': feitas[:MAX_FEITAS],
+            'feitas_quantidade': len(feitas),
+            'feitas_resto': max(0, len(feitas) - MAX_FEITAS),
+            'minutos': minutos,
+            'diario': diario,
+            'diario_dias': (hoje - diario.data).days if diario else None,
+        })
+    return resumos
+
+
 # ===== Página =====
 
 def index(request):
@@ -87,8 +164,9 @@ def index(request):
     inicio_mes = hoje.replace(day=1)
     inicio_mes_passado = (inicio_mes - timedelta(days=1)).replace(day=1)
     inicio_mapa = inicio_semana - timedelta(weeks=SEMANAS_NO_MAPA - 1)
+    periodo = periodo_escolhido(request, hoje)  # o filtro: esta semana, semana passada...
 
-    por_dia = minutos_por_dia(min(inicio_mapa, inicio_mes_passado))
+    por_dia = minutos_por_dia(min(inicio_mapa, inicio_mes_passado, periodo['anterior_inicio']))
 
     # --- Números do topo ---
     min_hoje = por_dia.get(hoje, 0)
@@ -104,22 +182,8 @@ def index(request):
     meta_min = perfil.meta_semanal_horas * 60
     meta_pct = round(min_semana / meta_min * 100) if meta_min else 0
 
-    # --- Gráfico: esta semana × semana passada, dia a dia ---
-    colunas = []
-    for i, nome in enumerate(DIAS_SEMANA):
-        dia = inicio_semana + timedelta(days=i)
-        colunas.append({
-            'nome': nome,
-            'data': dia,
-            'atual': por_dia.get(dia, 0) if dia <= hoje else None,  # None = dia ainda não chegou
-            'anterior': por_dia.get(dia - timedelta(weeks=1), 0),
-            'hoje': dia == hoje,
-        })
-    topo = escala(max([c['atual'] or 0 for c in colunas] + [c['anterior'] for c in colunas]))
-    for c in colunas:
-        c['altura_atual'] = (c['atual'] or 0) / topo * 100
-        c['altura_anterior'] = c['anterior'] / topo * 100
-    marcas_eixo = [topo, topo // 2, 0]
+    # --- Gráfico: período escolhido × período anterior (segue o filtro) ---
+    colunas, marcas_eixo = grafico(por_dia, periodo, hoje)
 
     # --- Mapa de calor: uma coluna por semana, uma linha por dia ---
     mapa = []
@@ -136,10 +200,10 @@ def index(request):
             })
         mapa.append(semana)
 
-    # --- Tempo por disciplina (este mês) ---
+    # --- Tempo por disciplina e projeto (segue o filtro) ---
     por_disciplina = list(
         SessaoPomodoro.objects
-        .filter(concluida_em__date__gte=inicio_mes)
+        .filter(concluida_em__date__gte=periodo['inicio'], concluida_em__date__lte=periodo['fim'])
         .values('disciplina__nome', 'disciplina__cor', 'projeto__nome', 'projeto__cor')
         .annotate(total=Sum('duracao_minutos'))
         .order_by('-total')
@@ -148,15 +212,19 @@ def index(request):
     for linha in por_disciplina:
         linha['largura'] = linha['total'] / maior * 100
 
-    # --- Calendário do mês: dias com estudo + eventos (provas, trabalhos...) ---
-    semanas = semanas_do_mes(hoje.year, hoje.month)
+    # --- Calendário: o mês do período (segue o filtro), com estudo + eventos ---
+    # Na semana, o mês de referência é o do último dia que já passou (a semana pode virar o mês)
+    mes_referencia = periodo['inicio'] if periodo['tipo'] == 'mes' else min(periodo['fim'], hoje)
+    semanas = semanas_do_mes(mes_referencia.year, mes_referencia.month)
     eventos = eventos_por_dia(semanas[0][0], semanas[-1][-1])
     ordem_tipos = [valor for valor, _ in Evento.TIPOS]
     calendario_mes = [
         [{
             'data': dia,
-            'fora': dia.month != hoje.month,
+            'fora': dia.month != mes_referencia.month,
             'hoje': dia == hoje,
+            # filtro de semana: os dias da semana escolhida ficam destacados
+            'no_periodo': periodo['tipo'] == 'semana' and periodo['inicio'] <= dia <= periodo['fim'],
             'estudou': bool(por_dia.get(dia)),
             # um ponto por tipo de evento no dia, sempre na mesma ordem
             'tipos': sorted({e.tipo for e in eventos.get(dia, [])}, key=ordem_tipos.index),
@@ -191,12 +259,15 @@ def index(request):
         'falta_meta': max(0, meta_min - min_semana),
         'colunas': colunas,
         'marcas_eixo': marcas_eixo,
-        'total_semana_passada': sum(c['anterior'] for c in colunas),
         'mapa': mapa,
         'dias_semana': DIAS_SEMANA,
         'por_disciplina': por_disciplina,
         'calendario_mes': calendario_mes,
         'proximos': proximos_eventos(limite=5),
+        'periodo': periodo,
+        'opcoes_periodo': periodos.OPCOES,
+        'mes_referencia': mes_referencia,
+        'projetos': resumo_dos_projetos(periodo, hoje),
         'tem_flashcards': Flashcard.objects.exists(),
         'flashcards_hoje': memoria.para_revisar(),
     })

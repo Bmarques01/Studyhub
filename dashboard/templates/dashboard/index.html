@@ -33,6 +33,15 @@
         </div>
     </header>
 
+    {# ===== Filtro de período: muda os blocos que mostram o período no canto (gráfico, calendário, disciplinas, projetos) ===== #}
+    <nav class="dash-filtro" aria-label="Período do dashboard">
+        {% for chave, nome in opcoes_periodo %}
+            <a href="?periodo={{ chave }}" class="{% if periodo.chave == chave %}ativo{% endif %}"
+               {% if periodo.chave == chave %}aria-current="true"{% endif %}>{{ nome }}</a>
+        {% endfor %}
+        <span class="dash-filtro-datas">{{ periodo.inicio|date:"d/m" }} a {{ periodo.fim|date:"d/m" }}</span>
+    </nav>
+
     <div class="dash-grade">
 
         {# ===== Números do topo ===== #}
@@ -77,13 +86,13 @@
             </form>
         </section>
 
-        {# ===== Gráfico: esta semana × semana passada ===== #}
+        {# ===== Gráfico: período escolhido × período anterior ===== #}
         <section class="card grafico-semana">
             <header class="card-topo">
-                <h2 class="rotulo">semana</h2>
+                <h2 class="rotulo">{% if periodo.tipo == 'semana' %}semana{% else %}mês{% endif %}</h2>
                 <div class="legenda">
-                    <span><i class="chave anterior"></i>semana passada</span>
-                    <span><i class="chave atual"></i>esta semana</span>
+                    <span><i class="chave anterior"></i>{{ periodo.rotulo_anterior }}</span>
+                    <span><i class="chave atual"></i>{{ periodo.rotulo_atual }}</span>
                 </div>
             </header>
 
@@ -91,21 +100,22 @@
                 <div class="eixo-y" aria-hidden="true">
                     {% for marca in marcas_eixo %}<span>{{ marca|horas }}</span>{% endfor %}
                 </div>
-                <div class="plot">
+                <div class="plot {% if periodo.tipo == 'mes' %}plot-mes{% endif %}" style="--colunas: {{ colunas|length }}"
+                     data-nome-atual="{{ periodo.rotulo_atual }}" data-nome-anterior="{{ periodo.rotulo_anterior }}">
                     <div class="grade" aria-hidden="true"><span></span><span></span><span></span></div>
                     {% for c in colunas %}
                         <div class="dia {% if c.hoje %}hoje{% endif %}" tabindex="0"
-                             data-tip-titulo="{{ c.nome }}, {{ c.data|date:'d/m' }}"
+                             data-tip-titulo="{% if periodo.tipo == 'semana' %}{{ c.nome }}, {% endif %}{{ c.data|date:'d/m' }}"
                              data-tip-atual="{% if c.atual is None %}—{% else %}{{ c.atual|horas }}{% endif %}"
-                             data-tip-anterior="{{ c.anterior|horas }}"
-                             aria-label="{{ c.nome }}: esta semana {% if c.atual is None %}ainda não chegou{% else %}{{ c.atual|horas }}{% endif %}, semana passada {{ c.anterior|horas }}">
+                             data-tip-anterior="{% if c.anterior is None %}—{% else %}{{ c.anterior|horas }}{% endif %}"
+                             aria-label="{{ c.data|date:'d/m' }}: {{ periodo.rotulo_atual }} {% if c.atual is None %}ainda não chegou{% else %}{{ c.atual|horas }}{% endif %}, {{ periodo.rotulo_anterior }} {% if c.anterior is None %}—{% else %}{{ c.anterior|horas }}{% endif %}">
                             <div class="barras">
                                 <span class="barra anterior" style="height: {{ c.altura_anterior|floatformat:'1u' }}%"></span>
                                 <span class="barra atual" style="height: {{ c.altura_atual|floatformat:'1u' }}%">
                                     {% if c.hoje and c.atual %}<em class="rotulo-barra">{{ c.atual|horas }}</em>{% endif %}
                                 </span>
                             </div>
-                            <span class="dia-nome">{{ c.nome }}</span>
+                            <span class="dia-nome">{% if periodo.tipo == 'semana' or c.marca or c.hoje %}{{ c.nome }}{% endif %}</span>
                         </div>
                     {% endfor %}
                 </div>
@@ -114,13 +124,13 @@
             <details class="ver-tabela">
                 <summary>ver como tabela</summary>
                 <table>
-                    <thead><tr><th>dia</th><th>esta semana</th><th>semana passada</th></tr></thead>
+                    <thead><tr><th>dia</th><th>{{ periodo.rotulo_atual }}</th><th>{{ periodo.rotulo_anterior }}</th></tr></thead>
                     <tbody>
                         {% for c in colunas %}
                             <tr>
-                                <td>{{ c.nome }} {{ c.data|date:'d/m' }}</td>
+                                <td>{% if periodo.tipo == 'semana' %}{{ c.nome }} {% endif %}{{ c.data|date:'d/m' }}</td>
                                 <td>{% if c.atual is None %}—{% else %}{{ c.atual|horas }}{% endif %}</td>
-                                <td>{{ c.anterior|horas }}</td>
+                                <td>{% if c.anterior is None %}—{% else %}{{ c.anterior|horas }}{% endif %}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -131,13 +141,13 @@
         {# ===== Calendário do mês ===== #}
         <section class="card calendario">
             <header class="card-topo">
-                <a href="{% url 'calendario:index' %}" class="rotulo link-rotulo">{{ hoje|date:"F Y"|lower }}</a>
+                <a href="{% url 'calendario:index' %}?mes={{ mes_referencia|date:'Y-m' }}" class="rotulo link-rotulo">{{ mes_referencia|date:"F Y"|lower }}</a>
             </header>
             <div class="cal-grade">
                 {% for d in dias_semana %}<span class="cal-cabecalho">{{ d|first|upper }}</span>{% endfor %}
                 {% for semana in calendario_mes %}
                     {% for dia in semana %}
-                        <span class="cal-dia {% if dia.fora %}fora{% endif %} {% if dia.hoje %}hoje{% endif %} {% if dia.estudou %}estudou{% endif %}"
+                        <span class="cal-dia {% if dia.fora %}fora{% endif %} {% if dia.hoje %}hoje{% endif %} {% if dia.estudou %}estudou{% endif %} {% if dia.no_periodo %}no-periodo{% endif %}"
                               {% if dia.titulos %}title="{{ dia.titulos }}"{% endif %}>
                             {{ dia.data.day }}
                             {% if dia.tipos %}
@@ -209,7 +219,7 @@
         <section class="card por-disciplina">
             <header class="card-topo">
                 <h2 class="rotulo">por disciplina e projeto</h2>
-                <span class="sub">este mês</span>
+                <span class="sub">{{ periodo.nome }}</span>
             </header>
             {% if por_disciplina %}
                 <ul class="ranking">
@@ -228,11 +238,72 @@
                 </ul>
             {% else %}
                 <p class="vazio-card">
-                    Nenhum pomodoro este mês ainda.<br>
+                    Nenhum pomodoro {{ periodo.nome }}.<br>
                     <a href="{% url 'pomodoro:index' %}">Começar o primeiro →</a>
                 </p>
             {% endif %}
         </section>
+
+        {# ===== Projetos ativos: progresso + o que foi feito no período ===== #}
+        {% if projetos %}
+        <section class="card projetos-card">
+            <header class="card-topo">
+                <h2 class="rotulo">projetos</h2>
+                <a href="{% url 'projetos:index' %}" class="sub">ver projetos →</a>
+            </header>
+            <div class="proj-colunas">
+                {% for r in projetos %}
+                    <article class="proj" style="--cor: {{ r.projeto.cor }}">
+                        <header class="proj-topo">
+                            <a href="{% url 'projetos:projeto' r.projeto.id %}" class="proj-nome">
+                                <i class="bolinha"></i>{{ r.projeto.nome }}
+                            </a>
+                            <strong class="proj-pct">{{ r.porcentagem }}%</strong>
+                        </header>
+                        <div class="medidor proj-medidor" role="meter" aria-label="Funcionalidades feitas em {{ r.projeto.nome }}"
+                             aria-valuemin="0" aria-valuemax="{{ r.total }}" aria-valuenow="{{ r.feitas_total }}">
+                            <span style="width: {{ r.porcentagem }}%"></span>
+                        </div>
+                        <p class="proj-sub">{{ r.feitas_total }} de {{ r.total }} funcionalidades feitas</p>
+
+                        <h3 class="proj-titulo">fazendo agora</h3>
+                        {% if r.fazendo %}
+                            <ul class="proj-lista">
+                                {% for f in r.fazendo %}<li><span class="proj-marca">›</span>{{ f.titulo }}</li>{% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="proj-vazio">nada em andamento</p>
+                        {% endif %}
+
+                        <h3 class="proj-titulo">feito · {{ periodo.nome }} ({{ r.feitas_quantidade }})</h3>
+                        {% if r.feitas %}
+                            <ul class="proj-lista">
+                                {% for f in r.feitas %}
+                                    <li><span class="proj-marca feito">✓</span>{{ f.titulo }}
+                                        <small>{{ f.concluida_em|date:"d/m" }}</small></li>
+                                {% endfor %}
+                            </ul>
+                            {% if r.feitas_resto %}<p class="proj-vazio">+ {{ r.feitas_resto }} outra{{ r.feitas_resto|pluralize }}</p>{% endif %}
+                        {% else %}
+                            <p class="proj-vazio">nada concluído {{ periodo.nome }}</p>
+                        {% endif %}
+
+                        <footer class="proj-rodape">
+                            <span>⏱ {{ r.minutos|horas }} {{ periodo.nome }}</span>
+                            {% if r.diario %}
+                                <span class="proj-diario">
+                                    diário · {% if r.diario_dias == 0 %}hoje{% elif r.diario_dias == 1 %}ontem{% else %}{{ r.diario.data|date:"d/m" }}{% endif %}:
+                                    {% if r.diario.fiz %}“{{ r.diario.fiz|truncatechars:110 }}”{% else %}sem o que fiz{% endif %}
+                                </span>
+                            {% else %}
+                                <span class="proj-diario">diário · nenhuma entrada</span>
+                            {% endif %}
+                        </footer>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
 
     </div>
 </div>
