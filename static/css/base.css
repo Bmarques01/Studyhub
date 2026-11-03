@@ -458,7 +458,8 @@ input[type="color"] {
     right: 24px;
     bottom: 24px;
     z-index: 50;
-    width: 290px;
+    /* 4 botões + anel ocupam ~210px: com 330px sobra espaço para o tempo (até "+mm:ss") */
+    width: 330px;
     padding: 12px 14px;
     border-radius: 18px;
     background: var(--branco);
@@ -519,6 +520,7 @@ input[type="color"] {
 .mini-tempo {
     font-family: var(--fonte-mono);
     font-size: 1.45rem;
+    white-space: nowrap;  /* o tempo nunca quebra nem fica embaixo dos botões */
     color: var(--texto);
 }
 
@@ -535,6 +537,7 @@ input[type="color"] {
 
 .mini-botoes {
     display: flex;
+    flex-shrink: 0;
     gap: 4px;
 }
 
