@@ -12,10 +12,9 @@ só por ela. Repositório: https://github.com/Bmarques01/Studyhub
   perguntas objetivas, com uma recomendação). Para ajustes pequenos e pedidos claros, faça direto.
 - **Depois de cada entrega:** rodar os testes, fazer commit (mensagem em português) e `git push`.
   Lembrar a Bruna de dar **Ctrl + F5** (o navegador guarda CSS/JS antigos).
-- **Manter o projeto "Studyhub" do próprio site atualizado** (pedido dela): ao começar uma tarefa, criar ou
-  mover o cartão no Kanban para "fazendo"; ao terminar, para "feito", marcar as tarefas e anotar no diário
-  de bordo (fiz / aprendi / travei). Fazer pelo `manage.py shell` no banco real. O Studyhub é o `Projeto`
-  de **id 1** (o Time Tracking, outro projeto dela, é o id 2).
+- **Não mexer no Kanban nem no diário de bordo** dos projetos: a Bruna atualiza ela mesma (quando o Claude
+  também atualizava, os cartões e as entradas ficavam duplicados). O Studyhub é o `Projeto` de **id 1**
+  (o Time Tracking, outro projeto dela, é o id 2).
 - **Dados pessoais nunca vão para o repositório público**: `db.sqlite3`, `backup/` e `dados/` estão no
   `.gitignore`; os dados viajam só pelo repositório privado (ver "Dados entre computadores"). Scripts que
   mexem nos dados dela (ex.: preencher cartões, marcar situações da grade) rodam via `manage.py shell` e
