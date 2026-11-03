@@ -18,7 +18,7 @@ from .models import Perfil
 from .templatetags.tempo import horas
 
 DIAS_SEMANA = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom']
-SEMANAS_NO_MAPA = 40  # ~9 meses no mapa de calor
+HISTORICO = timedelta(weeks=40)  # quanto olhar para trás para contar a sequência de dias
 
 
 # ===== Cálculos =====
@@ -119,6 +119,38 @@ def grafico(por_dia, periodo, hoje):
     return colunas, [topo, topo // 2, 0]
 
 
+def constancia(por_dia, periodo, hoje):
+    """Mapa de constância do período: uma coluna por semana (segunda a domingo).
+    Dias fora do período (começo/fim do mês) ficam vazios. Também devolve o resumo do período."""
+    semanas = []
+    segunda = periodo['inicio'] - timedelta(days=periodo['inicio'].weekday())
+    while segunda <= periodo['fim']:
+        dias = []
+        for d in range(7):
+            dia = segunda + timedelta(days=d)
+            minutos = por_dia.get(dia, 0)
+            dias.append({
+                'data': dia,
+                'minutos': minutos,
+                'nivel': nivel_do_dia(minutos),
+                'fora': not periodo['inicio'] <= dia <= periodo['fim'],
+                'futuro': dia > hoje,
+            })
+        semanas.append({'inicio': segunda, 'dias': dias})
+        segunda += timedelta(weeks=1)
+
+    passados = [d for s in semanas for d in s['dias'] if not d['fora'] and not d['futuro']]
+    com_estudo = [d for d in passados if d['minutos']]
+    resumo = {
+        'dias_com_estudo': len(com_estudo),
+        'dias_passados': len(passados),
+        # média só dos dias em que estudou (um dia sem estudo não "puxa" a média para baixo)
+        'media': round(sum(d['minutos'] for d in com_estudo) / len(com_estudo)) if com_estudo else 0,
+        'maior': max(com_estudo, key=lambda d: d['minutos'], default=None),
+    }
+    return semanas, resumo
+
+
 MAX_FEITAS = 5  # funcionalidades "feitas no período" mostradas por projeto
 
 
@@ -163,10 +195,9 @@ def index(request):
     inicio_semana = hoje - timedelta(days=hoje.weekday())  # segunda-feira
     inicio_mes = hoje.replace(day=1)
     inicio_mes_passado = (inicio_mes - timedelta(days=1)).replace(day=1)
-    inicio_mapa = inicio_semana - timedelta(weeks=SEMANAS_NO_MAPA - 1)
     periodo = periodo_escolhido(request, hoje)  # o filtro: esta semana, semana passada...
 
-    por_dia = minutos_por_dia(min(inicio_mapa, inicio_mes_passado, periodo['anterior_inicio']))
+    por_dia = minutos_por_dia(min(hoje - HISTORICO, inicio_mes_passado, periodo['anterior_inicio']))
 
     # --- Números do topo ---
     min_hoje = por_dia.get(hoje, 0)
@@ -185,20 +216,8 @@ def index(request):
     # --- Gráfico: período escolhido × período anterior (segue o filtro) ---
     colunas, marcas_eixo = grafico(por_dia, periodo, hoje)
 
-    # --- Mapa de calor: uma coluna por semana, uma linha por dia ---
-    mapa = []
-    for s in range(SEMANAS_NO_MAPA):
-        semana = []
-        for d in range(7):
-            dia = inicio_mapa + timedelta(weeks=s, days=d)
-            minutos = por_dia.get(dia, 0)
-            semana.append({
-                'data': dia,
-                'minutos': minutos,
-                'nivel': nivel_do_dia(minutos),
-                'futuro': dia > hoje,
-            })
-        mapa.append(semana)
+    # --- Constância: os dias do período (segue o filtro) ---
+    mapa, resumo_constancia = constancia(por_dia, periodo, hoje)
 
     # --- Tempo por disciplina e projeto (segue o filtro) ---
     por_disciplina = list(
@@ -260,6 +279,7 @@ def index(request):
         'colunas': colunas,
         'marcas_eixo': marcas_eixo,
         'mapa': mapa,
+        'resumo_constancia': resumo_constancia,
         'dias_semana': DIAS_SEMANA,
         'por_disciplina': por_disciplina,
         'calendario_mes': calendario_mes,

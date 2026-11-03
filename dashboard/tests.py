@@ -118,6 +118,27 @@ class PeriodoTests(TestCase):
         self.assertIsNone(colunas[20]['atual'])       # dia 21 ainda não chegou
         self.assertIsNone(colunas[30]['anterior'])    # setembro não tem dia 31
 
+    def test_constancia_do_periodo(self):
+        from datetime import date
+
+        from .periodos import periodo
+        from .views import constancia
+        hoje = date(2026, 10, 15)
+        por_dia = {date(2026, 10, 1): 30, date(2026, 10, 2): 90, date(2026, 9, 30): 500}
+        # outubro de 2026 começa numa quinta: 5 colunas (29/09 a 01/11)
+        semanas, resumo = constancia(por_dia, periodo('mes', hoje), hoje)
+        self.assertEqual([s['inicio'] for s in semanas][0], date(2026, 9, 28))
+        self.assertEqual(len(semanas), 5)
+        primeira = semanas[0]['dias']
+        self.assertTrue(primeira[2]['fora'])            # 30/09 é de setembro: não conta
+        self.assertFalse(primeira[3]['fora'])           # 01/10
+        self.assertTrue(semanas[2]['dias'][4]['futuro'])  # 16/10 ainda não chegou
+        self.assertEqual((resumo['dias_com_estudo'], resumo['dias_passados'], resumo['media']), (2, 15, 60))
+        self.assertEqual(resumo['maior']['data'], date(2026, 10, 2))
+        # semana: uma coluna só
+        semanas, resumo = constancia(por_dia, periodo('semana', hoje), hoje)
+        self.assertEqual((len(semanas), resumo['dias_passados'], resumo['maior']), (1, 4, None))
+
     def test_filtro_muda_disciplinas_e_fica_guardado(self):
         categoria = Categoria.objects.create(nome='CC')
         redes = Disciplina.objects.create(categoria=categoria, nome='Redes 2')

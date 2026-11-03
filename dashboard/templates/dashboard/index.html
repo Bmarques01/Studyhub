@@ -33,7 +33,7 @@
         </div>
     </header>
 
-    {# ===== Filtro de período: muda os blocos que mostram o período no canto (gráfico, calendário, disciplinas, projetos) ===== #}
+    {# ===== Filtro de período: muda os blocos que mostram o período no canto (gráfico, calendário, disciplinas, constância, projetos) ===== #}
     <nav class="dash-filtro" aria-label="Período do dashboard">
         {% for chave, nome in opcoes_periodo %}
             <a href="?periodo={{ chave }}" class="{% if periodo.chave == chave %}ativo{% endif %}"
@@ -176,45 +176,6 @@
             {% include "calendario/_proximos.html" %}
         </section>
 
-        {# ===== Mapa de calor ===== #}
-        <section class="card mapa-calor">
-            <header class="card-topo">
-                <h2 class="rotulo">constância</h2>
-                <span class="sub">últimas {{ mapa|length }} semanas</span>
-            </header>
-            <div class="mapa">
-                <div class="mapa-dias" aria-hidden="true">
-                    {% for d in dias_semana %}<span>{% if forloop.counter0|divisibleby:2 %}{{ d }}{% endif %}</span>{% endfor %}
-                </div>
-                <div class="mapa-grade">
-                    {% for semana in mapa %}
-                        <div class="mapa-semana">
-                            {% for dia in semana %}
-                                {% if dia.futuro %}
-                                    <span class="celula futuro"></span>
-                                {% else %}
-                                    <span class="celula nivel-{{ dia.nivel }}"
-                                          data-tip-titulo="{{ dia.data|date:'D, d/m' }}"
-                                          data-tip-valor="{{ dia.minutos|horas }}"
-                                          aria-label="{{ dia.data|date:'d/m' }}: {{ dia.minutos|horas }}"></span>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-            <div class="mapa-legenda">
-                menos
-                <span class="celula nivel-0" title="nada"></span>
-                <span class="celula nivel-1" title="até 30min"></span>
-                <span class="celula nivel-2" title="30min a 1h"></span>
-                <span class="celula nivel-3" title="1h a 2h"></span>
-                <span class="celula nivel-4" title="2h ou mais"></span>
-                mais
-                <small>0 · &lt;30min · &lt;1h · &lt;2h · 2h+</small>
-            </div>
-        </section>
-
         {# ===== Tempo por disciplina ===== #}
         <section class="card por-disciplina">
             <header class="card-topo">
@@ -242,6 +203,53 @@
                     <a href="{% url 'pomodoro:index' %}">Começar o primeiro →</a>
                 </p>
             {% endif %}
+        </section>
+
+        {# ===== Mapa de calor ===== #}
+        <section class="card mapa-calor">
+            <header class="card-topo">
+                <h2 class="rotulo">constância · {{ periodo.nome }}</h2>
+                {% with r=resumo_constancia %}
+                    <span class="sub">
+                        {{ r.dias_com_estudo }} de {{ r.dias_passados }} dia{{ r.dias_passados|pluralize }} com estudo
+                        {% if r.maior %}· média {{ r.media|horas }} por dia de estudo · maior: {{ r.maior.minutos|horas }} ({{ r.maior.data|date:"d/m" }}){% endif %}
+                    </span>
+                {% endwith %}
+            </header>
+            <div class="mapa">
+                <div class="mapa-dias" aria-hidden="true">
+                    <span></span>{% for d in dias_semana %}<span>{{ d }}</span>{% endfor %}
+                </div>
+                <div class="mapa-grade">
+                    {% for semana in mapa %}
+                        <div class="mapa-semana">
+                            <span class="mapa-data">{{ semana.inicio|date:"d/m" }}</span>
+                            {% for dia in semana.dias %}
+                                {% if dia.fora %}
+                                    <span class="celula fora"></span>
+                                {% elif dia.futuro %}
+                                    <span class="celula futuro"><small>{{ dia.data.day }}</small></span>
+                                {% else %}
+                                    <span class="celula nivel-{{ dia.nivel }}" tabindex="0"
+                                          data-tip-titulo="{{ dia.data|date:'D, d/m' }}"
+                                          data-tip-valor="{{ dia.minutos|horas }}"
+                                          aria-label="{{ dia.data|date:'d/m' }}: {{ dia.minutos|horas }}"><small>{{ dia.data.day }}</small></span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mapa-legenda">
+                menos
+                <span class="celula nivel-0" title="nada"></span>
+                <span class="celula nivel-1" title="até 30min"></span>
+                <span class="celula nivel-2" title="30min a 1h"></span>
+                <span class="celula nivel-3" title="1h a 2h"></span>
+                <span class="celula nivel-4" title="2h ou mais"></span>
+                mais
+                <small>0 · &lt;30min · &lt;1h · &lt;2h · 2h+</small>
+            </div>
         </section>
 
         {# ===== Projetos ativos: progresso + o que foi feito no período ===== #}

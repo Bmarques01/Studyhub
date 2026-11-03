@@ -91,14 +91,13 @@
 .kpi { grid-column: span 3; }
 .grafico-semana { grid-column: span 7; }
 .calendario { grid-column: span 5; }
-.proximos-card { grid-column: span 6; }
-.por-disciplina { grid-column: span 6; }
+/* próximos, disciplinas e constância dividem uma linha; projetos vem embaixo, na largura toda */
+.proximos-card, .por-disciplina, .mapa-calor { grid-column: span 4; }
 .projetos-card { grid-column: span 12; }
-.mapa-calor { grid-column: span 12; order: 1; }  /* order 1 = vai para o fim da grade */
 
 @media (max-width: 1100px) {
     .kpi { grid-column: span 6; }
-    .grafico-semana, .calendario, .mapa-calor, .por-disciplina, .proximos-card { grid-column: span 12; }
+    .grafico-semana, .calendario, .mapa-calor, .por-disciplina, .proximos-card, .projetos-card { grid-column: span 12; }
 }
 
 .card-topo {
@@ -457,8 +456,8 @@ a.sub:hover {
 
 .mapa-dias {
     display: grid;
-    grid-template-rows: repeat(7, 1fr);
-    gap: 4px;
+    grid-template-rows: auto repeat(7, var(--tam-celula));
+    gap: 6px;
     font-family: var(--fonte-mono);
     font-size: 0.65rem;
     color: var(--texto-suave);
@@ -469,34 +468,60 @@ a.sub:hover {
     align-items: center;
 }
 
+.mapa { --tam-celula: 44px; }
+
 .mapa-grade {
-    flex: 1;
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: 1fr;
-    gap: 4px;
+    grid-auto-columns: var(--tam-celula);
+    gap: 6px;
 }
 
 .mapa-semana {
     display: grid;
-    grid-template-rows: repeat(7, 1fr);
-    gap: 4px;
+    grid-template-rows: auto repeat(7, var(--tam-celula));
+    gap: 6px;
+}
+
+/* data da segunda-feira em cima de cada coluna */
+.mapa-data {
+    font-family: var(--fonte-mono);
+    font-size: 0.65rem;
+    color: var(--texto-suave);
+    text-align: center;
 }
 
 .celula {
-    display: inline-block;
+    display: inline-grid;
+    place-items: center;
     min-width: 10px;
     aspect-ratio: 1;
-    border-radius: 3px;
+    border-radius: 8px;
     background: var(--g-vazio);
+    outline: none;
 }
 
+/* número do dia dentro do quadrado */
+.celula small {
+    font-family: var(--fonte-mono);
+    font-size: 0.68rem;
+    color: var(--texto-suave);
+}
+
+.celula.nivel-1 small, .celula.nivel-2 small { color: var(--texto); }
+.celula.nivel-3 small, .celula.nivel-4 small { color: var(--branco); }
+
+.celula.fora { background: transparent; }
+.celula.futuro { box-shadow: inset 0 0 0 1px var(--g-grade); }
+
+.mapa-grade .celula:focus-visible,
 .mapa-grade .celula:hover {
     outline: 2px solid var(--texto);
     outline-offset: 1px;
 }
 
 .celula.futuro { background: transparent; }
+.mapa-grade .celula.fora:hover, .mapa-grade .celula.futuro:hover { outline: none; }
 .celula.nivel-1 { background: var(--g-1); }
 .celula.nivel-2 { background: var(--g-2); }
 .celula.nivel-3 { background: var(--g-3); }
@@ -514,6 +539,7 @@ a.sub:hover {
 .mapa-legenda .celula {
     width: 12px;
     min-width: 12px;
+    border-radius: 3px;
 }
 
 .mapa-legenda small {
