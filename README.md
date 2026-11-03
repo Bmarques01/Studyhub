@@ -33,15 +33,17 @@ python manage.py runserver
 
 Depois é só abrir http://127.0.0.1:8000
 
-## Levar os dados para outro computador
+## Usar em mais de um computador
 
-O banco (`db.sqlite3`) não vai para o GitHub, porque tem dados pessoais. Para levar tudo:
+O banco (`db.sqlite3`) não vai para este repositório, porque tem dados pessoais. Os dados viajam por um
+**repositório privado** (configurado em `DADOS_REPO`, em `config/settings.py`):
 
 ```bash
-python manage.py fazer_backup                           # gera backup/studyhub-AAAA-MM-DD.json
-# copie esse arquivo para o outro computador (pasta backup/) e, lá, depois do migrate:
-python manage.py loaddata backup/studyhub-AAAA-MM-DD.json
+python manage.py enviar_dados    # ao terminar de estudar: manda os dados para o repositório privado
+python manage.py receber_dados   # ao sentar no outro computador: traz os dados mais novos
 ```
+
+Os comandos avisam antes de sobrescrever algo que ainda não foi sincronizado.
 
 Para rodar os testes:
 

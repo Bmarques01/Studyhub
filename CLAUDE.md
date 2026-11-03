@@ -16,7 +16,8 @@ só por ela. Repositório: https://github.com/Bmarques01/Studyhub
   mover o cartão no Kanban para "fazendo"; ao terminar, para "feito", marcar as tarefas e anotar no diário
   de bordo (fiz / aprendi / travei). Fazer pelo `manage.py shell` no banco real. O Studyhub é o `Projeto`
   de **id 1** (o Time Tracking, outro projeto dela, é o id 2).
-- **Dados pessoais nunca vão para o GitHub**: `db.sqlite3` e `backup/` estão no `.gitignore`. Scripts que
+- **Dados pessoais nunca vão para o repositório público**: `db.sqlite3`, `backup/` e `dados/` estão no
+  `.gitignore`; os dados viajam só pelo repositório privado (ver "Dados entre computadores"). Scripts que
   mexem nos dados dela (ex.: preencher cartões, marcar situações da grade) rodam via `manage.py shell` e
   não são commitados.
 
@@ -28,18 +29,28 @@ cd Studyhub
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe manage.py migrate
-# trazer os dados: copiar o arquivo de backup para a pasta backup\ e carregar
-.\.venv\Scripts\python.exe manage.py loaddata backup\studyhub-AAAA-MM-DD.json
+.\.venv\Scripts\python.exe manage.py receber_dados    # traz os dados do repositório privado
 .\.venv\Scripts\python.exe manage.py runserver
 ```
 
-Abrir http://127.0.0.1:8000. Sem o backup, o site abre vazio (e a grade do curso pode ser recriada com
-`manage.py importar_grade --categoria ID`, mas sem as situações marcadas).
+Abrir http://127.0.0.1:8000.
 
-**Backup dos dados:** `python manage.py fazer_backup` gera `backup/studyhub-AAAA-MM-DD.json` com tudo
-(estudos, pomodoros, calendário, curso, projetos, cadernos). Para levar a outro computador, copiar esse
-arquivo à parte (OneDrive, pendrive...) e rodar `loaddata` como acima, **depois** do `migrate` e com o
-banco ainda vazio. Os ids são preservados (o Studyhub continua sendo o projeto 1).
+## Dados entre computadores (sincronização)
+
+O código fica no repositório **público** `Studyhub`; os **dados** ficam no repositório **privado**
+`Bmarques01/Studyhub-dados` (config `DADOS_REPO` em `config/settings.py`, clonado em `dados/`, que está
+no `.gitignore`). Lógica em `dashboard/sincronizacao.py`:
+
+- `manage.py enviar_dados` — ao terminar de estudar: exporta o banco para `dados/studyhub.json`
+  (dumpdata dos apps), commit e push. Recusa se o GitHub tiver dados mais novos que este computador ainda
+  não recebeu (`--forcar` passa por cima).
+- `manage.py receber_dados` — ao sentar em outro computador: puxa e substitui o banco local. Recusa se
+  houver mudanças locais não enviadas, ou se for um computador novo que já tem dados (`--forcar`).
+- A versão que cada computador conhece fica em `dados/.git/studyhub-ultima-versao`.
+- O pomodoro em andamento fica no `localStorage` do navegador e não é sincronizado.
+- `manage.py fazer_backup` continua existindo para um backup avulso em `backup/`.
+- Ids são preservados (o Studyhub continua sendo o projeto 1).
+- **Nunca** colocar dados pessoais no repositório público (inclui o Time Tracking, que tem dados da empresa).
 
 ## Comandos
 
@@ -51,7 +62,7 @@ banco ainda vazio. Os ids são preservados (o Studyhub continua sendo o projeto 
 
 | App | O que faz |
 |---|---|
-| `dashboard` | Página inicial: horas hoje/semana/mês, meta semanal (`Perfil`), sequência, gráfico da semana, calendário do mês, próximos eventos, tempo por disciplina/projeto, mapa de constância (40 semanas). Filtro `horas` em `templatetags/tempo.py`. Comando `fazer_backup`. |
+| `dashboard` | Página inicial: horas hoje/semana/mês, meta semanal (`Perfil`), sequência, gráfico da semana, calendário do mês, próximos eventos, tempo por disciplina/projeto, mapa de constância (40 semanas). Filtro `horas` em `templatetags/tempo.py`. Comandos `fazer_backup`, `enviar_dados`, `receber_dados`. |
 | `pomodoro` | `SessaoPomodoro` (minutos + disciplina/tópico **ou** projeto/funcionalidade). Página do relógio e endpoint `registrar/` (JSON). |
 | `estudos` | `Categoria` (tipo: graduação → semestres letivos "2026/2", pós → módulos, outro → sem divisão) → `Periodo` → `Disciplina` (cor, notas GA/GB) → `Topico`. Página de cada disciplina com estatísticas e notas. Modo leitura + lápis por categoria para editar. |
 | `calendario` | `Evento` (prova, trabalho, entrega, outro), visão do mês e "próximos". |

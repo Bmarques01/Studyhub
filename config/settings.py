@@ -134,3 +134,11 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+
+# Sincronização dos dados entre computadores (comandos enviar_dados / receber_dados):
+# um repositório PRIVADO no GitHub, clonado na pasta dados/ (que não vai para o Git do código).
+import os  # noqa: E402
+
+DADOS_REPO = os.environ.get('STUDYHUB_DADOS_REPO', 'https://github.com/Bmarques01/Studyhub-dados.git')
+DADOS_DIR = BASE_DIR / 'dados'

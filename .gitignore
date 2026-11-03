@@ -5,6 +5,7 @@
 db.sqlite3
 *.sqlite3
 backup/
+dados/
 
 # Arquivos gerados pelo Python
 __pycache__/

@@ -106,3 +106,76 @@ class BackupTests(TestCase):
             call_command('loaddata', str(arquivo), verbosity=0)
         self.assertEqual(Perfil.atual().meta_semanal_horas, 12)
         self.assertEqual(SessaoPomodoro.objects.count(), 1)
+
+
+class SincronizacaoTests(TestCase):
+    """Simula dois computadores usando um repositório Git local (nada vai para o GitHub)."""
+
+    def setUp(self):
+        import subprocess
+        import tempfile
+        from pathlib import Path
+
+        self.temp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        self.raiz = Path(self.temp.name)
+        self.repo = self.raiz / 'remoto.git'
+        subprocess.run(['git', 'init', '--bare', '-q', str(self.repo)], check=True)
+        categoria = Categoria.objects.create(nome='Ciência da Computação', tipo='graduacao')
+        self.redes = Disciplina.objects.create(categoria=categoria, nome='Redes 2')
+        SessaoPomodoro.objects.create(duracao_minutos=25, disciplina=self.redes)
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def computador(self, nome):
+        from django.test import override_settings
+        return override_settings(DADOS_REPO=str(self.repo), DADOS_DIR=self.raiz / nome)
+
+    def test_enviar_e_receber_em_outro_computador(self):
+        from .sincronizacao import enviar, receber
+        with self.computador('notebook'):
+            self.assertIn('Dados enviados', enviar())
+            self.assertIn('Nada para enviar', enviar())
+        # "outro computador": banco vazio, recebe tudo
+        from .sincronizacao import apagar_dados
+        apagar_dados()
+        self.assertFalse(SessaoPomodoro.objects.exists())
+        with self.computador('desktop'):
+            self.assertIn('recebidos', receber())
+        self.assertEqual(SessaoPomodoro.objects.get().disciplina.nome, 'Redes 2')
+
+    def test_nao_envia_por_cima_de_dados_mais_novos(self):
+        from .sincronizacao import ErroSincronizacao, enviar
+        with self.computador('notebook'):
+            enviar()
+        with self.computador('desktop'):
+            SessaoPomodoro.objects.create(duracao_minutos=50)
+            enviar(forcar=True)  # o desktop envia algo novo
+        with self.computador('notebook'):
+            SessaoPomodoro.objects.create(duracao_minutos=10)
+            with self.assertRaisesMessage(ErroSincronizacao, 'receber_dados'):
+                enviar()
+
+    def test_nao_recebe_por_cima_de_mudancas_nao_enviadas(self):
+        from .sincronizacao import ErroSincronizacao, enviar, receber
+        with self.computador('notebook'):
+            enviar()
+            SessaoPomodoro.objects.create(duracao_minutos=10)  # mudança local não enviada
+            with self.assertRaisesMessage(ErroSincronizacao, 'enviar_dados'):
+                receber()
+            self.assertIn('recebidos', receber(forcar=True))  # descarta a mudança local
+        self.assertEqual(SessaoPomodoro.objects.count(), 1)
+
+    def test_computador_novo_com_dados_pede_confirmacao(self):
+        from .sincronizacao import ErroSincronizacao, enviar, receber
+        with self.computador('notebook'):
+            enviar()
+        with self.computador('desktop'):
+            with self.assertRaisesMessage(ErroSincronizacao, '--forcar'):
+                receber()
+
+    def test_repositorio_vazio(self):
+        from .sincronizacao import ErroSincronizacao, receber
+        with self.computador('desktop'):
+            with self.assertRaisesMessage(ErroSincronizacao, 'vazio'):
+                receber()
