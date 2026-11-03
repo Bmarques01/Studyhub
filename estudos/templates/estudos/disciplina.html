@@ -236,7 +236,7 @@
                 <h2 class="rotulo">ferramentas</h2>
             </header>
             <div class="ferramentas">
-                <a href="{% url 'flashcards:index' %}?disciplina={{ disciplina.id }}" class="ferramenta">
+                <a href="{% url 'flashcards:disciplina' disciplina.id %}" class="ferramenta">
                     {% include "componentes/icone.html" with nome="flashcards" %}
                     <strong>Flashcards</strong>
                     <small>{% with n=disciplina.flashcards.count %}{% if n %}{{ n }} {% if n == 1 %}cartão{% else %}cartões{% endif %} · {{ flashcards_hoje }} hoje{% else %}criar o primeiro{% endif %}{% endwith %}</small>

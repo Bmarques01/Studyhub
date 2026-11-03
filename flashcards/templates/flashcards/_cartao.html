@@ -1,0 +1,35 @@
+{# Um cartão da lista, com editar (frente, verso e baralho) e excluir. #}
+<li class="fc-cartao editavel">
+    <div class="modo-ver">
+        <div class="fc-textos">
+            <strong>{{ c.frente }}</strong>
+            <span>{{ c.verso }}</span>
+        </div>
+        <div class="fc-meta">
+            <span class="quando {% if c.situacao == 'para revisar' %}perto{% endif %}">{{ c.situacao }}</span>
+            <button type="button" class="btn-icone" data-editar title="Editar">✎</button>
+            <form method="post" action="{% url 'flashcards:excluir' c.id %}"
+                  onsubmit="return confirm('Excluir este cartão?')">
+                {% csrf_token %}
+                <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+                <button class="btn-icone" title="Excluir">✕</button>
+            </form>
+        </div>
+    </div>
+    <form method="post" action="{% url 'flashcards:editar' c.id %}" class="modo-edicao fc-form">
+        {% csrf_token %}
+        <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+        <textarea name="frente" rows="2" required aria-label="Frente">{{ c.frente }}</textarea>
+        <textarea name="verso" rows="3" required aria-label="Verso">{{ c.verso }}</textarea>
+        <div class="form-linha">
+            <select name="topico" aria-label="Baralho">
+                <option value="">sem baralho</option>
+                {% for t in topicos_da_disciplina %}
+                    <option value="{{ t.id }}" {% if t.id == c.topico_id %}selected{% endif %}>{{ t.nome }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn">salvar</button>
+            <button type="button" class="btn-texto" data-cancelar>cancelar</button>
+        </div>
+    </form>
+</li>

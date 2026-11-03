@@ -79,6 +79,7 @@ async function responder(nota) {
             nota,
             duracao_segundos: Math.round((Date.now() - mostradoEm) / 1000),
             disciplina: config.disciplina,
+            topico: config.topico,  // revisando um baralho só
         }),
     });
     enviando = false;

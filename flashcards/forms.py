@@ -42,3 +42,16 @@ class ImportarForm(forms.Form):
 
     def clean_topico(self):
         return conferir_topico(self, self.cleaned_data.get('disciplina'))
+
+
+class BaralhoForm(forms.Form):
+    """Baralho novo = tópico novo na disciplina."""
+
+    disciplina = forms.ModelChoiceField(queryset=Disciplina.objects.all())
+    nome = forms.CharField(max_length=150)
+
+    def clean_nome(self):
+        nome = self.cleaned_data['nome'].strip()
+        if not nome:
+            raise forms.ValidationError('Dê um nome ao baralho.')
+        return nome

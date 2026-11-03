@@ -123,16 +123,84 @@ class PaginasTests(TestCase):
         self.bgp = Topico.objects.create(disciplina=self.redes, nome='BGP')
         self.escalonamento = Topico.objects.create(disciplina=self.so, nome='Escalonamento')
 
-    def test_pagina_vazia_e_com_filtro(self):
-        self.assertContains(self.client.get(reverse('flashcards:index')), 'Nenhum cartão')
-        Flashcard.objects.create(disciplina=self.redes, frente='Porta do BGP?', verso='179')
-        Flashcard.objects.create(disciplina=self.so, frente='O que é um processo?', verso='programa rodando')
+    def test_tela_inicial_separa_por_disciplina(self):
+        from estudos.models import Periodo, semestre_letivo
+        resposta = self.client.get(reverse('flashcards:index'))
+        # sem cartões: as disciplinas atuais aparecem mesmo assim, com o botão de criar o primeiro
+        self.assertContains(resposta, 'Redes 2')
+        self.assertContains(resposta, '+ criar o primeiro')
+
+        Flashcard.objects.create(disciplina=self.redes, topico=self.bgp, frente='Porta do BGP?', verso='179')
+        resposta = self.client.get(reverse('flashcards:index'))
+        self.assertNotContains(resposta, 'Porta do BGP?')  # a lista de cartões fica na página da disciplina
+        redes = next(d for g in resposta.context['grupos'] for d in g['disciplinas'] if d.id == self.redes.id)
+        self.assertEqual(redes.resumo, {'total': 1, 'para_revisar': 1})
+        self.assertEqual([(t.nome, t.total) for t in redes.baralhos], [('BGP', 1)])
+
+        # semestre antigo: só aparece se tiver cartões
+        categoria = self.redes.categoria
+        antigo = Periodo.objects.create(categoria=categoria, nome='2020/1', ordem=0)
+        Periodo.objects.create(categoria=categoria, nome=semestre_letivo(timezone.localdate()), ordem=1)
+        calculo = Disciplina.objects.create(categoria=categoria, periodo=antigo, nome='Cálculo I')
+        def caixas():
+            resposta = self.client.get(reverse('flashcards:index'))
+            return [(g['rotulo'], d.nome) for g in resposta.context['grupos'] for d in g['disciplinas']]
+        self.assertNotIn(('CC · 2020/1', 'Cálculo I'), caixas())
+        Flashcard.objects.create(disciplina=calculo, frente='a', verso='b')
+        self.assertIn(('CC · 2020/1', 'Cálculo I'), caixas())
+        self.assertContains(self.client.get(reverse('flashcards:index')), '(anterior)')
+
+    def test_link_antigo_vai_para_a_disciplina(self):
         resposta = self.client.get(reverse('flashcards:index') + f'?disciplina={self.redes.id}')
+        self.assertRedirects(resposta, reverse('flashcards:disciplina', args=[self.redes.id]))
+        self.assertEqual(self.client.get(reverse('flashcards:index') + '?disciplina=abc').status_code, 200)
+
+    def test_pagina_da_disciplina_mostra_os_baralhos(self):
+        url = reverse('flashcards:disciplina', args=[self.redes.id])
+        resposta = self.client.get(url)
+        self.assertContains(resposta, 'Nenhum cartão de Redes 2')
+        self.assertEqual(resposta.context['vazios'], [self.bgp])  # BGP ainda não tem cartões
+        Flashcard.objects.create(disciplina=self.redes, topico=self.bgp, frente='Porta do BGP?', verso='179')
+        Flashcard.objects.create(disciplina=self.redes, frente='Solto?', verso='sim')
+        Flashcard.objects.create(disciplina=self.so, frente='O que é um processo?', verso='programa rodando')
+        resposta = self.client.get(url)
         self.assertContains(resposta, 'Porta do BGP?')
+        self.assertContains(resposta, 'Solto?')
+        self.assertContains(resposta, 'sem baralho')
+        self.assertContains(resposta, f'id="baralho-{self.bgp.id}"')
+        self.assertEqual(resposta.context['vazios'], [])
+        self.assertEqual([b['topico'] for b in resposta.context['baralhos']], [self.bgp, None])
         self.assertNotContains(resposta, 'O que é um processo?')
-        self.assertContains(resposta, 'Sistemas Operacionais')  # continua no filtro
-        # filtro inválido = todas
-        self.assertContains(self.client.get(reverse('flashcards:index') + '?disciplina=abc'), 'O que é um processo?')
+        self.assertEqual(self.client.get(reverse('flashcards:disciplina', args=[999])).status_code, 404)
+
+    def test_criar_baralho(self):
+        url = reverse('flashcards:criar_baralho')
+        resposta = self.client.post(url, {'disciplina': self.redes.id, 'nome': '  OSPF '})
+        ospf = Topico.objects.get(nome='OSPF')
+        self.assertEqual(ospf.disciplina, self.redes)
+        self.assertRedirects(resposta, reverse('flashcards:disciplina', args=[self.redes.id]) + f'#baralho-{ospf.id}',
+                             fetch_redirect_response=False)
+        # mesmo nome (maiúsculas não importam): não duplica
+        resposta = self.client.post(url, {'disciplina': self.redes.id, 'nome': 'bgp'}, follow=True)
+        self.assertEqual(self.redes.topicos.count(), 2)
+        self.assertContains(resposta, 'já existia')
+        # sem nome: não cria
+        self.client.post(url, {'disciplina': self.redes.id, 'nome': '   '})
+        self.assertEqual(Topico.objects.count(), 3)
+
+    def test_revisar_um_baralho_so(self):
+        do_bgp = Flashcard.objects.create(disciplina=self.redes, topico=self.bgp, frente='a', verso='b')
+        Flashcard.objects.create(disciplina=self.redes, frente='solto', verso='x')
+        resposta = self.client.get(reverse('flashcards:revisar') + f'?topico={self.bgp.id}')
+        self.assertContains(resposta, 'Revisar · Redes 2 · BGP')
+        self.assertEqual(resposta.context['para_revisar'], 1)
+
+        dados = self.client.get(reverse('flashcards:proximo') + f'?topico={self.bgp.id}').json()
+        self.assertEqual((dados['cartao']['id'], dados['restantes']), (do_bgp.id, 1))
+        dados = self.client.post(reverse('flashcards:responder', args=[do_bgp.id]),
+                                 json.dumps({'nota': 4, 'disciplina': self.redes.id, 'topico': self.bgp.id}),
+                                 content_type='application/json').json()
+        self.assertIsNone(dados['cartao'])  # o cartão solto não entra na revisão do baralho
 
     def test_criar_cartao(self):
         self.client.post(reverse('flashcards:criar'), {

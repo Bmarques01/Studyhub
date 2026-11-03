@@ -99,15 +99,18 @@ def vagas_de_novos():
     return max(0, Perfil.atual().flashcards_novos_por_dia - novos_feitos_hoje())
 
 
-def do_filtro(disciplina=None):
+def do_filtro(disciplina=None, topico=None):
+    """Os cartões de uma disciplina, de um baralho (tópico) ou todos."""
     cartoes = Flashcard.objects.all()
+    if topico:
+        return cartoes.filter(topico=topico)
     return cartoes.filter(disciplina=disciplina) if disciplina else cartoes
 
 
-def proximo_cartao(disciplina=None, agora=None):
+def proximo_cartao(disciplina=None, agora=None, topico=None):
     """Qual cartão mostrar agora: primeiro os vencidos, depois os novos (se ainda houver vaga hoje)."""
     agora = agora or timezone.now()
-    cartoes = do_filtro(disciplina)
+    cartoes = do_filtro(disciplina, topico)
     vistos = cartoes.filter(primeira_revisao__isnull=False)
 
     cartao = vistos.filter(vencimento__lte=agora).order_by('vencimento', 'id').first()
@@ -119,10 +122,10 @@ def proximo_cartao(disciplina=None, agora=None):
     return cartao
 
 
-def para_revisar(disciplina=None, agora=None):
+def para_revisar(disciplina=None, agora=None, topico=None):
     """Quantos cartões estão esperando agora (vencidos + novos dentro do limite)."""
     agora = agora or timezone.now()
-    cartoes = do_filtro(disciplina)
+    cartoes = do_filtro(disciplina, topico)
     vencidos = cartoes.filter(primeira_revisao__isnull=False, vencimento__lte=agora).count()
     novos = cartoes.filter(primeira_revisao__isnull=True).count()
     return vencidos + min(novos, vagas_de_novos())
@@ -130,24 +133,35 @@ def para_revisar(disciplina=None, agora=None):
 
 def resumo_por_disciplina(agora=None):
     """{disciplina_id: {'total', 'para_revisar'}} de todas as disciplinas que têm cartões."""
+    return resumo(Flashcard.objects.all(), 'disciplina', agora)
+
+
+def resumo_por_baralho(disciplina, agora=None):
+    """{topico_id: {'total', 'para_revisar'}} dos baralhos de uma disciplina (None = sem baralho)."""
+    return resumo(Flashcard.objects.filter(disciplina=disciplina), 'topico', agora)
+
+
+def resumo(cartoes, campo, agora=None):
+    """Conta, para cada valor de `campo`, quantos cartões existem e quantos estão para revisar.
+    Os novos entram até o limite do dia (o mesmo limite vale para cada grupo)."""
     agora = agora or timezone.now()
     vagas = vagas_de_novos()
-    linhas = (Flashcard.objects.values('disciplina')
+    linhas = (cartoes.values(campo)
               .annotate(total=Count('id'),
                         vencidos=Count('id', filter=Q(primeira_revisao__isnull=False,
                                                       vencimento__lte=agora)),
                         novos=Count('id', filter=Q(primeira_revisao__isnull=True)))
               .order_by())
     return {
-        linha['disciplina']: {'total': linha['total'],
+        linha[campo]: {'total': linha['total'],
                               'para_revisar': linha['vencidos'] + min(linha['novos'], vagas)}
         for linha in linhas
     }
 
 
-def proxima_revisao(disciplina=None, agora=None):
+def proxima_revisao(disciplina=None, agora=None, topico=None):
     """Quando vence o próximo cartão (para a tela de "acabou por hoje"). None se não houver."""
     agora = agora or timezone.now()
-    cartao = (do_filtro(disciplina).filter(primeira_revisao__isnull=False, vencimento__gt=agora)
+    cartao = (do_filtro(disciplina, topico).filter(primeira_revisao__isnull=False, vencimento__gt=agora)
               .order_by('vencimento').first())
     return cartao.vencimento if cartao else None

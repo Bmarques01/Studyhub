@@ -10,16 +10,19 @@
 {% endblock %}
 
 {% block conteudo %}
+{# Voltar: para a disciplina (ou o baralho) que está sendo revisada, ou para a tela inicial #}
+{% if filtro %}{% url 'flashcards:disciplina' filtro.id as voltar_para %}{% else %}{% url 'flashcards:index' as voltar_para %}{% endif %}
 <div class="dash fc-revisao" id="revisao"
-     data-url-proximo="{% url 'flashcards:proximo' %}{% if filtro %}?disciplina={{ filtro.id }}{% endif %}"
+     data-url-proximo="{% url 'flashcards:proximo' %}{% if topico %}?topico={{ topico.id }}{% elif filtro %}?disciplina={{ filtro.id }}{% endif %}"
      data-url-responder="{% url 'flashcards:responder' 0 %}"
      data-disciplina="{{ filtro.id|default:'' }}"
+     data-topico="{{ topico.id|default:'' }}"
      data-csrf="{{ csrf_token }}">
 
     <header class="dash-topo">
         <div>
-            <a href="{% url 'flashcards:index' %}{% if filtro %}?disciplina={{ filtro.id }}{% endif %}" class="voltar">‹ flashcards</a>
-            <h1>Revisar{% if filtro %} · {{ filtro.nome }}{% endif %}</h1>
+            <a href="{{ voltar_para }}{% if topico %}#baralho-{{ topico.id }}{% endif %}" class="voltar">‹ {% if filtro %}{{ filtro.nome }}{% else %}flashcards{% endif %}</a>
+            <h1>Revisar{% if filtro %} · {{ filtro.nome }}{% endif %}{% if topico %} · {{ topico.nome }}{% endif %}</h1>
             <p class="dash-data"><span id="restantes">{{ para_revisar }}</span> para revisar</p>
         </div>
         <div class="dash-topo-acoes">
@@ -53,7 +56,7 @@
     <section class="card fc-fim" id="fim" hidden>
         <p class="fc-fim-titulo">✓ Revisão de hoje concluída</p>
         <p class="vazio-card" id="fim-proxima"></p>
-        <a href="{% url 'flashcards:index' %}{% if filtro %}?disciplina={{ filtro.id }}{% endif %}" class="btn btn-claro">voltar aos cartões</a>
+        <a href="{{ voltar_para }}" class="btn btn-claro">voltar aos cartões</a>
     </section>
 
     <p class="mensagem error" id="erro" hidden></p>

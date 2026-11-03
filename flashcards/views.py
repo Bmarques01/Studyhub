@@ -1,30 +1,43 @@
 import json
 
 from django.contrib import messages
+from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 
 from dashboard.models import Perfil
-from estudos.models import Disciplina, Topico
+from estudos.models import Categoria, Disciplina, Topico, semestre_letivo
 from estudos.views import avisar_erros, opcoes_de_disciplina
 
 from . import memoria
-from .forms import EdicaoForm, FlashcardForm, ImportarForm
+from .forms import BaralhoForm, EdicaoForm, FlashcardForm, ImportarForm
 from .importacao import LIMITE, ler_cartoes
 from .models import Flashcard
+
+# Na tela, o tópico da disciplina se chama "baralho": é o mesmo objeto (Topico).
+MAX_BARALHOS_NA_CAIXA = 4
 
 
 # ===== Funções de apoio =====
 
-def disciplina_do_filtro(request):
-    """A disciplina escolhida em ?disciplina=ID (ou None = todas)."""
+def ler_id(valor):
     try:
-        return Disciplina.objects.get(id=int(request.GET.get('disciplina', '')))
-    except (ValueError, Disciplina.DoesNotExist):
+        return int(valor)
+    except (ValueError, TypeError):
         return None
+
+
+def filtro_da_revisao(dados):
+    """(disciplina, baralho) escolhidos em ?disciplina=ID&topico=ID. Os dois são opcionais;
+    se vier o baralho, a disciplina é a dele."""
+    topico = Topico.objects.select_related('disciplina').filter(id=ler_id(dados.get('topico'))).first()
+    if topico:
+        return topico.disciplina, topico
+    return Disciplina.objects.filter(id=ler_id(dados.get('disciplina'))).first(), None
 
 
 def voltar(request):
@@ -44,43 +57,109 @@ def situacao(cartao, agora):
     return 'em ' + memoria.texto_intervalo(cartao.vencimento - agora)
 
 
-# ===== Página principal: lista com filtro por disciplina =====
+def periodos_atuais():
+    """Os períodos que você está cursando agora, um por categoria:
+    graduação = o semestre letivo de hoje ("2026/2"); pós = o último módulo."""
+    atuais = set()
+    for categoria in Categoria.objects.prefetch_related('periodos'):
+        periodos = list(categoria.periodos.all())
+        if categoria.divisao == 'semestre':
+            nome = semestre_letivo(timezone.localdate())
+            atuais.update(p.id for p in periodos if p.nome == nome)
+        elif periodos:
+            atuais.add(max(periodos, key=lambda p: (p.ordem, p.id)).id)
+    return atuais
 
-def index(request):
-    agora = timezone.now()
-    filtro = disciplina_do_filtro(request)
-    resumo = memoria.resumo_por_disciplina(agora)
 
-    # Botões de filtro: só as disciplinas que têm cartões (e a escolhida, mesmo vazia)
-    ids = set(resumo) | ({filtro.id} if filtro else set())
-    filtros = list(Disciplina.objects.filter(id__in=ids).order_by('nome'))
-    for d in filtros:
-        d.resumo = resumo.get(d.id, {'total': 0, 'para_revisar': 0})
-
-    cartoes = list(memoria.do_filtro(filtro).select_related('disciplina', 'topico')
-                   .prefetch_related('disciplina__topicos'))  # tópicos para a edição
-    for cartao in cartoes:
-        cartao.situacao = situacao(cartao, agora)
-
-    # Para o JavaScript trocar a lista de tópicos quando a disciplina muda
+def dados_do_dialogo():
+    """O que a janela "+ novo" precisa: disciplinas para escolher e os baralhos de cada uma."""
     topicos = {}
     for topico in Topico.objects.order_by('nome'):
         topicos.setdefault(topico.disciplina_id, []).append([topico.id, topico.nome])
+    return {'opcoes': opcoes_de_disciplina(), 'topicos': topicos, 'limite_importacao': LIMITE}
+
+
+# ===== Tela inicial: uma caixa por disciplina =====
+
+def index(request):
+    # Link antigo (?disciplina=ID) vai para a página da disciplina
+    antiga = Disciplina.objects.filter(id=ler_id(request.GET.get('disciplina'))).first()
+    if antiga:
+        return redirect('flashcards:disciplina', disciplina_id=antiga.id)
+
+    agora = timezone.now()
+    resumo = memoria.resumo_por_disciplina(agora)
+    atuais = periodos_atuais()
+
+    # Aparecem: as disciplinas que têm cartões + as que você está cursando agora (mesmo vazias)
+    disciplinas = [
+        d for d in Disciplina.objects.select_related('categoria', 'periodo').prefetch_related('topicos')
+        if d.id in resumo or (not d.arquivada and (d.periodo_id is None or d.periodo_id in atuais))
+    ]
+    por_baralho = {}  # quantos cartões cada baralho tem
+    for linha in Flashcard.objects.values('topico').exclude(topico=None).annotate(n=Count('id')).order_by():
+        por_baralho[linha['topico']] = linha['n']
+
+    # Separa em grupos "Categoria · período"; o período atual vem antes dos antigos
+    grupos = {}
+    for d in sorted(disciplinas, key=lambda d: (
+            d.categoria.criado_em, d.categoria_id, d.periodo_id not in atuais,
+            -(d.periodo.ordem if d.periodo else 0), d.nome.lower())):
+        d.resumo = resumo.get(d.id, {'total': 0, 'para_revisar': 0})
+        baralhos = sorted(d.topicos.all(), key=lambda t: (-por_baralho.get(t.id, 0), t.nome.lower()))
+        for t in baralhos:
+            t.total = por_baralho.get(t.id, 0)
+        d.baralhos = baralhos[:MAX_BARALHOS_NA_CAIXA]
+        d.mais_baralhos = len(baralhos) - len(d.baralhos)
+        rotulo = d.categoria.nome + (f' · {d.periodo.nome}' if d.periodo else '')
+        grupo = grupos.setdefault(rotulo, {'rotulo': rotulo, 'atual': d.periodo_id in atuais or not d.periodo,
+                                           'disciplinas': []})
+        grupo['disciplinas'].append(d)
 
     return render(request, 'flashcards/index.html', {
-        'filtro': filtro,
-        'filtros': filtros,
+        'grupos': list(grupos.values()),
         'total_cartoes': sum(r['total'] for r in resumo.values()),
-        'para_revisar': memoria.para_revisar(filtro, agora),
-        'para_revisar_todas': memoria.para_revisar(None, agora),
-        'cartoes': cartoes,
-        'opcoes': opcoes_de_disciplina(),
-        'topicos': topicos,
+        'para_revisar': memoria.para_revisar(None, agora),
         'perfil': Perfil.atual(),
         'vagas': memoria.vagas_de_novos(),
-        'limite_importacao': LIMITE,
+        **dados_do_dialogo(),
     })
 
+
+# ===== Página de uma disciplina: os baralhos e os cartões de cada um =====
+
+def disciplina(request, disciplina_id):
+    disciplina = get_object_or_404(Disciplina.objects.select_related('categoria', 'periodo'), id=disciplina_id)
+    agora = timezone.now()
+    resumo = memoria.resumo_por_baralho(disciplina, agora)
+    vazio = {'total': 0, 'para_revisar': 0}
+
+    cartoes = list(disciplina.flashcards.all())
+    for cartao in cartoes:
+        cartao.situacao = situacao(cartao, agora)
+
+    topicos = list(disciplina.topicos.all())
+    baralhos = []  # um bloco por baralho com cartões ("sem baralho" no fim)
+    for t in topicos + [None]:
+        do_baralho = [c for c in cartoes if c.topico_id == (t.id if t else None)]
+        if do_baralho:
+            baralhos.append({'topico': t, 'resumo': resumo.get(t.id if t else None, vazio),
+                             'cartoes': do_baralho})
+    com_cartoes = {c.topico_id for c in cartoes}
+
+    return render(request, 'flashcards/disciplina.html', {
+        'disciplina': disciplina,
+        'filtro': disciplina,  # deixa a disciplina já escolhida na janela "+ novo"
+        'baralhos': baralhos,
+        'vazios': [t for t in topicos if t.id not in com_cartoes],
+        'topicos_da_disciplina': topicos,
+        'total_cartoes': len(cartoes),
+        'para_revisar': memoria.para_revisar(disciplina, agora),
+        **dados_do_dialogo(),
+    })
+
+
+# ===== Criar, editar, excluir =====
 
 @require_POST
 def criar(request):
@@ -91,6 +170,23 @@ def criar(request):
     else:
         avisar_erros(request, form)
     return voltar(request)
+
+
+@require_POST
+def criar_baralho(request):
+    """Um baralho novo é um tópico novo na disciplina (aparece também em Estudos e no pomodoro)."""
+    form = BaralhoForm(request.POST)
+    if not form.is_valid():
+        avisar_erros(request, form)
+        return voltar(request)
+    disciplina, nome = form.cleaned_data['disciplina'], form.cleaned_data['nome']
+    topico = disciplina.topicos.filter(nome__iexact=nome).first()
+    if topico:
+        messages.success(request, f'O baralho "{topico.nome}" já existia em {disciplina.nome}.')
+    else:
+        topico = Topico.objects.create(disciplina=disciplina, nome=nome)
+        messages.success(request, f'Baralho "{topico.nome}" criado em {disciplina.nome}.')
+    return redirect(reverse('flashcards:disciplina', args=[disciplina.id]) + f'#baralho-{topico.id}')
 
 
 @require_POST
@@ -141,10 +237,7 @@ def excluir(request, cartao_id):
 
 @require_POST
 def salvar_limite(request):
-    try:
-        limite = int(request.POST.get('flashcards_novos_por_dia', ''))
-    except ValueError:
-        limite = 0
+    limite = ler_id(request.POST.get('flashcards_novos_por_dia')) or 0
     if 1 <= limite <= 500:
         perfil = Perfil.atual()
         perfil.flashcards_novos_por_dia = limite
@@ -155,21 +248,22 @@ def salvar_limite(request):
     return voltar(request)
 
 
-# ===== Revisão =====
+# ===== Revisão (tudo, uma disciplina ou um baralho) =====
 
 def revisar(request):
-    filtro = disciplina_do_filtro(request)
+    disciplina, topico = filtro_da_revisao(request.GET)
     return render(request, 'flashcards/revisar.html', {
-        'filtro': filtro,
-        'para_revisar': memoria.para_revisar(filtro),
+        'filtro': disciplina,
+        'topico': topico,
+        'para_revisar': memoria.para_revisar(disciplina, topico=topico),
     })
 
 
-def estado_da_fila(disciplina):
+def estado_da_fila(disciplina, topico=None):
     """O que a tela de revisão precisa: o próximo cartão (ou nenhum) e quantos faltam."""
     agora = timezone.now()
-    cartao = memoria.proximo_cartao(disciplina, agora)
-    dados = {'restantes': memoria.para_revisar(disciplina, agora), 'cartao': None, 'proxima': ''}
+    cartao = memoria.proximo_cartao(disciplina, agora, topico=topico)
+    dados = {'restantes': memoria.para_revisar(disciplina, agora, topico=topico), 'cartao': None, 'proxima': ''}
     if cartao:
         dados['cartao'] = {
             'id': cartao.id,
@@ -182,7 +276,7 @@ def estado_da_fila(disciplina):
             'intervalos': memoria.intervalos(cartao, agora),
         }
     else:
-        proxima = memoria.proxima_revisao(disciplina, agora)
+        proxima = memoria.proxima_revisao(disciplina, agora, topico=topico)
         if proxima:
             dados['proxima'] = memoria.texto_intervalo(proxima - agora)
     return dados
@@ -190,7 +284,7 @@ def estado_da_fila(disciplina):
 
 @require_GET
 def proximo(request):
-    return JsonResponse(estado_da_fila(disciplina_do_filtro(request)))
+    return JsonResponse(estado_da_fila(*filtro_da_revisao(request.GET)))
 
 
 @require_POST
@@ -211,9 +305,5 @@ def responder(request, cartao_id):
         duracao = None
     memoria.responder(cartao, nota, duracao_segundos=duracao if duracao and duracao > 0 else None)
 
-    # A próxima carta vem do mesmo filtro da revisão (uma disciplina ou todas)
-    try:
-        disciplina = Disciplina.objects.filter(id=int(dados.get('disciplina'))).first()
-    except (ValueError, TypeError):
-        disciplina = None
-    return JsonResponse(estado_da_fila(disciplina))
+    # A próxima carta vem do mesmo filtro da revisão (todas, uma disciplina ou um baralho)
+    return JsonResponse(estado_da_fila(*filtro_da_revisao(dados)))

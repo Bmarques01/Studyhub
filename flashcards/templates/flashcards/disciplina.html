@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Flashcards · {{ disciplina.nome }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<script src="{% static 'flashcards/flashcards.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash fc" style="--cor: {{ disciplina.cor }}">
+
+    {# ===== Topo ===== #}
+    <header class="dash-topo">
+        <div>
+            <a href="{% url 'flashcards:index' %}" class="voltar">‹ flashcards</a>
+            <h1 class="fc-titulo"><i class="bolinha"></i>{{ disciplina.nome }}</h1>
+            <p class="dash-data">
+                {{ disciplina.categoria.nome }}{% if disciplina.periodo %} · {{ disciplina.periodo.nome }}{% endif %} ·
+                {{ total_cartoes }} {% if total_cartoes == 1 %}cartão{% else %}cartões{% endif %} ·
+                {{ para_revisar }} para revisar agora
+            </p>
+        </div>
+        <div class="dash-topo-acoes">
+            <a href="{% url 'estudos:disciplina' disciplina.id %}" class="btn btn-claro">disciplina</a>
+            <a href="{% url 'pomodoro:index' %}?disciplina={{ disciplina.id }}" class="btn btn-claro"
+               title="Ligue um pomodoro para o tempo de revisão contar nas suas horas">pomodoro</a>
+            <button type="button" class="btn btn-claro" data-abrir-novo data-disciplina="{{ disciplina.id }}">+ novo</button>
+            {% if para_revisar %}
+                <a href="{% url 'flashcards:revisar' %}?disciplina={{ disciplina.id }}" class="btn btn-com-icone">
+                    {% include "componentes/icone.html" with nome="play" %} Revisar ({{ para_revisar }})
+                </a>
+            {% elif total_cartoes %}
+                <span class="chip-sequencia">✓ tudo revisado</span>
+            {% endif %}
+        </div>
+    </header>
+
+    {# ===== Um bloco por baralho ===== #}
+    {% for b in baralhos %}
+        <section class="card fc-baralho" {% if b.topico %}id="baralho-{{ b.topico.id }}"{% endif %}>
+            <header class="card-topo">
+                <h2 class="rotulo">{% if b.topico %}{{ b.topico.nome }}{% else %}sem baralho{% endif %}</h2>
+                <span class="sub">
+                    {{ b.resumo.total }} {% if b.resumo.total == 1 %}cartão{% else %}cartões{% endif %}{% if b.resumo.total %} · {{ b.resumo.para_revisar }} hoje{% endif %}
+                </span>
+                <div class="fc-baralho-acoes">
+                    <button type="button" class="btn-texto" data-abrir-novo data-disciplina="{{ disciplina.id }}"
+                            data-topico="{{ b.topico.id|default:'' }}">+ cartão</button>
+                    {% if b.topico and b.resumo.para_revisar %}
+                        <a href="{% url 'flashcards:revisar' %}?topico={{ b.topico.id }}" class="btn btn-com-icone">
+                            {% include "componentes/icone.html" with nome="play" %} revisar
+                        </a>
+                    {% endif %}
+                </div>
+            </header>
+            <ul class="fc-cartoes">
+                {% for c in b.cartoes %}{% include "flashcards/_cartao.html" %}{% endfor %}
+            </ul>
+        </section>
+    {% empty %}
+        <p class="card vazio-card">Nenhum cartão de {{ disciplina.nome }} ainda.
+            Use <strong>+ novo</strong> para criar um cartão, colar vários de uma vez ou criar um baralho.</p>
+    {% endfor %}
+
+    {# ===== Baralhos ainda sem cartões: numa linha só, para não ocupar a tela ===== #}
+    {% if vazios %}
+        <section class="card fc-vazios">
+            <h2 class="rotulo">baralhos vazios</h2>
+            <ul class="fc-baralhos-mini">
+                {% for t in vazios %}
+                    <li id="baralho-{{ t.id }}">
+                        <button type="button" data-abrir-novo data-disciplina="{{ disciplina.id }}" data-topico="{{ t.id }}"
+                                title="Criar um cartão em {{ t.nome }}">{{ t.nome }} <small>+</small></button>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+</div>
+
+{% include "flashcards/_novo.html" %}
+{% endblock %}

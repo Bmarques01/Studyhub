@@ -1,0 +1,60 @@
+{% comment %}
+    Janela "+ novo": cartão, colar vários ou baralho. Abre por qualquer botão com data-abrir-novo
+    (que pode trazer data-aba, data-disciplina e data-topico para já vir escolhido).
+{% endcomment %}
+{{ topicos|json_script:"topicos-por-disciplina" }}
+<dialog id="dialogo-novo" class="dialogo fc-dialogo" aria-labelledby="dialogo-novo-titulo">
+    <header class="fc-dialogo-topo">
+        <h2 id="dialogo-novo-titulo">Novo</h2>
+        <nav class="fc-abas" role="tablist">
+            <button type="button" role="tab" data-aba="cartao">cartão</button>
+            <button type="button" role="tab" data-aba="varios">colar vários</button>
+            <button type="button" role="tab" data-aba="baralho">baralho</button>
+        </nav>
+    </header>
+
+    {# ===== Um cartão ===== #}
+    <form method="post" action="{% url 'flashcards:criar' %}" class="fc-form" data-conteudo="cartao" data-topicos>
+        {% csrf_token %}
+        <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+        {% include "flashcards/_escolha.html" %}
+        <label>frente <textarea name="frente" rows="2" required placeholder="Qual porta o BGP usa?"></textarea></label>
+        <label>verso <textarea name="verso" rows="3" required placeholder="TCP, porta 179."></textarea></label>
+        <footer>
+            <button type="button" class="btn btn-claro" data-fechar>cancelar</button>
+            <button class="btn">+ cartão</button>
+        </footer>
+    </form>
+
+    {# ===== Colar vários ===== #}
+    <form method="post" action="{% url 'flashcards:importar' %}" class="fc-form" data-conteudo="varios" data-topicos>
+        {% csrf_token %}
+        <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+        {% include "flashcards/_escolha.html" %}
+        <label>cartões <small>(até {{ limite_importacao }} por vez)</small>
+            <textarea name="texto" rows="8" required class="mono"
+                      placeholder="F: Qual porta o BGP usa?&#10;V: TCP, porta 179.&#10;&#10;F: O que é um sistema autônomo (AS)?&#10;V: Um conjunto de redes sob a mesma administração."></textarea>
+        </label>
+        <p class="fc-dica">Cada cartão começa com <code>F:</code> (frente) e tem um <code>V:</code> (verso).
+            A resposta pode ter várias linhas.</p>
+        <footer>
+            <button type="button" class="btn btn-claro" data-fechar>cancelar</button>
+            <button class="btn">importar</button>
+        </footer>
+    </form>
+
+    {# ===== Baralho (= tópico da disciplina) ===== #}
+    <form method="post" action="{% url 'flashcards:criar_baralho' %}" class="fc-form" data-conteudo="baralho">
+        {% csrf_token %}
+        <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+        <label>disciplina
+            {% include "flashcards/_disciplinas.html" %}
+        </label>
+        <label>nome do baralho <input type="text" name="nome" maxlength="150" required placeholder="BGP"></label>
+        <p class="fc-dica">O baralho é o mesmo que um tópico da disciplina: ele aparece também em Estudos e no pomodoro.</p>
+        <footer>
+            <button type="button" class="btn btn-claro" data-fechar>cancelar</button>
+            <button class="btn">+ baralho</button>
+        </footer>
+    </form>
+</dialog>

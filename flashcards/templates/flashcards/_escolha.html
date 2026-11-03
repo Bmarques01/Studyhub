@@ -1,16 +1,7 @@
-{# Disciplina (obrigatória) + tópico (opcional). O flashcards.js troca os tópicos ao mudar a disciplina. #}
+{# Disciplina (obrigatória) + baralho (opcional). O flashcards.js troca os baralhos ao mudar a disciplina. #}
 <div class="form-linha">
-    <select name="disciplina" required aria-label="Disciplina">
-        <option value="">disciplina…</option>
-        {% for rotulo, disciplinas in opcoes %}
-            <optgroup label="{{ rotulo }}">
-                {% for d in disciplinas %}
-                    <option value="{{ d.id }}" {% if filtro.id == d.id %}selected{% endif %}>{{ d.nome }}</option>
-                {% endfor %}
-            </optgroup>
-        {% endfor %}
-    </select>
-    <select name="topico" aria-label="Tópico (opcional)">
-        <option value="">sem tópico</option>
+    {% include "flashcards/_disciplinas.html" %}
+    <select name="topico" aria-label="Baralho (opcional)">
+        <option value="">sem baralho</option>
     </select>
 </div>
