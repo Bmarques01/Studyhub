@@ -173,7 +173,7 @@
 }
 
 @media (max-width: 1000px) {
-    .caderno-pagina { grid-template-columns: 1fr; }
+    .caderno-pagina { grid-template-columns: minmax(0, 1fr); }
 }
 
 .caderno-lateral {

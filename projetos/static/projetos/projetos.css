@@ -396,7 +396,7 @@
 }
 
 @media (max-width: 1000px) {
-    .projeto-baixo { grid-template-columns: 1fr; }
+    .projeto-baixo { grid-template-columns: minmax(0, 1fr); }
 }
 
 .form-diario, .form-projeto {
@@ -525,7 +525,7 @@
 .editar-funcionalidade { grid-column: span 2; }
 
 @media (max-width: 1000px) {
-    .funcionalidade-grade { grid-template-columns: 1fr; }
+    .funcionalidade-grade { grid-template-columns: minmax(0, 1fr); }
     .editar-funcionalidade { grid-column: span 1; }
 }
 

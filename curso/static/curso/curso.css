@@ -290,7 +290,7 @@
 }
 
 @media (max-width: 1000px) {
-    .duas-colunas { grid-template-columns: 1fr; }
+    .duas-colunas { grid-template-columns: minmax(0, 1fr); }
 }
 
 .lista-grade {

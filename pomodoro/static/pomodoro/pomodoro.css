@@ -10,7 +10,8 @@
    1200px e não 800px porque o menu lateral já ocupa uns 240px da largura. */
 @media (max-width: 1200px) {
     .pomodoro {
-        grid-template-columns: 1fr;
+        /* minmax(0, ...) de novo: um nome comprido na lista "hoje" não pode alargar a coluna */
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
