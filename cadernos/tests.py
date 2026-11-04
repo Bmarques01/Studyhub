@@ -99,6 +99,21 @@ class CadernoTests(TestCase):
         self.client.post(reverse('cadernos:excluir_caderno', args=[caderno.id]))
         self.assertFalse(Caderno.objects.exists())
 
+    def test_excluir_pela_lista_continua_na_pagina_aberta(self):
+        caderno = Caderno.objects.create(nome='Redes')
+        aberta = Pagina.objects.create(caderno=caderno, titulo='Aberta')
+        outra = Pagina.objects.create(caderno=caderno, titulo='Rascunho')
+        # a lista mostra uma lixeira para cada página
+        resposta = self.client.get(reverse('cadernos:pagina', args=[aberta.id]))
+        self.assertContains(resposta, 'class="excluir-na-lista"', count=2)
+        resposta = self.client.post(reverse('cadernos:excluir_pagina', args=[outra.id]), {'voltar': aberta.id})
+        self.assertRedirects(resposta, reverse('cadernos:pagina', args=[aberta.id]))
+        self.assertFalse(Pagina.objects.filter(id=outra.id).exists())
+        # "voltar" de outro caderno é ignorado
+        alheia = Pagina.objects.create(caderno=Caderno.objects.create(nome='Outro'))
+        resposta = self.client.post(reverse('cadernos:excluir_pagina', args=[aberta.id]), {'voltar': alheia.id})
+        self.assertRedirects(resposta, reverse('cadernos:caderno', args=[caderno.id]), target_status_code=200)
+
     def test_estudar_isso_abre_pomodoro_no_topico(self):
         resposta = self.client.get(reverse('pomodoro:index') + f'?topico={self.bgp.id}')
         self.assertContains(resposta, f'data-disciplina-inicial="{self.redes.id}"')

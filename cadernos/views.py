@@ -198,6 +198,10 @@ def excluir_pagina(request, pagina_id):
     caderno_id = item.caderno_id
     item.delete()
     messages.success(request, f'Página "{item.titulo}" excluída.')
+    # Excluiu pela lista outra página? Continua na que estava aberta (se for do mesmo caderno)
+    voltar = request.POST.get('voltar', '')
+    if voltar.isdigit() and Pagina.objects.filter(id=voltar, caderno_id=caderno_id).exists():
+        return redirect('cadernos:pagina', pagina_id=int(voltar))
     return redirect('cadernos:caderno', caderno_id=caderno_id)
 
 

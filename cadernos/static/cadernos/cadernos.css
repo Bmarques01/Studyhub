@@ -216,10 +216,54 @@
     overflow-y: auto;
 }
 
+/* cada item = link da página + lixeira à direita */
+.lista-paginas li {
+    position: relative;
+}
+
+.excluir-na-lista {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #b0436f;
+    cursor: pointer;
+    opacity: 0;  /* só aparece ao passar o mouse (ou ao chegar pelo Tab) */
+}
+
+.lista-paginas li:hover .excluir-na-lista,
+.excluir-na-lista:focus-visible { opacity: 1; }
+.excluir-na-lista:hover { background: var(--rosa-bebe); }
+.excluir-na-lista .icone { width: 16px; height: 16px; }
+
+.btn-excluir-pagina {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: #b0436f;
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.btn-excluir-pagina:hover { background: var(--rosa-bebe); }
+.btn-excluir-pagina .icone { width: 16px; height: 16px; }
+
 .lista-paginas a {
     display: flex;
     flex-direction: column;
-    padding: 8px 12px;
+    padding: 8px 36px 8px 12px;  /* 36px à direita: espaço para a lixeira não cobrir o título */
     border-radius: 10px;
     border-left: 3px solid transparent;
     color: var(--texto);

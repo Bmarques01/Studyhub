@@ -48,6 +48,14 @@
                         <span class="titulo-na-lista">{{ p.titulo }}</span>
                         <small>{% if p.tipo == 'material' %}<span class="marca-material">material</span> · {% endif %}{{ p.criada_em|date:"d/m/Y" }}</small>
                     </a>
+                    {# "voltar" = depois de excluir, continua na página que estava aberta #}
+                    <form method="post" action="{% url 'cadernos:excluir_pagina' p.id %}" data-excluir-pagina="{{ p.id }}">
+                        {% csrf_token %}
+                        {% if pagina and p.id != pagina.id %}<input type="hidden" name="voltar" value="{{ pagina.id }}">{% endif %}
+                        <button class="excluir-na-lista" title="Excluir esta página" aria-label="Excluir a página {{ p.titulo }}">
+                            {% include "componentes/icone.html" with nome="lixeira" %}
+                        </button>
+                    </form>
                 </li>
             {% endfor %}
         </ul>
@@ -123,10 +131,11 @@
                         <a href="{% url 'pomodoro:index' %}?{% if pagina.topico %}topico={{ pagina.topico_id }}{% else %}disciplina={{ caderno.disciplina_id }}{% endif %}"
                            class="btn btn-claro" title="Abrir o pomodoro nesta disciplina/tópico">▶ estudar isso</a>
                     {% endif %}
-                    <form method="post" action="{% url 'cadernos:excluir_pagina' pagina.id %}"
-                          onsubmit="return confirm('Excluir a página &quot;{{ pagina.titulo|escapejs }}&quot;?');">
+                    <form method="post" action="{% url 'cadernos:excluir_pagina' pagina.id %}" data-excluir-pagina="{{ pagina.id }}">
                         {% csrf_token %}
-                        <button class="btn-icone" title="Excluir página">✕</button>
+                        <button class="btn-excluir-pagina" title="Excluir esta página">
+                            {% include "componentes/icone.html" with nome="lixeira" %} excluir
+                        </button>
                     </form>
                 </div>
             </div>

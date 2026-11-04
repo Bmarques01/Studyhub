@@ -108,6 +108,13 @@ if (area && elEditor) {
     }
 }
 
+// Excluir página: pergunta antes, com o título atual (a lista já mostra o título renomeado)
+document.querySelectorAll('[data-excluir-pagina]').forEach(form => form.addEventListener('submit', evento => {
+    const naLista = document.querySelector(`.lista-paginas a[data-pagina="${form.dataset.excluirPagina}"] .titulo-na-lista`);
+    const titulo = naLista ? naLista.textContent.trim() : 'esta página';
+    if (!confirm(`Excluir a página "${titulo}"? Não dá para desfazer.`)) evento.preventDefault();
+}));
+
 // Janela "+ material": colar o HTML ou enviar o arquivo
 const dialogoMaterial = document.getElementById('dialogo-material');
 if (dialogoMaterial) {
