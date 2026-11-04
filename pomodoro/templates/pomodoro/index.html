@@ -103,6 +103,20 @@
         </button>
         <p class="dica">Dica: aperte <kbd>espaço</kbd> para iniciar/pausar</p>
 
+        {# Ruído para tocar junto: gerado pelo navegador, só durante o foco. Fica salvo no navegador. #}
+        <div class="ruido" id="ruido">
+            <button type="button" class="ruido-ligar" id="ruido-ligar" aria-pressed="false">
+                {% include "componentes/icone.html" with nome="ruido" %} <span>ruído</span>
+            </button>
+            <div class="ruido-tipos" role="group" aria-label="Tipo de ruído">
+                <button type="button" data-ruido-tipo="branco" title="Chiado de TV, mais agudo">branco</button>
+                <button type="button" data-ruido-tipo="rosa" title="Parecido com chuva">rosa</button>
+                <button type="button" data-ruido-tipo="marrom" title="Grave, tipo cachoeira">marrom</button>
+            </div>
+            <input type="range" id="ruido-volume" min="0" max="1" step="0.05" aria-label="Volume do ruído">
+            <small class="ruido-estado" id="ruido-estado" aria-live="polite"></small>
+        </div>
+
     </div>
 
     <aside class="card resumo-dia">

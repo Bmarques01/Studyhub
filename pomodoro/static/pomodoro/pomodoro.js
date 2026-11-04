@@ -137,6 +137,32 @@ document.addEventListener('keydown', evento => {
     }
 });
 
+// ===== Ruído (branco, rosa, marrom) =====
+// O som em si fica no motor: aqui só mostramos o estado e mandamos as mudanças.
+const btnRuido = document.getElementById('ruido-ligar');
+const volumeRuido = document.getElementById('ruido-volume');
+const estadoRuido = document.getElementById('ruido-estado');
+const botoesTipo = document.querySelectorAll('[data-ruido-tipo]');
+
+function desenharRuido() {
+    const ruido = P.ruido;
+    btnRuido.setAttribute('aria-pressed', ruido.ligado);
+    btnRuido.title = ruido.ligado ? 'Desligar o ruído' : 'Ligar o ruído (toca só durante o foco)';
+    botoesTipo.forEach(botao => botao.classList.toggle('escolhido', botao.dataset.ruidoTipo === ruido.tipo));
+    if (document.activeElement !== volumeRuido) volumeRuido.value = ruido.volume;
+    let texto = 'desligado';
+    if (ruido.ligado && P.ruidoNoFoco()) texto = P.somLiberado() ? 'tocando' : 'clique na página para tocar';
+    else if (ruido.ligado) texto = 'toca durante o foco';
+    estadoRuido.textContent = texto;
+}
+
+btnRuido.addEventListener('click', () => P.definirRuido({ ligado: !P.ruido.ligado }));
+// escolher um tipo já liga o ruído
+botoesTipo.forEach(botao => botao.addEventListener('click', () => P.definirRuido({ tipo: botao.dataset.ruidoTipo, ligado: true })));
+volumeRuido.addEventListener('input', () => P.definirRuido({ volume: Number(volumeRuido.value) }));
+P.ouvir(tipo => { if (tipo !== 'tick') desenharRuido(); });
+desenharRuido();
+
 // ===== Tempos do topo (foco, pausa e meta de ciclos) =====
 Object.keys(P.tempos).forEach(nome => {
     const campo = document.getElementById(`cfg-${nome}`);

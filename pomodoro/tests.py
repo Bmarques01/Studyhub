@@ -14,6 +14,16 @@ class PomodoroTests(TestCase):
         self.assertEqual(resposta.status_code, 200)
         self.assertContains(resposta, 'Nenhum pomodoro ainda')
 
+    def test_controles_do_ruido(self):
+        # na página do pomodoro: ligar, os 3 tipos e o volume
+        resposta = self.client.get(reverse('pomodoro:index'))
+        self.assertContains(resposta, 'id="ruido-ligar"')
+        for tipo in ('branco', 'rosa', 'marrom'):
+            self.assertContains(resposta, f'data-ruido-tipo="{tipo}"')
+        self.assertContains(resposta, 'id="ruido-volume"')
+        # nas outras páginas: o botão no mini pomodoro
+        self.assertContains(self.client.get(reverse('calendario:index')), 'id="mini-ruido"')
+
     def test_registrar_sessao(self):
         resposta = self.client.post(
             reverse('pomodoro:registrar'),

@@ -458,8 +458,8 @@ input[type="color"] {
     right: 24px;
     bottom: 24px;
     z-index: 50;
-    /* 4 botões + anel ocupam ~210px: com 330px sobra espaço para o tempo (até "+mm:ss") */
-    width: 330px;
+    /* 5 botões + anel ocupam ~250px: com 370px sobra espaço para o tempo (até "+mm:ss") */
+    width: 370px;
     padding: 12px 14px;
     border-radius: 18px;
     background: var(--branco);
@@ -555,6 +555,8 @@ input[type="color"] {
 }
 
 .mini-btn:hover { background: var(--rosa-bebe); }
+/* ruído ligado: botão preenchido (o título também diz "desligar o ruído") */
+.mini-ruido[aria-pressed="true"] { border-color: transparent; background: var(--degrade); color: var(--branco); }
 .mini-btn[hidden] { display: none; }
 .mini-btn .icone { width: 16px; height: 16px; }
 .mini-btn span { display: grid; }

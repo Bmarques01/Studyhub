@@ -268,6 +268,7 @@ window.Pomodoro = (() => {
 
     function tick() {
         tocarSomPendente();
+        atualizarRuido();  // liga no foco, desliga na pausa (em até 1/4 de segundo)
         if (!estado.rodando) return;
         const restante = restanteMs();
 
@@ -414,6 +415,126 @@ window.Pomodoro = (() => {
         }
     }
 
+    // ----- ruído (branco, rosa ou marrom) tocando junto com o foco -----
+    // Não usa arquivo de áudio: o navegador gera 8 s de números aleatórios e toca em loop.
+    // Só toca com o FOCO rodando (a pausa fica em silêncio). Com várias abas abertas, só uma
+    // toca: a "dona" do ruído, que avisa a cada segundo no localStorage que continua tocando.
+    const CHAVE_RUIDO = 'pomodoro-ruido';
+    const CHAVE_DONA_RUIDO = 'pomodoro-ruido-aba';
+    const TIPOS_DE_RUIDO = ['branco', 'rosa', 'marrom'];
+    const ruido = { ligado: false, tipo: 'marrom', volume: 0.4 };
+    try { Object.assign(ruido, JSON.parse(localStorage.getItem(CHAVE_RUIDO) || '{}')); } catch { /* ignora */ }
+    const minhaAba = Math.random().toString(36).slice(2);
+    const ruidosProntos = {};  // o som de cada tipo é gerado uma vez só
+    let fonteRuido = null;
+    let volumeRuido = null;
+    let tipoTocando = null;
+
+    function gerarRuido(tipo) {
+        const taxa = audio.sampleRate;
+        const total = taxa * 8;
+        const emenda = Math.round(taxa / 2);  // meio segundo para o fim "colar" no começo sem estalo
+        const bruto = new Float32Array(total + emenda);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, anterior = 0;
+        for (let i = 0; i < bruto.length; i++) {
+            const branco = Math.random() * 2 - 1;
+            if (tipo === 'branco') {
+                bruto[i] = branco * 0.35;
+            } else if (tipo === 'rosa') {
+                // filtro de Paul Kellet: tira um pouco dos agudos (som de chuva)
+                b0 = 0.99886 * b0 + branco * 0.0555179; b1 = 0.99332 * b1 + branco * 0.0750759;
+                b2 = 0.96900 * b2 + branco * 0.1538520; b3 = 0.86650 * b3 + branco * 0.3104856;
+                b4 = 0.55000 * b4 + branco * 0.5329522; b5 = -0.7616 * b5 - branco * 0.0168980;
+                bruto[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + branco * 0.5362) * 0.09;
+                b6 = branco * 0.115926;
+            } else {
+                // marrom: cada valor anda um pouquinho a partir do anterior (som grave, de cachoeira)
+                anterior = (anterior + 0.02 * branco) / 1.02;
+                bruto[i] = anterior * 3.5;
+            }
+        }
+        const buffer = audio.createBuffer(1, total, taxa);
+        const saida = buffer.getChannelData(0);
+        saida.set(bruto.subarray(0, total));
+        // o começo vai virando o pedaço que vem logo depois do fim: o loop não dá "clique"
+        for (let i = 0; i < emenda; i++) {
+            const t = i / emenda;
+            saida[i] = bruto[i] * Math.sqrt(t) + bruto[total + i] * Math.sqrt(1 - t);
+        }
+        return buffer;
+    }
+
+    // Volume do controle (0 a 1) → volume do som. Ao quadrado: o ouvido percebe melhor assim.
+    const ganhoDoRuido = () => 0.6 * ruido.volume ** 2;
+
+    function comecarRuido() {
+        pararRuido();
+        ruidosProntos[ruido.tipo] ??= gerarRuido(ruido.tipo);
+        volumeRuido = audio.createGain();
+        volumeRuido.gain.value = 0;
+        volumeRuido.connect(audio.destination);
+        fonteRuido = audio.createBufferSource();
+        fonteRuido.buffer = ruidosProntos[ruido.tipo];
+        fonteRuido.loop = true;
+        fonteRuido.connect(volumeRuido);
+        fonteRuido.start();
+        tipoTocando = ruido.tipo;
+        volumeRuido.gain.setTargetAtTime(ganhoDoRuido(), audio.currentTime, 0.4);  // entra devagar
+    }
+
+    function pararRuido() {
+        if (!fonteRuido) return;
+        volumeRuido.gain.setTargetAtTime(0, audio.currentTime, 0.15);  // sai devagar
+        fonteRuido.stop(audio.currentTime + 1);
+        fonteRuido = volumeRuido = tipoTocando = null;
+    }
+
+    // O ruído deveria estar tocando agora (em alguma aba)?
+    const ruidoNoFoco = () => ruido.ligado && estado.rodando && estado.modo === 'foco';
+
+    function lerDona() {
+        try { return JSON.parse(localStorage.getItem(CHAVE_DONA_RUIDO)); } catch { return null; }
+    }
+
+    // Esta aba pode tocar? Pode se ninguém está tocando (ou a outra aba sumiu há 5 s)
+    function pegarRuido() {
+        const dona = lerDona();
+        const agora = Date.now();
+        if (dona && dona.aba !== minhaAba && agora - dona.em < 5000) return false;
+        if (!dona || dona.aba !== minhaAba || agora - dona.em > 1000) {
+            localStorage.setItem(CHAVE_DONA_RUIDO, JSON.stringify({ aba: minhaAba, em: agora }));
+        }
+        return true;
+    }
+
+    function largarRuido() {
+        if (lerDona()?.aba === minhaAba) localStorage.removeItem(CHAVE_DONA_RUIDO);
+    }
+
+    function atualizarRuido() {
+        const tocar = ruidoNoFoco() && somLiberado() && pegarRuido();
+        if (tocar && (!fonteRuido || tipoTocando !== ruido.tipo)) {
+            comecarRuido();
+        } else if (!tocar && fonteRuido) {
+            pararRuido();
+            largarRuido();
+        }
+    }
+
+    function definirRuido(mudancas) {
+        if (mudancas.tipo && !TIPOS_DE_RUIDO.includes(mudancas.tipo)) return;
+        Object.assign(ruido, mudancas);
+        ruido.volume = Math.min(1, Math.max(0, Number(ruido.volume) || 0));
+        localStorage.setItem(CHAVE_RUIDO, JSON.stringify(ruido));
+        if (ruido.ligado) prepararSom();  // o clique no botão já libera o som
+        if (volumeRuido) volumeRuido.gain.setTargetAtTime(ganhoDoRuido(), audio.currentTime, 0.05);
+        atualizarRuido();
+        avisarTelas('mudou');
+    }
+
+    // Saindo da página: libera para a próxima página (ou outra aba) tocar
+    window.addEventListener('pagehide', largarRuido);
+
     // ----- notificação do sistema -----
     function pedirPermissaoDeNotificacao() {
         if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
@@ -434,6 +555,11 @@ window.Pomodoro = (() => {
             estado = JSON.parse(evento.newValue);
             avisarTelas('mudou');
         }
+        if (evento.key === CHAVE_RUIDO && evento.newValue) {  // mexeu no ruído em outra aba
+            Object.assign(ruido, JSON.parse(evento.newValue));
+            if (volumeRuido) volumeRuido.gain.setTargetAtTime(ganhoDoRuido(), audio.currentTime, 0.05);
+            avisarTelas('mudou');
+        }
     });
 
     setInterval(tick, 250);
@@ -447,5 +573,7 @@ window.Pomodoro = (() => {
         finalizar, textoParaEncerrar,
         encerrar: () => terminar(), definirTempo, tick,
         decorridoMs, textoDoTempo, textoDoCiclo, fracaoRestante, emAndamento, mostrarAviso, somLiberado,
+        TIPOS_DE_RUIDO, definirRuido, ruidoNoFoco,
+        get ruido() { return { ...ruido }; },
     };
 })();

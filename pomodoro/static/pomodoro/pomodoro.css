@@ -244,6 +244,80 @@ kbd {
     padding: 2px 6px;
 }
 
+/* ===== Ruído ===== */
+.ruido {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 8px 14px;
+    border-radius: 14px;
+    background: var(--rosa-fundo);
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--vinho);
+}
+
+.ruido-ligar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    background: var(--branco);
+    color: var(--vinho);
+    font: inherit;
+    cursor: pointer;
+}
+
+.ruido-ligar .icone { width: 16px; height: 16px; }
+
+/* ligado: preenchido com o degradê (além do texto "tocando" ao lado, não só a cor) */
+.ruido-ligar[aria-pressed="true"] {
+    border-color: transparent;
+    background: var(--degrade);
+    color: var(--branco);
+    font-weight: 700;
+}
+
+.ruido-tipos {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 10px;
+    background: var(--branco);
+}
+
+.ruido-tipos button {
+    padding: 4px 9px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: var(--vinho);
+    font: inherit;
+    cursor: pointer;
+}
+
+.ruido-tipos button:hover { background: var(--rosa-bebe); }
+
+.ruido-tipos button.escolhido {
+    background: var(--rosa-bebe);
+    color: var(--rosa-forte);
+    font-weight: 700;
+}
+
+.ruido input[type="range"] {
+    width: 90px;
+    accent-color: var(--rosa-forte);
+}
+
+.ruido-estado {
+    min-width: 9em;
+    color: var(--texto-suave, #8a6b7c);
+}
+
 /* ===== Resumo do dia ===== */
 
 

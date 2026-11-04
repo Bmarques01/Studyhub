@@ -102,6 +102,9 @@
             <button type="button" class="mini-btn" id="mini-finalizar" title="Encerrar (salva o tempo feito)">
                 {% include "componentes/icone.html" with nome="parar" %}
             </button>
+            <button type="button" class="mini-btn mini-ruido" id="mini-ruido" aria-pressed="false" title="Ruído">
+                {% include "componentes/icone.html" with nome="ruido" %}
+            </button>
             <a href="{% url 'pomodoro:index' %}" class="mini-btn" title="Abrir o pomodoro">
                 {% include "componentes/icone.html" with nome="pomodoro" %}
             </a>

@@ -98,6 +98,10 @@ Compartilhado: `templates/base.html` (menu lateral, mensagens, mini pomodoro), `
   - Som entre abas: só a aba que percebe o fim do bloco toca. Se ela não pode (sem clique), grava
     `somPendente` no estado e qualquer aba liberada toca no próximo `tick` (vale 2 min). O mini mostra
     "🔇 som bloqueado · clique para ativar" quando a página ainda não tem permissão de som.
+  - **Ruído** (branco / rosa / marrom + volume, em `pomodoro-ruido`): gerado no motor (buffer de 8 s em
+    loop, sem arquivo de áudio), toca **só com o foco rodando**. Controles na página do pomodoro e botão
+    no mini. Ao trocar de página o navegador corta o som: volta no primeiro clique (o mini avisa "ruído
+    parado"). Com várias abas, só a "dona" toca (`pomodoro-ruido-aba`, renovada a cada segundo).
 
 ## Visual (decidido com a Bruna)
 
