@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}{% if questao %}Editar questão{% else %}Nova questão{% endif %}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<link rel="stylesheet" href="{% static 'questoes/questoes.css' %}">
+<script src="{% static 'questoes/questoes.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash">
+    <header class="dash-topo">
+        <div>
+            <a href="{{ voltar }}" class="voltar">‹ voltar</a>
+            <h1>{% if questao %}Editar questão{% else %}Nova questão{% endif %}</h1>
+        </div>
+    </header>
+
+    <form method="post" class="card qz-form" data-escolha-disciplina>
+        {% csrf_token %}
+        {% if erros %}
+            <ul class="qz-erros" role="alert">{% for erro in erros %}<li>{{ erro }}</li>{% endfor %}</ul>
+        {% endif %}
+
+        <div class="qz-linha">
+            <label>disciplina
+                <select name="disciplina" required data-disciplina>
+                    <option value="">escolha…</option>
+                    {% for rotulo, disciplinas in opcoes %}
+                        <optgroup label="{{ rotulo }}">
+                            {% for d in disciplinas %}
+                                <option value="{{ d.id }}" {% if d.id == valores.disciplina %}selected{% endif %}>{{ d.nome }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>tópico <small>(opcional)</small>
+                <select name="topico" data-topico data-inicial="{{ valores.topico }}">
+                    <option value="">sem tópico</option>
+                </select>
+            </label>
+        </div>
+
+        <fieldset class="qz-tipos">
+            <legend>tipo</legend>
+            {% for valor, texto in tipos %}
+                <label class="qz-tipo-opcao">
+                    <input type="radio" name="tipo" value="{{ valor }}" {% if valor == valores.tipo %}checked{% endif %} data-tipo>
+                    <span>{{ texto }}</span>
+                </label>
+            {% endfor %}
+        </fieldset>
+
+        <label>enunciado
+            <textarea name="enunciado" rows="4" required maxlength="5000">{{ valores.enunciado }}</textarea>
+        </label>
+
+        {# ===== Múltipla escolha: as alternativas e qual é a certa ===== #}
+        <fieldset class="qz-secao" data-secao="multipla">
+            <legend>alternativas <small>· marque a certa</small></legend>
+            <ol class="qz-alternativas-form" data-alternativas data-maximo="{{ max_alternativas }}">
+                {% for letra, i, texto, certa in valores.alternativas %}
+                    <li>
+                        <label class="qz-certa" title="Esta é a certa">
+                            <input type="radio" name="correta" value="{{ i }}" {% if certa %}checked{% endif %}>
+                            <span>{{ letra }}</span>
+                        </label>
+                        <input type="text" name="alternativa" value="{{ texto }}" maxlength="2000" aria-label="Alternativa {{ letra }}">
+                    </li>
+                {% endfor %}
+            </ol>
+            <button type="button" class="btn-texto" data-mais-alternativa>+ alternativa</button>
+        </fieldset>
+
+        {# ===== Verdadeiro ou falso ===== #}
+        <fieldset class="qz-secao" data-secao="vf">
+            <legend>a afirmação é</legend>
+            <div class="qz-vf-escolha">
+                <label class="qz-tipo-opcao"><input type="radio" name="resposta_vf" value="V" {% if valores.resposta_vf == 'V' %}checked{% endif %}><span>verdadeira</span></label>
+                <label class="qz-tipo-opcao"><input type="radio" name="resposta_vf" value="F" {% if valores.resposta_vf == 'F' %}checked{% endif %}><span>falsa</span></label>
+            </div>
+        </fieldset>
+
+        {# ===== Aberta: a resposta esperada (você mesma confere se acertou) ===== #}
+        <fieldset class="qz-secao" data-secao="aberta">
+            <legend>resposta esperada <small>· aparece depois que você responder, para conferir</small></legend>
+            <textarea name="resposta_aberta" rows="3" maxlength="5000">{{ valores.resposta_aberta }}</textarea>
+        </fieldset>
+
+        <label>explicação <small>(opcional) · aparece depois de responder</small>
+            <textarea name="explicacao" rows="3" maxlength="5000">{{ valores.explicacao }}</textarea>
+        </label>
+
+        <footer class="qz-form-botoes">
+            <a href="{{ voltar }}" class="btn-texto">cancelar</a>
+            {% if not questao %}
+                <button class="btn btn-claro" name="outra" value="1">salvar e escrever outra</button>
+            {% endif %}
+            <button class="btn">salvar</button>
+        </footer>
+    </form>
+</div>
+{{ topicos|json_script:"dados-topicos" }}
+{% endblock %}

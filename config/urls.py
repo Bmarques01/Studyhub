@@ -10,5 +10,6 @@ urlpatterns = [
     path('projetos/', include('projetos.urls')),
     path('cadernos/', include('cadernos.urls')),
     path('flashcards/', include('flashcards.urls')),
+    path('questoes/', include('questoes.urls')),
     path('', include('dashboard.urls')),  # página inicial = dashboard
 ]

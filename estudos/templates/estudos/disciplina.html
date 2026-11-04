@@ -241,6 +241,11 @@
                     <strong>Flashcards</strong>
                     <small>{% with n=disciplina.flashcards.count %}{% if n %}{{ n }} {% if n == 1 %}cartão{% else %}cartões{% endif %} · {{ flashcards_hoje }} hoje{% else %}criar o primeiro{% endif %}{% endwith %}</small>
                 </a>
+                <a href="{% url 'questoes:disciplina' disciplina.id %}" class="ferramenta">
+                    {% include "componentes/icone.html" with nome="questoes" %}
+                    <strong>Questões</strong>
+                    <small>{% with n=disciplina.questoes.count %}{% if n %}{{ n }} {% if n == 1 %}questão{% else %}questões{% endif %}{% else %}criar a primeira{% endif %}{% endwith %}</small>
+                </a>
                 <a href="{% url 'cadernos:index' %}?disciplina={{ disciplina.id }}" class="ferramenta">
                     {% include "componentes/icone.html" with nome="cadernos" %}
                     <strong>Cadernos</strong>

@@ -19,7 +19,7 @@ from django.core.management import call_command
 from django.db import transaction
 from django.utils import timezone
 
-APPS = ['estudos', 'pomodoro', 'dashboard', 'calendario', 'curso', 'projetos', 'cadernos', 'flashcards']
+APPS = ['estudos', 'pomodoro', 'dashboard', 'calendario', 'curso', 'projetos', 'cadernos', 'flashcards', 'questoes']
 ARQUIVO = 'studyhub.json'
 MARCADOR = 'studyhub-ultima-versao'  # fica dentro de dados/.git/
 

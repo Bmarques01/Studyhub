@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Importar questões{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<link rel="stylesheet" href="{% static 'questoes/questoes.css' %}">
+<script src="{% static 'questoes/questoes.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash">
+    <header class="dash-topo">
+        <div>
+            <a href="{% if disciplina_id %}{% url 'questoes:disciplina' disciplina_id %}{% else %}{% url 'questoes:index' %}{% endif %}" class="voltar">‹ voltar</a>
+            <h1>Importar questões</h1>
+            <p class="dash-data">cole o texto (ou envie um arquivo .txt) · até {{ limite }} questões por vez</p>
+        </div>
+    </header>
+
+    <div class="qz-importar">
+        <form method="post" enctype="multipart/form-data" class="card qz-form" data-escolha-disciplina>
+            {% csrf_token %}
+            <div class="qz-linha">
+                <label>disciplina
+                    <select name="disciplina" required data-disciplina>
+                        <option value="">escolha…</option>
+                        {% for rotulo, disciplinas in opcoes %}
+                            <optgroup label="{{ rotulo }}">
+                                {% for d in disciplinas %}
+                                    <option value="{{ d.id }}" {% if d.id == disciplina_id %}selected{% endif %}>{{ d.nome }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>tópico <small>(opcional, vale para todas)</small>
+                    <select name="topico" data-topico data-inicial="{{ topico_id|default:'' }}">
+                        <option value="">sem tópico</option>
+                    </select>
+                </label>
+            </div>
+            <label>questões
+                <textarea name="texto" rows="16" class="qz-texto" spellcheck="false"
+                          placeholder="P: Qual protocolo de transporte o BGP usa?&#10;A) UDP&#10;B) TCP *&#10;C) ICMP&#10;E: O BGP usa TCP na porta 179.">{{ texto }}</textarea>
+            </label>
+            <label class="qz-arquivo">ou envie um arquivo
+                <input type="file" name="arquivo" accept=".txt,.md,text/plain">
+            </label>
+            <footer class="qz-form-botoes">
+                <button class="btn {% if previa %}btn-claro{% endif %}" name="acao" value="previa">ver prévia</button>
+                {% if previa %}
+                    <button class="btn" name="acao" value="salvar">salvar {{ previa|length }} {% if previa|length == 1 %}questão{% else %}questões{% endif %}</button>
+                {% endif %}
+            </footer>
+
+            {# ===== Prévia: o que foi entendido e o que ficou de fora ===== #}
+            {% if previa is not None %}
+                <section class="qz-previa" aria-live="polite">
+                    {% if problemas %}
+                        <div class="qz-problemas">
+                            <strong>⚠ {{ problemas|length }} {% if problemas|length == 1 %}questão ficou{% else %}questões ficaram{% endif %} de fora:</strong>
+                            <ul>{% for inicio, motivo in problemas %}<li>“{{ inicio }}” · {{ motivo }}</li>{% endfor %}</ul>
+                            <small>Corrija no texto e clique em "ver prévia" de novo, ou salve só as que deram certo.</small>
+                        </div>
+                    {% endif %}
+                    {% if previa %}
+                        <p class="rotulo">✓ {{ previa|length }} {% if previa|length == 1 %}questão encontrada{% else %}questões encontradas{% endif %}</p>
+                        <ol class="qz-lista">
+                            {% for q in previa %}
+                                <li class="qz-item">
+                                    <div class="qz-item-texto">
+                                        <span class="qz-tipo">{% if q.tipo == 'multipla' %}múltipla escolha{% elif q.tipo == 'vf' %}verdadeiro ou falso{% else %}aberta{% endif %}</span>
+                                        <p>{{ q.enunciado }}</p>
+                                        {% if q.tipo == 'multipla' %}
+                                            <ul class="qz-alternativas-lista">
+                                                {% for texto, certa in q.alternativas %}
+                                                    <li {% if certa %}class="certa"{% endif %}>{{ forloop.counter0|add:65|stringformat:"c" }}) {{ texto }}{% if certa %} <strong>✓ certa</strong>{% endif %}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% elif q.tipo == 'vf' %}
+                                            <p class="qz-esperada"><strong>Resposta:</strong> {% if q.resposta == 'V' %}Verdadeiro{% else %}Falso{% endif %}</p>
+                                        {% else %}
+                                            <p class="qz-esperada"><strong>Resposta esperada:</strong> <span class="qz-pre">{{ q.resposta }}</span></p>
+                                        {% endif %}
+                                        {% if q.explicacao %}<p class="qz-explicacao">{{ q.explicacao }}</p>{% endif %}
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    {% endif %}
+                </section>
+            {% endif %}
+        </form>
+
+        {# ===== Como escrever (e o pedido pronto para o Claude) ===== #}
+        <aside class="card qz-ajuda">
+            <h2 class="rotulo">formato</h2>
+            <pre class="qz-exemplo">P: Qual protocolo de transporte o BGP usa?
+A) UDP
+B) TCP *
+C) ICMP
+E: O BGP usa TCP na porta 179.
+
+P: [V/F] O BGP é um protocolo interno (IGP).
+R: F
+E: O BGP é um EGP, usado entre sistemas autônomos.
+
+P: [aberta] Diferencie IGP de EGP.
+R: IGP roteia dentro de um AS; EGP, entre ASes.</pre>
+            <ul class="qz-regras">
+                <li><code>P:</code> começa uma questão</li>
+                <li><code>*</code> no fim marca a alternativa certa</li>
+                <li><code>R:</code> resposta (V/F ou a esperada)</li>
+                <li><code>E:</code> explicação (opcional)</li>
+            </ul>
+
+            <h2 class="rotulo">pedir ao Claude</h2>
+            <p class="qz-dica">Copie, troque o assunto e cole na conversa com o Claude (dá para anexar os slides):</p>
+            <textarea class="qz-pedido" id="pedido-claude" rows="9" readonly>Gere 10 questões sobre [ASSUNTO] para eu estudar para a prova. Misture múltipla escolha (4 alternativas), verdadeiro ou falso e algumas abertas. Use exatamente este formato, sem negrito e sem numeração:
+
+P: enunciado
+A) alternativa
+B) alternativa certa *
+C) alternativa
+D) alternativa
+E: explicação curta de por que a certa está certa
+
+P: [V/F] afirmação
+R: V (ou F)
+E: explicação
+
+P: [aberta] pergunta
+R: resposta esperada
+E: explicação</textarea>
+            <button type="button" class="btn btn-claro" data-copiar="pedido-claude">copiar pedido</button>
+        </aside>
+    </div>
+</div>
+{{ topicos|json_script:"dados-topicos" }}
+{% endblock %}

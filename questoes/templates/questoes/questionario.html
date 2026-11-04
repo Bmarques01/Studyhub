@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Questionário · {{ item.disciplina.nome }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<link rel="stylesheet" href="{% static 'questoes/questoes.css' %}">
+<script src="{% static 'questoes/questionario.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash qz-rodada" style="--cor: {{ item.disciplina.cor }}">
+    <header class="dash-topo">
+        <div>
+            <a href="{% url 'questoes:disciplina' item.disciplina.id %}" class="voltar">‹ {{ item.disciplina.nome }}</a>
+            <h1>Questionário{% if item.topico %} · {{ item.topico.nome }}{% endif %}</h1>
+            <p class="dash-data">
+                {% if momento == 'resultado' %}concluído{% else %}questão {% if numero %}{{ numero }}{% else %}{{ feitas }}{% endif %} de {{ total }}{% endif %}
+                · {{ certas }} {% if certas == 1 %}acerto{% else %}acertos{% endif %}
+            </p>
+        </div>
+        <div class="dash-topo-acoes">
+            <a href="{% url 'pomodoro:index' %}?disciplina={{ item.disciplina.id }}" class="btn btn-claro"
+               title="Ligue um pomodoro para o tempo contar nas suas horas">pomodoro</a>
+        </div>
+    </header>
+
+    {# barra de progresso: quantas já foram respondidas #}
+    <div class="qz-progresso" role="progressbar" aria-valuemin="0" aria-valuemax="{{ total }}" aria-valuenow="{{ feitas }}">
+        <span style="width: {% widthratio feitas total 100 %}%"></span>
+    </div>
+
+    {% if momento == 'pergunta' or momento == 'conferir' %}
+        {# ===== A pergunta ===== #}
+        <section class="card qz-palco">
+            <p class="fc-onde"><i class="bolinha"></i>{{ item.disciplina.nome }}{% if questao.topico %} · {{ questao.topico.nome }}{% endif %}
+                <span class="qz-tipo">{{ questao.get_tipo_display }}</span></p>
+            <div class="qz-enunciado">{{ questao.enunciado }}</div>
+
+            <form method="post" action="{% url 'questoes:responder' item.id %}" class="qz-responder" data-responder>
+                {% csrf_token %}
+                <input type="hidden" name="questao" value="{{ questao.id }}">
+                {% if questao.tipo == 'multipla' %}
+                    <div class="qz-alternativas">
+                        {% for a in questao.alternativas.all %}
+                            <button class="qz-alternativa" name="alternativa" value="{{ a.id }}" data-tecla="{{ a.letra|lower }}">
+                                <kbd>{{ a.letra }}</kbd><span>{{ a.texto }}</span>
+                            </button>
+                        {% endfor %}
+                    </div>
+                    <p class="qz-atalho">clique na alternativa ou aperte a letra</p>
+                {% elif questao.tipo == 'vf' %}
+                    <div class="qz-alternativas qz-vf">
+                        <button class="qz-alternativa" name="vf" value="V" data-tecla="v"><kbd>V</kbd><span>Verdadeiro</span></button>
+                        <button class="qz-alternativa" name="vf" value="F" data-tecla="f"><kbd>F</kbd><span>Falso</span></button>
+                    </div>
+                {% elif momento == 'pergunta' %}
+                    <textarea name="texto" rows="5" class="qz-aberta" placeholder="Escreva sua resposta (ou responda de cabeça e só clique em ver resposta)" autofocus></textarea>
+                    <button class="btn">ver resposta esperada</button>
+                {% else %}
+                    {# aberta, 2º passo: compara e diz se acertou #}
+                    <input type="hidden" name="texto" value="{{ texto }}">
+                    <div class="qz-comparar">
+                        <div><p class="rotulo">sua resposta</p><p class="qz-sua">{{ texto|default:"(respondida de cabeça)" }}</p></div>
+                        <div><p class="rotulo">resposta esperada</p><p class="qz-esperada-grande">{{ questao.resposta }}</p></div>
+                    </div>
+                    {% if questao.explicacao %}<p class="qz-explicacao">{{ questao.explicacao }}</p>{% endif %}
+                    <p class="qz-pergunta-veredito">E aí, acertou?</p>
+                    <div class="qz-veredito">
+                        <button class="btn qz-acertei" name="acertou" value="sim" data-tecla="s">✓ acertei <kbd>S</kbd></button>
+                        <button class="btn btn-claro qz-errei" name="acertou" value="nao" data-tecla="n">✗ errei <kbd>N</kbd></button>
+                    </div>
+                {% endif %}
+            </form>
+        </section>
+
+    {% elif momento == 'correcao' %}
+        {# ===== Correção da questão que acabou de responder ===== #}
+        <section class="card qz-palco">
+            <p class="qz-resultado-questao {% if resposta.acertou %}acertou{% else %}errou{% endif %}" role="status">
+                {% if resposta.acertou %}✓ Acertou!{% else %}✗ Errou{% endif %}
+            </p>
+            <div class="qz-enunciado">{{ questao.enunciado }}</div>
+            {% if questao.tipo == 'multipla' %}
+                <ul class="qz-alternativas qz-corrigidas">
+                    {% for a in questao.alternativas.all %}
+                        <li class="qz-alternativa {% if a.correta %}certa{% elif a.letra == resposta.resposta_dada %}marcada{% endif %}">
+                            <kbd>{{ a.letra }}</kbd><span>{{ a.texto }}</span>
+                            {% if a.correta %}<strong>✓ certa</strong>{% elif a.letra == resposta.resposta_dada %}<strong>✗ sua resposta</strong>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% elif questao.tipo == 'vf' %}
+                <p class="qz-esperada">Você respondeu <strong>{% if resposta.resposta_dada == 'V' %}Verdadeiro{% else %}Falso{% endif %}</strong>.
+                    A resposta é <strong>{{ questao.texto_da_resposta }}</strong>.</p>
+            {% else %}
+                <p class="qz-esperada"><strong>Resposta esperada:</strong> <span class="qz-pre">{{ questao.resposta }}</span></p>
+            {% endif %}
+            {% if questao.explicacao and questao.tipo != 'aberta' %}<p class="qz-explicacao">{{ questao.explicacao }}</p>{% endif %}
+
+            <a href="{% url 'questoes:questionario' item.id %}" class="btn qz-seguir" data-seguir autofocus>
+                {% if tem_proxima %}próxima{% else %}ver resultado{% endif %} <kbd>enter</kbd>
+            </a>
+        </section>
+
+    {% else %}
+        {# ===== Resultado final ===== #}
+        <section class="card qz-final">
+            <p class="qz-nota"><strong>{{ certas }}</strong> de {{ feitas }}</p>
+            {% if porcentagem is not None %}<p class="qz-porcentagem">{{ porcentagem }}% de acerto</p>{% endif %}
+            <div class="qz-final-botoes">
+                {% if erradas %}
+                    <form method="post" action="{% url 'questoes:refazer_erradas' item.id %}">
+                        {% csrf_token %}
+                        <button class="btn">{% if erradas == 1 %}refazer a errada{% else %}refazer as {{ erradas }} erradas{% endif %}</button>
+                    </form>
+                {% endif %}
+                <a href="{% url 'questoes:disciplina' item.disciplina.id %}" class="btn btn-claro">novo questionário</a>
+            </div>
+        </section>
+
+        <section class="card fc-baralho">
+            <h2 class="rotulo">questão por questão</h2>
+            <ol class="qz-lista">
+                {% for q, r in linhas %}
+                    <li class="qz-item {% if r.acertou %}acertou{% else %}errou{% endif %}">
+                        <span class="qz-marca">{% if r.acertou %}✓{% else %}✗{% endif %}</span>
+                        <div class="qz-item-texto">
+                            <p>{{ q.enunciado }}</p>
+                            <p class="qz-esperada">
+                                {% if r %}Sua resposta: <strong>{% if q.tipo == 'vf' %}{% if r.resposta_dada == 'V' %}Verdadeiro{% else %}Falso{% endif %}{% elif q.tipo == 'aberta' %}{{ r.resposta_dada|default:"(de cabeça)"|truncatechars:200 }}{% else %}{{ r.resposta_dada }}{% endif %}</strong> · {% endif %}
+                                certa: <strong class="qz-pre">{{ q.texto_da_resposta|truncatechars:300 }}</strong>
+                            </p>
+                            {% if q.explicacao and not r.acertou %}<p class="qz-explicacao">{{ q.explicacao }}</p>{% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

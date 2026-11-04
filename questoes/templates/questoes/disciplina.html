@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Questões · {{ disciplina.nome }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<link rel="stylesheet" href="{% static 'questoes/questoes.css' %}">
+<script src="{% static 'questoes/questoes.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash fc" style="--cor: {{ disciplina.cor }}">
+
+    {# ===== Topo ===== #}
+    <header class="dash-topo">
+        <div>
+            <a href="{% url 'questoes:index' %}" class="voltar">‹ questões</a>
+            <h1 class="fc-titulo"><i class="bolinha"></i>{{ disciplina.nome }}</h1>
+            <p class="dash-data">
+                {{ disciplina.categoria.nome }}{% if disciplina.periodo %} · {{ disciplina.periodo.nome }}{% endif %} ·
+                {{ total_questoes }} {% if total_questoes == 1 %}questão{% else %}questões{% endif %}
+            </p>
+        </div>
+        <div class="dash-topo-acoes">
+            <a href="{% url 'estudos:disciplina' disciplina.id %}" class="btn btn-claro">disciplina</a>
+            <a href="{% url 'questoes:importar' %}?disciplina={{ disciplina.id }}" class="btn btn-claro">importar</a>
+            <a href="{% url 'questoes:nova' %}?disciplina={{ disciplina.id }}" class="btn">+ questão</a>
+        </div>
+    </header>
+
+    {% if total_questoes %}
+        {# ===== Começar um questionário ===== #}
+        <section class="card qz-comecar">
+            <form method="post" action="{% url 'questoes:criar_questionario' %}" class="qz-comecar-form">
+                {% csrf_token %}
+                <input type="hidden" name="disciplina" value="{{ disciplina.id }}">
+                <strong class="rotulo">fazer questionário</strong>
+                <label>de
+                    <select name="topico">
+                        <option value="">todos os tópicos ({{ total_questoes }})</option>
+                        {% for t, n in topicos %}
+                            <option value="{{ t.id }}">{{ t.nome }} ({{ n }})</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>quantas
+                    <select name="quantidade">
+                        {% for valor, texto in quantidades %}
+                            <option value="{{ valor }}" {% if valor == 10 %}selected{% endif %}>{{ texto }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button class="btn btn-com-icone">{% include "componentes/icone.html" with nome="play" %} começar</button>
+            </form>
+            {% if questionarios %}
+                <p class="qz-ultimos">
+                    <span>últimos:</span>
+                    {% for q in questionarios %}
+                        <a href="{% url 'questoes:questionario' q.id %}" title="{{ q.criado_em|date:'d/m H:i' }}{% if q.topico %} · {{ q.topico.nome }}{% endif %}">
+                            {{ q.certas }}/{{ q.total }}{% if q.feitas < q.total %} <small>(parou)</small>{% endif %}
+                        </a>
+                    {% endfor %}
+                </p>
+            {% endif %}
+        </section>
+    {% endif %}
+
+    {# ===== Um bloco por tópico ===== #}
+    {% for b in blocos %}
+        <section class="card fc-baralho">
+            <header class="card-topo">
+                <h2 class="rotulo">{% if b.topico %}{{ b.topico.nome }}{% else %}sem tópico{% endif %}</h2>
+                <span class="sub">{{ b.questoes|length }} {% if b.questoes|length == 1 %}questão{% else %}questões{% endif %}</span>
+                <div class="fc-baralho-acoes">
+                    <a href="{% url 'questoes:nova' %}?disciplina={{ disciplina.id }}{% if b.topico %}&topico={{ b.topico.id }}{% endif %}" class="btn-texto">+ questão</a>
+                </div>
+            </header>
+            <ol class="qz-lista">
+                {% for q in b.questoes %}
+                    <li class="qz-item" id="questao-{{ q.id }}">
+                        <div class="qz-item-texto">
+                            <span class="qz-tipo">{{ q.get_tipo_display }}</span>
+                            <p>{{ q.enunciado }}</p>
+                            <details>
+                                <summary>ver resposta</summary>
+                                {% if q.tipo == 'multipla' %}
+                                    <ul class="qz-alternativas-lista">
+                                        {% for a in q.alternativas.all %}
+                                            <li {% if a.correta %}class="certa"{% endif %}>{{ a.letra }}) {{ a.texto }}{% if a.correta %} <strong>✓ certa</strong>{% endif %}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="qz-esperada"><strong>Resposta:</strong> <span class="qz-pre">{{ q.texto_da_resposta }}</span></p>
+                                {% endif %}
+                                {% if q.explicacao %}<p class="qz-explicacao">{{ q.explicacao }}</p>{% endif %}
+                            </details>
+                        </div>
+                        <div class="qz-item-lado">
+                            <small class="qz-placar">{% if q.respostas_feitas %}{{ q.acertos }}/{{ q.respostas_feitas }} acertos{% else %}nunca respondida{% endif %}</small>
+                            <a href="{% url 'questoes:editar' q.id %}" class="btn-icone" title="Editar">✎</a>
+                            <form method="post" action="{% url 'questoes:excluir' q.id %}" data-confirmar="Excluir esta questão?">
+                                {% csrf_token %}
+                                <button class="btn-icone" title="Excluir">{% include "componentes/icone.html" with nome="lixeira" %}</button>
+                            </form>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
+        </section>
+    {% empty %}
+        <div class="card vazio-card qz-vazio">
+            <p>Nenhuma questão de {{ disciplina.nome }} ainda.</p>
+            <p><a href="{% url 'questoes:nova' %}?disciplina={{ disciplina.id }}">Escreva a primeira</a> ou
+               <a href="{% url 'questoes:importar' %}?disciplina={{ disciplina.id }}">importe várias</a>
+               (por exemplo, pedindo ao Claude para gerar no formato do Studyhub).</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

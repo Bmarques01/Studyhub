@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Questões{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<link rel="stylesheet" href="{% static 'questoes/questoes.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash fc">
+
+    {# ===== Topo ===== #}
+    <header class="dash-topo">
+        <div>
+            <h1>Questões</h1>
+            <p class="dash-data">
+                {{ total_questoes }} {% if total_questoes == 1 %}questão{% else %}questões{% endif %} no banco
+            </p>
+        </div>
+        <div class="dash-topo-acoes">
+            <a href="{% url 'questoes:importar' %}" class="btn btn-claro"
+               title="Colar ou enviar várias questões (ex.: geradas pelo Claude)">importar</a>
+            <a href="{% url 'questoes:nova' %}" class="btn">+ questão</a>
+        </div>
+    </header>
+
+    {# ===== Uma caixa por disciplina, separadas por categoria · período (igual aos flashcards) ===== #}
+    {% for grupo in grupos %}
+        <section class="fc-grupo">
+            <h2 class="rotulo">{{ grupo.rotulo|lower }}{% if not grupo.atual %} <small>(anterior)</small>{% endif %}</h2>
+            <div class="fc-caixas">
+                {% for d in grupo.disciplinas %}
+                    <article class="card fc-caixa" style="--cor: {{ d.cor }}">
+                        <a href="{% url 'questoes:disciplina' d.id %}" class="fc-caixa-nome">
+                            <i class="bolinha"></i><strong>{{ d.nome }}</strong>
+                        </a>
+                        {% if d.total %}
+                            <p class="fc-caixa-numeros">
+                                <span><strong>{{ d.total }}</strong> {% if d.total == 1 %}questão{% else %}questões{% endif %}</span>
+                                {% if d.aproveitamento is not None %}
+                                    <span><strong>{{ d.aproveitamento }}%</strong> de acerto</span>
+                                {% else %}
+                                    <span>nenhuma respondida</span>
+                                {% endif %}
+                            </p>
+                        {% else %}
+                            <p class="fc-caixa-numeros"><span>nenhuma questão ainda</span></p>
+                        {% endif %}
+                        <footer class="fc-caixa-acoes">
+                            {% if d.total %}
+                                <form method="post" action="{% url 'questoes:criar_questionario' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="disciplina" value="{{ d.id }}">
+                                    <input type="hidden" name="quantidade" value="10">
+                                    <button class="btn btn-com-icone" title="10 questões sorteadas">
+                                        {% include "componentes/icone.html" with nome="play" %} praticar
+                                    </button>
+                                </form>
+                                <a href="{% url 'questoes:disciplina' d.id %}" class="btn-texto">abrir →</a>
+                            {% else %}
+                                <a href="{% url 'questoes:nova' %}?disciplina={{ d.id }}" class="btn btn-claro">+ escrever</a>
+                                <a href="{% url 'questoes:importar' %}?disciplina={{ d.id }}" class="btn-texto">importar</a>
+                            {% endif %}
+                        </footer>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% empty %}
+        <p class="card vazio-card">Nenhuma disciplina ainda. Cadastre em <a href="{% url 'estudos:index' %}">Estudos</a>
+            e volte aqui para criar as questões.</p>
+    {% endfor %}
+</div>
+{% endblock %}

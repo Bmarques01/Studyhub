@@ -1,0 +1,75 @@
+// Formulários das questões: tópicos da disciplina, tipo de questão, alternativas e "copiar".
+
+// Os tópicos de cada disciplina, enviados pelo Django com json_script: { "3": [[id, nome], ...] }
+const elTopicos = document.getElementById('dados-topicos');
+const TOPICOS = elTopicos ? JSON.parse(elTopicos.textContent) : {};
+
+// ===== Disciplina → lista de tópicos =====
+document.querySelectorAll('[data-escolha-disciplina]').forEach(form => {
+    const disciplina = form.querySelector('[data-disciplina]');
+    const topico = form.querySelector('[data-topico]');
+    if (!disciplina || !topico) return;
+
+    function preencher(escolhido) {
+        const itens = TOPICOS[disciplina.value] || [];
+        topico.replaceChildren(new Option('sem tópico', ''));
+        itens.forEach(([id, nome]) => topico.add(new Option(nome, id)));
+        topico.value = itens.some(([id]) => String(id) === String(escolhido)) ? escolhido : '';
+        topico.disabled = itens.length === 0;
+    }
+    disciplina.addEventListener('change', () => preencher(''));
+    preencher(topico.dataset.inicial);
+});
+
+// ===== Tipo de questão: mostra só a parte que importa (alternativas, V/F ou resposta esperada) =====
+const radiosTipo = document.querySelectorAll('[data-tipo]');
+function mostrarSecao() {
+    const tipo = [...radiosTipo].find(r => r.checked)?.value;
+    document.querySelectorAll('[data-secao]').forEach(secao => { secao.hidden = secao.dataset.secao !== tipo; });
+}
+radiosTipo.forEach(r => r.addEventListener('change', mostrarSecao));
+if (radiosTipo.length) mostrarSecao();
+
+// ===== "+ alternativa": copia a última linha (até 8 alternativas: A a H) =====
+const listaAlternativas = document.querySelector('[data-alternativas]');
+const btnMais = document.querySelector('[data-mais-alternativa]');
+if (listaAlternativas && btnMais) {
+    const maximo = Number(listaAlternativas.dataset.maximo);
+    const atualizarBotao = () => { btnMais.hidden = listaAlternativas.children.length >= maximo; };
+    btnMais.addEventListener('click', () => {
+        const linhas = listaAlternativas.children;
+        const nova = linhas[linhas.length - 1].cloneNode(true);
+        const posicao = linhas.length;
+        const letra = String.fromCharCode(65 + posicao);
+        const radio = nova.querySelector('input[type=radio]');
+        radio.value = posicao;
+        radio.checked = false;
+        nova.querySelector('span').textContent = letra;
+        const campo = nova.querySelector('input[type=text]');
+        campo.value = '';
+        campo.setAttribute('aria-label', `Alternativa ${letra}`);
+        listaAlternativas.append(nova);
+        campo.focus();
+        atualizarBotao();
+    });
+    atualizarBotao();
+}
+
+// ===== Excluir: pergunta antes =====
+document.querySelectorAll('form[data-confirmar]').forEach(form => form.addEventListener('submit', evento => {
+    if (!confirm(form.dataset.confirmar)) evento.preventDefault();
+}));
+
+// ===== Copiar o pedido para o Claude =====
+document.querySelectorAll('[data-copiar]').forEach(botao => botao.addEventListener('click', async () => {
+    const campo = document.getElementById(botao.dataset.copiar);
+    try {
+        await navigator.clipboard.writeText(campo.value);
+    } catch {
+        campo.select();  // sem permissão de copiar: deixa selecionado para o Ctrl+C
+        document.execCommand('copy');
+    }
+    const antes = botao.textContent;
+    botao.textContent = 'copiado ✓';
+    setTimeout(() => { botao.textContent = antes; }, 1800);
+}));

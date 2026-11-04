@@ -52,6 +52,9 @@
             <a href="{% url 'flashcards:index' %}" class="menu-item {% if app == 'flashcards' %}ativo{% endif %}">
                 {% include "componentes/icone.html" with nome="flashcards" %} Flashcards
             </a>
+            <a href="{% url 'questoes:index' %}" class="menu-item {% if app == 'questoes' %}ativo{% endif %}">
+                {% include "componentes/icone.html" with nome="questoes" %} Questões
+            </a>
 
             <span class="menu-secao">em breve</span>
             <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="erros" %} Erros</span>
