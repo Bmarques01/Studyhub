@@ -74,12 +74,20 @@
         </section>
     {% endif %}
 
-    {# ===== Um bloco por tópico ===== #}
+    {# ===== Um bloco por tópico: começa fechado (clique no nome para ver as questões) ===== #}
+    {% if blocos|length > 1 %}
+        <p class="qz-abrir-tudo"><button type="button" class="btn-texto" data-abrir-tudo>abrir tudo</button></p>
+    {% endif %}
     {% for b in blocos %}
-        <section class="card fc-baralho">
+        <section class="card fc-baralho qz-bloco">
             <header class="card-topo">
-                <h2 class="rotulo">{% if b.topico %}{{ b.topico.nome }}{% else %}sem tópico{% endif %}</h2>
-                <span class="sub">{{ b.questoes|length }} {% if b.questoes|length == 1 %}questão{% else %}questões{% endif %}</span>
+                <h2 class="rotulo">
+                    <button type="button" class="qz-abrir" aria-expanded="false" aria-controls="bloco-{{ forloop.counter }}" data-abrir-bloco>
+                        <span class="qz-seta" aria-hidden="true">›</span>
+                        {% if b.topico %}{{ b.topico.nome }}{% else %}sem tópico{% endif %}
+                        <span class="sub">{{ b.questoes|length }} {% if b.questoes|length == 1 %}questão{% else %}questões{% endif %}</span>
+                    </button>
+                </h2>
                 <div class="fc-baralho-acoes">
                     <a href="{% url 'questoes:nova' %}?disciplina={{ disciplina.id }}{% if b.topico %}&topico={{ b.topico.id }}{% endif %}" class="btn-texto">+ questão</a>
                     {# praticar só este tópico: todas as questões dele, sorteadas #}
@@ -94,7 +102,7 @@
                     </form>
                 </div>
             </header>
-            <ol class="qz-lista">
+            <ol class="qz-lista" id="bloco-{{ forloop.counter }}" hidden>
                 {% for q in b.questoes %}
                     <li class="qz-item" id="questao-{{ q.id }}">
                         <div class="qz-item-texto">

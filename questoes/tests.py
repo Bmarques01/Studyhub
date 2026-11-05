@@ -92,6 +92,9 @@ class PaginasTests(Base):
         self.assertContains(resposta, 'Qual porta o BGP usa?')
         self.assertContains(resposta, 'nunca respondida')
         self.assertContains(resposta, 'fazer questionário')
+        # as questões de cada tópico começam fechadas (abre clicando no nome do tópico)
+        self.assertContains(resposta, 'aria-expanded="false"')
+        self.assertContains(resposta, 'id="bloco-1" hidden')
 
     def test_nova_disciplina(self):
         # a janela oferece os períodos da graduação (e a categoria sem divisão, que vale ela mesma)

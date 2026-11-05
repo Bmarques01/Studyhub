@@ -103,6 +103,44 @@ document.querySelectorAll('dialog').forEach(dialogo => {
     });
 });
 
+// ===== Blocos de tópico: abrir e fechar a lista de questões =====
+const botoesDosBlocos = [...document.querySelectorAll('[data-abrir-bloco]')];
+const botaoAbrirTudo = document.querySelector('[data-abrir-tudo]');
+
+function abrirBloco(botao, aberto) {
+    botao.setAttribute('aria-expanded', aberto);
+    document.getElementById(botao.getAttribute('aria-controls')).hidden = !aberto;
+}
+
+function atualizarAbrirTudo() {
+    if (!botaoAbrirTudo) return;
+    const todosAbertos = botoesDosBlocos.every(b => b.getAttribute('aria-expanded') === 'true');
+    botaoAbrirTudo.textContent = todosAbertos ? 'fechar tudo' : 'abrir tudo';
+}
+
+botoesDosBlocos.forEach(botao => botao.addEventListener('click', () => {
+    abrirBloco(botao, botao.getAttribute('aria-expanded') !== 'true');
+    atualizarAbrirTudo();
+}));
+
+botaoAbrirTudo?.addEventListener('click', () => {
+    const abrir = botaoAbrirTudo.textContent === 'abrir tudo';
+    botoesDosBlocos.forEach(b => abrirBloco(b, abrir));
+    atualizarAbrirTudo();
+});
+
+// Veio de um link para uma questão (ex.: depois de editar: #questao-12)? Abre o bloco dela.
+function abrirBlocoDoLink() {
+    const alvo = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+    const lista = alvo?.closest('ol[hidden]');
+    if (!lista) return;
+    abrirBloco(document.querySelector(`[aria-controls="${lista.id}"]`), true);
+    alvo.scrollIntoView({ block: 'center' });
+    atualizarAbrirTudo();
+}
+abrirBlocoDoLink();
+window.addEventListener('hashchange', abrirBlocoDoLink);
+
 // ===== Excluir: pergunta antes =====
 document.querySelectorAll('form[data-confirmar]').forEach(form => form.addEventListener('submit', evento => {
     if (!confirm(form.dataset.confirmar)) evento.preventDefault();
