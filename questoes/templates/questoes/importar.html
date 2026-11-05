@@ -46,9 +46,16 @@
                 <textarea name="texto" rows="16" class="qz-texto" spellcheck="false"
                           placeholder="P: Qual protocolo de transporte o BGP usa?&#10;A) UDP&#10;B) TCP *&#10;C) ICMP&#10;E: O BGP usa TCP na porta 179.">{{ texto }}</textarea>
             </label>
-            <label class="qz-arquivo">ou envie um arquivo
-                <input type="file" name="arquivo" accept=".txt,.md,text/plain">
-            </label>
+            {# O input de arquivo fica escondido; o rótulo é o botão (o padrão do navegador não combina com o site) #}
+            <div class="qz-arquivo" data-arquivo>
+                <span>ou envie um arquivo</span>
+                <label class="btn btn-claro btn-com-icone">
+                    <input type="file" name="arquivo" accept=".txt,.md,text/plain" class="qz-arquivo-input">
+                    {% include "componentes/icone.html" with nome="enviar" %} escolher .txt
+                </label>
+                <small class="qz-arquivo-nome" data-arquivo-nome>nenhum arquivo escolhido</small>
+                <button type="button" class="btn-icone" data-arquivo-limpar title="Tirar o arquivo" hidden>✕</button>
+            </div>
             <footer class="qz-form-botoes">
                 <button class="btn {% if previa %}btn-claro{% endif %}" name="acao" value="previa">ver prévia</button>
                 {% if previa %}

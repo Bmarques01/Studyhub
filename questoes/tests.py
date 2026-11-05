@@ -163,6 +163,13 @@ class ImportarTests(Base):
         self.assertEqual(Questao.objects.filter(disciplina=self.redes, topico=self.bgp).count(), 3)
         self.assertEqual(Alternativa.objects.filter(correta=True).get().texto, 'TCP')
 
+    def test_botao_de_arquivo(self):
+        # o input de arquivo continua no form (escondido), com o botão e o nome do escolhido ao lado
+        resposta = self.client.get(reverse('questoes:importar'))
+        self.assertContains(resposta, 'type="file" name="arquivo"')
+        self.assertContains(resposta, 'escolher .txt')
+        self.assertContains(resposta, 'data-arquivo-nome')
+
     def test_arquivo_com_bom(self):
         arquivo = SimpleUploadedFile('questoes.txt', EXEMPLO.encode('utf-8-sig'), content_type='text/plain')
         resposta = self.client.post(reverse('questoes:importar'), {

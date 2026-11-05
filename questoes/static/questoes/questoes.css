@@ -304,7 +304,23 @@
 }
 
 .qz-texto { font-family: var(--fonte-mono) !important; font-size: 0.85rem !important; }
-.qz-form .qz-arquivo { flex-direction: row; align-items: center; gap: 10px; }
+/* Enviar arquivo: o input some (mas continua funcionando pelo teclado) e o rótulo vira botão */
+.qz-arquivo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.85rem; color: var(--texto-suave); }
+/* o rótulo vira botão: ícone e texto lado a lado, na fonte dos botões (os outros rótulos do form empilham) */
+.qz-form .qz-arquivo label {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--fonte-texto);
+    font-size: 0.85rem;
+    color: var(--vinho);
+    cursor: pointer;
+}
+.qz-arquivo [hidden] { display: none; }
+.qz-arquivo-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.qz-arquivo label:focus-within { outline: 2px solid var(--rosa-forte); outline-offset: 2px; }
+.qz-arquivo-nome { font-family: var(--fonte-mono); }
+.qz-arquivo-nome.escolhido { color: var(--vinho); font-weight: 600; }
 
 .qz-previa { display: flex; flex-direction: column; gap: 12px; padding-top: 8px; border-top: 1px solid var(--rosa-bebe); }
 

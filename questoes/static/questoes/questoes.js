@@ -70,6 +70,22 @@ document.querySelectorAll('[data-topicos]').forEach(grupo => {
     atualizar();  // o navegador pode lembrar as marcações ao voltar para a página
 });
 
+// ===== Enviar arquivo: mostra o nome do escolhido e deixa tirar =====
+document.querySelectorAll('[data-arquivo]').forEach(caixa => {
+    const input = caixa.querySelector('input[type=file]');
+    const nome = caixa.querySelector('[data-arquivo-nome]');
+    const limpar = caixa.querySelector('[data-arquivo-limpar]');
+    function atualizar() {
+        const arquivo = input.files[0];
+        nome.textContent = arquivo ? arquivo.name : 'nenhum arquivo escolhido';
+        nome.classList.toggle('escolhido', Boolean(arquivo));
+        limpar.hidden = !arquivo;
+    }
+    input.addEventListener('change', atualizar);
+    limpar.addEventListener('click', () => { input.value = ''; atualizar(); });
+    atualizar();
+});
+
 // ===== Excluir: pergunta antes =====
 document.querySelectorAll('form[data-confirmar]').forEach(form => form.addEventListener('submit', evento => {
     if (!confirm(form.dataset.confirmar)) evento.preventDefault();
