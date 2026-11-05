@@ -38,7 +38,7 @@
                     {% endfor %}
                 </select>
             </label>
-            <label>tópico <small>(opcional)</small>
+            <label><span>tópico <small>(opcional)</small></span>
                 <select name="topico" data-topico data-inicial="{{ valores.topico }}">
                     <option value="">sem tópico</option>
                 </select>
@@ -91,7 +91,7 @@
             <textarea name="resposta_aberta" rows="3" maxlength="5000">{{ valores.resposta_aberta }}</textarea>
         </fieldset>
 
-        <label>explicação <small>(opcional) · aparece depois de responder</small>
+        <label><span>explicação <small>(opcional) · aparece depois de responder</small></span>
             <textarea name="explicacao" rows="3" maxlength="5000">{{ valores.explicacao }}</textarea>
         </label>
 
