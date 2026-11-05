@@ -251,10 +251,11 @@
                     <strong>Cadernos</strong>
                     <small>{% with n=disciplina.cadernos.count %}{% if n %}{{ n }} caderno{{ n|pluralize }}{% else %}criar o primeiro{% endif %}{% endwith %}</small>
                 </a>
-                <span class="ferramenta em-breve">
+                <a href="{% url 'questoes:erros' %}?disciplina={{ disciplina.id }}" class="ferramenta">
                     {% include "componentes/icone.html" with nome="erros" %}
-                    <strong>Erros</strong><small>em breve</small>
-                </span>
+                    <strong>Erros</strong>
+                    <small>{% if erros_pendentes %}{{ erros_pendentes }} para revisar{% else %}nenhum para revisar{% endif %}</small>
+                </a>
             </div>
         </section>
     </div>

@@ -3,7 +3,7 @@ from django import forms
 from estudos.models import Disciplina, Topico
 
 from .importacao import MAX_ALTERNATIVAS
-from .models import Questao
+from .models import Erro, Questao
 
 ARQUIVO_MAXIMO = 1_000_000  # ~1 MB de texto
 
@@ -102,4 +102,32 @@ class QuestionarioForm(forms.Form):
         disciplina = dados.get('disciplina')
         if disciplina and any(t.disciplina_id != disciplina.id for t in dados.get('topicos') or []):
             raise forms.ValidationError('O tópico escolhido não é dessa disciplina.')
+        return dados
+
+
+class AnotarErroForm(forms.Form):
+    """Por que errei + anotação, de um erro que já está no caderno."""
+
+    motivo = forms.ChoiceField(choices=Erro.MOTIVOS, required=False)
+    anotacao = forms.CharField(max_length=5000, required=False)
+
+
+class ErroDeForaForm(forms.Form):
+    """"+ erro": uma questão errada fora do Studyhub (prova, lista, exercício da aula).
+    Vira uma questão aberta no banco e já entra no caderno de erros."""
+
+    disciplina = forms.ModelChoiceField(queryset=Disciplina.objects.all(),
+                                        error_messages={'required': 'Escolha a disciplina.'})
+    topico = forms.ModelChoiceField(queryset=Topico.objects.all(), required=False)
+    origem = forms.CharField(max_length=100, required=False)
+    enunciado = forms.CharField(max_length=5000, error_messages={'required': 'Escreva a questão.'})
+    resposta_dada = forms.CharField(max_length=5000, required=False)
+    resposta_certa = forms.CharField(max_length=5000, error_messages={'required': 'Escreva a resposta certa.'})
+    explicacao = forms.CharField(max_length=5000, required=False)
+    motivo = forms.ChoiceField(choices=Erro.MOTIVOS, required=False)
+    anotacao = forms.CharField(max_length=5000, required=False)
+
+    def clean(self):
+        dados = super().clean()
+        conferir_topico(dados)
         return dados

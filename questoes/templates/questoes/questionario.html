@@ -15,7 +15,7 @@
     <header class="dash-topo">
         <div>
             <a href="{% url 'questoes:disciplina' item.disciplina.id %}" class="voltar">‹ {{ item.disciplina.nome }}</a>
-            {% with nomes=item.nome_dos_topicos %}<h1>Questionário{% if nomes %} · {{ nomes }}{% endif %}</h1>{% endwith %}
+            {% with nomes=item.nome_dos_topicos %}<h1>{% if item.de_erros %}Revisão dos erros{% else %}Questionário{% endif %}{% if nomes %} · {{ nomes }}{% endif %}</h1>{% endwith %}
             <p class="dash-data">
                 {% if momento == 'resultado' %}concluído{% else %}questão {% if numero %}{{ numero }}{% else %}{{ feitas }}{% endif %} de {{ total }}{% endif %}
                 · {{ certas }} {% if certas == 1 %}acerto{% else %}acertos{% endif %}
@@ -100,6 +100,43 @@
             {% endif %}
             {% if questao.explicacao and questao.tipo != 'aberta' %}<p class="qz-explicacao">{{ questao.explicacao }}</p>{% endif %}
 
+            {# ===== Caderno de erros ===== #}
+            {% if erro and not resposta.acertou %}
+                {# errou: a questão já foi para o caderno; aqui você diz por quê (teclas 1 a 4) #}
+                <form method="post" action="{% url 'questoes:salvar_erro' erro.id %}" class="qz-caderno" data-motivos>
+                    {% csrf_token %}
+                    <input type="hidden" name="proximo" value="{{ aqui }}">
+                    <p class="qz-caderno-titulo">
+                        {% include "componentes/icone.html" with nome="erros" %}
+                        <span>Foi para o <a href="{% url 'questoes:erros' %}?disciplina={{ item.disciplina.id }}">caderno de erros</a>{% if erro.vezes > 1 %} ({{ erro.vezes }}ª vez){% endif %}. Por que errou?</span>
+                    </p>
+                    <div class="qz-motivos">
+                        {% for valor, texto in erro.MOTIVOS %}
+                            <button class="qz-motivo" name="motivo" value="{{ valor }}" data-tecla="{{ forloop.counter }}"
+                                    aria-pressed="{% if erro.motivo == valor %}true{% else %}false{% endif %}">
+                                <kbd>{{ forloop.counter }}</kbd> {{ texto }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                    <details class="qz-anotar" {% if erro.anotacao %}open{% endif %}>
+                        <summary>{% if erro.anotacao %}sua anotação{% else %}+ anotação{% endif %}</summary>
+                        <textarea name="anotacao" rows="2" maxlength="5000" placeholder="Ex.: confundi OSPF com BGP — OSPF é interno.">{{ erro.anotacao }}</textarea>
+                        <button class="btn btn-claro">salvar anotação</button>
+                    </details>
+                </form>
+            {% elif erro and resposta.acertou and not erro.dominado_em %}
+                {# acertou uma que estava nos erros: você decide se já domina #}
+                <form method="post" action="{% url 'questoes:erro_dominei' erro.id %}" class="qz-caderno qz-caderno-acertou">
+                    {% csrf_token %}
+                    <input type="hidden" name="proximo" value="{{ aqui }}">
+                    <p class="qz-caderno-titulo">
+                        {% include "componentes/icone.html" with nome="erros" %}
+                        <span>Essa estava no caderno de erros (errou {{ erro.vezes }}x). Já domina?</span>
+                    </p>
+                    <button class="btn btn-claro">✓ dominei, tirar dos erros</button>
+                </form>
+            {% endif %}
+
             <a href="{% url 'questoes:questionario' item.id %}" class="btn qz-seguir" data-seguir autofocus>
                 {% if tem_proxima %}próxima{% else %}ver resultado{% endif %} <kbd>enter</kbd>
             </a>
@@ -119,6 +156,11 @@
                 {% endif %}
                 <a href="{% url 'questoes:disciplina' item.disciplina.id %}" class="btn btn-claro">novo questionário</a>
             </div>
+            {% if erradas or item.de_erros %}
+                <a href="{% url 'questoes:erros' %}?disciplina={{ item.disciplina.id }}" class="btn-texto">
+                    {% if erradas %}{% if erradas == 1 %}a errada está{% else %}as erradas estão{% endif %} no caderno de erros →{% else %}ver o caderno de erros →{% endif %}
+                </a>
+            {% endif %}
         </section>
 
         <section class="card fc-baralho">

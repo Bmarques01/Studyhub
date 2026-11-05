@@ -52,12 +52,12 @@
             <a href="{% url 'flashcards:index' %}" class="menu-item {% if app == 'flashcards' %}ativo{% endif %}">
                 {% include "componentes/icone.html" with nome="flashcards" %} Flashcards
             </a>
-            <a href="{% url 'questoes:index' %}" class="menu-item {% if app == 'questoes' %}ativo{% endif %}">
+            <a href="{% url 'questoes:index' %}" class="menu-item {% if app == 'questoes' and 'erro' not in request.resolver_match.url_name %}ativo{% endif %}">
                 {% include "componentes/icone.html" with nome="questoes" %} Questões
             </a>
-
-            <span class="menu-secao">em breve</span>
-            <span class="menu-item em-breve">{% include "componentes/icone.html" with nome="erros" %} Erros</span>
+            <a href="{% url 'questoes:erros' %}" class="menu-item {% if app == 'questoes' and 'erro' in request.resolver_match.url_name %}ativo{% endif %}">
+                {% include "componentes/icone.html" with nome="erros" %} Erros
+            </a>
         </nav>
         {% endwith %}
 

@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 from calendario.models import Evento
 from flashcards import memoria
 from pomodoro.models import SessaoPomodoro
+from questoes.models import Erro
 
 from .forms import CategoriaForm, DisciplinaForm, NotasForm, PeriodoForm, TopicoForm
 from .models import Categoria, Disciplina, Periodo, Topico, proximo_letivo, semestre_letivo
@@ -175,6 +176,7 @@ def disciplina_detalhe(request, disciplina_id):
         'proximos': Evento.objects.filter(disciplina=disciplina, data__gte=hoje, concluido=False),
         'historico': sessoes.select_related('topico')[:8],
         'flashcards_hoje': memoria.para_revisar(disciplina),
+        'erros_pendentes': Erro.objects.filter(questao__disciplina=disciplina, dominado_em__isnull=True).count(),
     })
 
 

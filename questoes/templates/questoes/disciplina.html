@@ -25,6 +25,8 @@
         </div>
         <div class="dash-topo-acoes">
             <a href="{% url 'estudos:disciplina' disciplina.id %}" class="btn btn-claro">disciplina</a>
+            <a href="{% url 'questoes:erros' %}?disciplina={{ disciplina.id }}" class="btn btn-claro"
+               title="Caderno de erros desta disciplina">erros{% if erros_pendentes %} ({{ erros_pendentes }}){% endif %}</a>
             <a href="{% url 'questoes:importar' %}?disciplina={{ disciplina.id }}" class="btn btn-claro">importar</a>
             <a href="{% url 'questoes:nova' %}?disciplina={{ disciplina.id }}" class="btn">+ questão</a>
         </div>

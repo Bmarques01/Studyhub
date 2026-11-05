@@ -1,5 +1,6 @@
 // Questionário: atalhos de teclado.
-// Alternativas: a letra (A, B, C...) ou V/F · aberta: S (acertei) / N (errei) · correção: Enter segue.
+// Alternativas: a letra (A, B, C...) ou V/F · aberta: S (acertei) / N (errei) · correção: Enter segue
+// e, se errou, 1 a 4 diz o porquê (caderno de erros).
 
 document.addEventListener('keydown', evento => {
     // escrevendo numa caixa de texto, as teclas são texto (não atalho)
@@ -12,7 +13,8 @@ document.addEventListener('keydown', evento => {
         return;
     }
 
-    const botao = document.querySelector(`[data-responder] [data-tecla="${CSS.escape(evento.key.toLowerCase())}"]`);
+    const tecla = CSS.escape(evento.key.toLowerCase());
+    const botao = document.querySelector(`[data-responder] [data-tecla="${tecla}"], [data-motivos] [data-tecla="${tecla}"]`);
     if (botao) {
         evento.preventDefault();
         botao.click();

@@ -66,6 +66,7 @@ class Questionario(models.Model):
     # Os tópicos escolhidos (nenhum = a disciplina inteira) e se entraram as questões sem tópico
     topicos = models.ManyToManyField(Topico, blank=True, related_name='questionarios')
     sem_topico = models.BooleanField(default=False)
+    de_erros = models.BooleanField(default=False)  # revisão do caderno de erros
     questoes = models.JSONField(default=list)  # ids das questões, na ordem em que aparecem
     criado_em = models.DateTimeField(auto_now_add=True)
 
@@ -98,3 +99,57 @@ class Resposta(models.Model):
 
     def __str__(self):
         return f'{self.questao} · {"acertou" if self.acertou else "errou"}'
+
+
+class Erro(models.Model):
+    """Caderno de erros: uma questão que você errou e ainda não domina.
+    Entra sozinha quando você erra no questionário (ou pelo "+ erro", para questões de fora).
+    Só sai da lista quando você marca "dominei"; se errar de novo depois, volta."""
+
+    MOTIVOS = [
+        ('nao_sabia', 'não sabia'),
+        ('confundi', 'confundi conceitos'),
+        ('atencao', 'falta de atenção'),
+        ('interpretei', 'interpretei errado'),
+    ]
+
+    questao = models.OneToOneField(Questao, on_delete=models.CASCADE, related_name='erro')
+    motivo = models.CharField(max_length=12, choices=MOTIVOS, blank=True)  # vazio = ainda não disse
+    anotacao = models.TextField(blank=True)
+    resposta_dada = models.TextField(blank=True)  # a última resposta errada
+    vezes = models.PositiveIntegerField(default=1)  # quantas vezes já errou
+    origem = models.CharField(max_length=100, blank=True)  # vazio = questionário; ex.: "Prova GA"
+    criado_em = models.DateTimeField(default=timezone.now)
+    errou_em = models.DateTimeField(default=timezone.now)  # o erro mais recente
+    dominado_em = models.DateTimeField(null=True, blank=True)  # None = ainda na lista
+
+    class Meta:
+        ordering = ['-errou_em', '-id']
+
+    def __str__(self):
+        return f'Erro · {self.questao}'
+
+    def texto_da_resposta_dada(self):
+        """A sua resposta por extenso. Ex.: "B) TCP", "Verdadeiro" ou o texto escrito."""
+        q = self.questao
+        if q.tipo == 'vf':
+            return {'V': 'Verdadeiro', 'F': 'Falso'}.get(self.resposta_dada, self.resposta_dada)
+        if q.tipo == 'multipla':
+            marcada = next((a for a in q.alternativas.all() if a.letra == self.resposta_dada), None)
+            return f'{marcada.letra}) {marcada.texto}' if marcada else self.resposta_dada
+        return self.resposta_dada or '(respondida de cabeça)'
+
+
+def registrar_erro(questao, resposta_dada, quando=None):
+    """Põe a questão no caderno de erros. Se ela já estava lá, conta mais uma vez
+    (e, se você tinha marcado "dominei", ela volta para a lista)."""
+    quando = quando or timezone.now()
+    erro, novo = Erro.objects.get_or_create(
+        questao=questao, defaults={'resposta_dada': resposta_dada, 'criado_em': quando, 'errou_em': quando})
+    if not novo:
+        erro.vezes += 1
+        erro.resposta_dada = resposta_dada
+        erro.errou_em = quando
+        erro.dominado_em = None
+        erro.save()
+    return erro

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import erros, views
 
 app_name = 'questoes'
 
@@ -17,4 +17,11 @@ urlpatterns = [
     path('questionario/<int:questionario_id>/', views.questionario, name='questionario'),
     path('questionario/<int:questionario_id>/responder/', views.responder, name='responder'),
     path('questionario/<int:questionario_id>/refazer/', views.refazer_erradas, name='refazer_erradas'),
+
+    # caderno de erros (os nomes têm "erro": é assim que o menu sabe marcar "Erros")
+    path('erros/', erros.erros, name='erros'),
+    path('erros/novo/', erros.novo, name='novo_erro'),
+    path('erros/revisar/', erros.revisar, name='revisar_erros'),
+    path('erros/<int:erro_id>/', erros.salvar_erro, name='salvar_erro'),
+    path('erros/<int:erro_id>/dominei/', erros.dominei, name='erro_dominei'),
 ]

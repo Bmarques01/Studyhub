@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Anotar um erro{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<link rel="stylesheet" href="{% static 'questoes/questoes.css' %}">
+<script src="{% static 'questoes/questoes.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash">
+    <header class="dash-topo">
+        <div>
+            <a href="{{ voltar }}" class="voltar">‹ caderno de erros</a>
+            <h1>Anotar um erro</h1>
+            <p class="dash-data">uma questão que você errou fora do Studyhub (prova, lista, exercício da aula) · ela também entra no banco de questões, para praticar depois</p>
+        </div>
+    </header>
+
+    <form method="post" class="card qz-form" data-escolha-disciplina>
+        {% csrf_token %}
+        {% if erros %}
+            <ul class="qz-erros" role="alert">{% for erro in erros %}<li>{{ erro }}</li>{% endfor %}</ul>
+        {% endif %}
+
+        <div class="qz-linha">
+            <label>disciplina
+                <select name="disciplina" required data-disciplina>
+                    <option value="">escolha…</option>
+                    {% for rotulo, disciplinas in opcoes %}
+                        <optgroup label="{{ rotulo }}">
+                            {% for d in disciplinas %}
+                                <option value="{{ d.id }}" {% if d.id == disciplina_id %}selected{% endif %}>{{ d.nome }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endfor %}
+                </select>
+            </label>
+            <label><span>tópico <small>(opcional)</small></span>
+                <select name="topico" data-topico data-inicial="{{ topico_id }}">
+                    <option value="">sem tópico</option>
+                </select>
+            </label>
+        </div>
+
+        <label><span>onde errou <small>(opcional)</small></span>
+            <input type="text" name="origem" maxlength="100" value="{{ valores.origem|default:'' }}" placeholder="Ex.: Prova GA, Lista 3, exercício da aula">
+        </label>
+
+        <label>questão
+            <textarea name="enunciado" rows="4" required maxlength="5000">{{ valores.enunciado|default:'' }}</textarea>
+        </label>
+
+        <div class="qz-linha">
+            <label><span>sua resposta <small>(o que você respondeu)</small></span>
+                <textarea name="resposta_dada" rows="3" maxlength="5000">{{ valores.resposta_dada|default:'' }}</textarea>
+            </label>
+            <label>resposta certa
+                <textarea name="resposta_certa" rows="3" required maxlength="5000">{{ valores.resposta_certa|default:'' }}</textarea>
+            </label>
+        </div>
+
+        <label><span>explicação <small>(opcional) · por que a certa está certa</small></span>
+            <textarea name="explicacao" rows="2" maxlength="5000">{{ valores.explicacao|default:'' }}</textarea>
+        </label>
+
+        <fieldset class="qz-tipos">
+            <legend>por que errou <small>(opcional)</small></legend>
+            {% for valor, texto in motivos_opcoes %}
+                <label class="qz-tipo-opcao">
+                    <input type="radio" name="motivo" value="{{ valor }}" {% if valores.motivo == valor %}checked{% endif %}>
+                    <span>{{ texto }}</span>
+                </label>
+            {% endfor %}
+        </fieldset>
+
+        <label><span>anotação <small>(opcional)</small></span>
+            <textarea name="anotacao" rows="2" maxlength="5000" placeholder="o que confundiu, o macete para lembrar…">{{ valores.anotacao|default:'' }}</textarea>
+        </label>
+
+        <footer class="qz-form-botoes">
+            <a href="{{ voltar }}" class="btn-texto">cancelar</a>
+            <button class="btn btn-claro" name="outro" value="1">salvar e anotar outro</button>
+            <button class="btn">salvar</button>
+        </footer>
+    </form>
+</div>
+{{ topicos|json_script:"dados-topicos" }}
+{% endblock %}

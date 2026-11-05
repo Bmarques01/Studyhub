@@ -13,7 +13,7 @@ from flashcards.views import ler_id, periodos_atuais
 
 from .forms import ImportarForm, QuestaoForm, QuestionarioForm
 from .importacao import LIMITE, MAX_ALTERNATIVAS, ler_questoes
-from .models import Alternativa, Questao, Questionario, Resposta
+from .models import Alternativa, Erro, Questao, Questionario, Resposta, registrar_erro
 
 ALTERNATIVAS_NO_FORMULARIO = 4  # espaços em branco ao escrever uma questão nova
 
@@ -138,6 +138,7 @@ def disciplina(request, disciplina_id):
         'sem_topico': sem_topico,
         'quantidades': QuestionarioForm.QUANTIDADES,
         'questionarios': questionarios,
+        'erros_pendentes': Erro.objects.filter(questao__disciplina=disciplina, dominado_em__isnull=True).count(),
     })
 
 
@@ -328,7 +329,10 @@ def questionario(request, questionario_id):
     vista = item.respostas.filter(id=ler_id(request.GET.get('ver'))).select_related('questao').first()
     if vista:
         contexto.update(momento='correcao', questao=next((q for q in questoes if q.id == vista.questao_id), None),
-                        resposta=vista, tem_proxima=proxima is not None)
+                        resposta=vista, tem_proxima=proxima is not None,
+                        # errou: pergunta "por que errei?" · acertou uma que estava nos erros: oferece "dominei"
+                        erro=Erro.objects.filter(questao_id=vista.questao_id).first(),
+                        aqui=request.get_full_path())
         if contexto['questao']:
             return render(request, 'questoes/questionario.html', contexto)
 
@@ -375,6 +379,8 @@ def responder(request, questionario_id):
         acertou = veredito == 'sim'
 
     resposta = Resposta.objects.create(questionario=item, questao=proxima, resposta_dada=dada, acertou=acertou)
+    if not acertou:
+        registrar_erro(proxima, dada, resposta.respondida_em)  # errou: vai para o caderno de erros
     return redirect(reverse('questoes:questionario', args=[item.id]) + f'?ver={resposta.id}')
 
 
@@ -386,6 +392,7 @@ def refazer_erradas(request, questionario_id):
     if not erradas:
         return redirect('questoes:questionario', questionario_id=item.id)
     random.shuffle(erradas)
-    novo = Questionario.objects.create(disciplina=item.disciplina, sem_topico=item.sem_topico, questoes=erradas)
+    novo = Questionario.objects.create(disciplina=item.disciplina, sem_topico=item.sem_topico, questoes=erradas,
+                                       de_erros=item.de_erros)
     novo.topicos.set(item.topicos.all())
     return redirect('questoes:questionario', questionario_id=novo.id)

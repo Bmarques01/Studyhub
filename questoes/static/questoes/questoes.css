@@ -501,3 +501,131 @@ button.qz-alternativa:hover { border-color: var(--rosa); background: var(--rosa-
 }
 .qz-dialogo .fc-form label.qz-dialogo-cor { flex-direction: row; align-items: center; justify-content: space-between; }
 .qz-dialogo footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+
+/* ===================== Caderno de erros ===================== */
+
+/* "pílulas" de motivo (por que errei): clicar já salva; a escolhida fica preenchida */
+.qz-motivos { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.qz-motivos .rotulo { margin-right: 4px; }
+
+.qz-motivo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 999px;
+    background: var(--branco);
+    font-family: var(--fonte-texto);
+    font-size: 0.85rem;
+    color: var(--texto);
+    cursor: pointer;
+}
+
+.qz-motivo:hover { background: var(--rosa-fundo); }
+.qz-motivo kbd { font-size: 0.7rem; color: var(--texto-suave); }
+.qz-motivo[aria-pressed="true"] { border-color: var(--errada); background: var(--errada); color: var(--branco); font-weight: 600; }
+.qz-motivo[aria-pressed="true"]::before { content: '✓'; }
+.qz-motivo[aria-pressed="true"] kbd { color: inherit; }
+
+/* na correção do questionário: a caixa "foi para o caderno de erros" */
+.qz-caderno {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 2px dashed var(--errada);
+    border-radius: 12px;
+}
+
+.qz-caderno-acertou { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; border-color: var(--certa); }
+.qz-caderno-titulo { display: flex; align-items: center; gap: 8px; font-size: 0.92rem; }
+.qz-caderno-titulo .icone { width: 18px; height: 18px; flex-shrink: 0; color: var(--errada); }
+.qz-caderno-acertou .qz-caderno-titulo .icone { color: var(--certa); }
+.qz-anotar summary { font-family: var(--fonte-mono); font-size: 0.75rem; color: var(--rosa-forte); cursor: pointer; }
+.qz-anotar[open] { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.qz-anotar textarea, .qz-anotacao textarea { font-size: 0.9rem; }
+
+/* filtro por disciplina */
+.qz-filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+
+.qz-filtros a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 999px;
+    background: var(--branco);
+    font-size: 0.85rem;
+    color: var(--texto);
+    text-decoration: none;
+}
+
+.qz-filtros a:hover { background: var(--rosa-fundo); }
+.qz-filtros .bolinha { width: 9px; height: 9px; }
+.qz-filtros small { font-family: var(--fonte-mono); color: var(--texto-suave); }
+.qz-filtros a[aria-current="page"] { border-color: var(--rosa-forte); background: var(--rosa-fundo); font-weight: 600; }
+.qz-filtro-dominados { margin-left: auto; }
+
+/* tópicos que você mais erra + motivos */
+.qz-onde-erro {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 28px;
+    margin-bottom: 22px;
+}
+
+.qz-onde-erro .rotulo { margin-bottom: 10px; }
+.qz-barras { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+.qz-barras li {
+    display: grid;
+    grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+}
+
+.qz-barras-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qz-barras-trilho { height: 10px; border-radius: 99px; background: var(--rosa-fundo); overflow: hidden; }
+.qz-barras-trilho span { display: block; height: 100%; border-radius: 99px; background: var(--errada); }
+.qz-barras-n { font-family: var(--fonte-mono); font-size: 0.78rem; white-space: nowrap; }
+.qz-barras-n small { color: var(--texto-suave); }
+.qz-motivos-resumo { list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.qz-motivos-resumo strong { display: inline-block; min-width: 1.6em; font-family: var(--fonte-mono); color: var(--errada); }
+
+/* os erros, agrupados por disciplina */
+.qz-erros-grupo { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+.qz-erros-grupo-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.qz-erros-grupo-topo h2 { font-size: 1.1rem; }
+.qz-erros-grupo-topo small { font-family: var(--fonte-mono); font-size: 0.75rem; font-weight: 400; color: var(--texto-suave); }
+
+.qz-erro { display: flex; flex-direction: column; gap: 12px; border-left: 4px solid var(--cor); scroll-margin-top: 20px; }
+.qz-erro:target { box-shadow: 0 0 0 3px var(--rosa-bebe), var(--sombra); }
+.qz-erro-onde { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--texto-suave); }
+.qz-erro-onde .qz-tipo { margin: 0; }
+.qz-dominado { background: var(--certa) !important; color: var(--branco) !important; }
+.qz-erro-enunciado { font-weight: 600; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.qz-alternativas-lista .marcada { color: var(--errada); }
+
+.qz-anotacao { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--rosa-bebe); }
+
+.qz-anotacao textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    font-family: var(--fonte-texto);
+    resize: vertical;
+}
+
+.qz-erro-botoes { display: flex; align-items: center; gap: 12px; }
+.qz-erro-botoes .qz-dominei { margin-left: auto; }
+
+@media (max-width: 900px) {
+    .qz-onde-erro { grid-template-columns: minmax(0, 1fr); }
+    .qz-barras li { grid-template-columns: minmax(0, 1fr) auto auto; }
+    .qz-barras-trilho { display: none; }
+}
+.qz-caderno-titulo a { color: var(--rosa-forte); font-weight: 600; }

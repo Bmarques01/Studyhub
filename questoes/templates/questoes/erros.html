@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Caderno de erros{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<link rel="stylesheet" href="{% static 'questoes/questoes.css' %}">
+<script src="{% static 'questoes/questoes.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash fc">
+
+    {# ===== Topo ===== #}
+    <header class="dash-topo">
+        <div>
+            {% if disciplina %}<a href="{% url 'questoes:disciplina' disciplina.id %}" class="voltar">‹ questões de {{ disciplina.nome }}</a>{% endif %}
+            <h1>Caderno de erros</h1>
+            <p class="dash-data">
+                {% if ver_dominados %}{{ total_dominados }} {% if total_dominados == 1 %}questão dominada{% else %}questões dominadas{% endif %}
+                {% else %}{{ total_pendentes }} {% if total_pendentes == 1 %}erro{% else %}erros{% endif %} para revisar · saem daqui quando você marca "dominei"{% endif %}
+            </p>
+        </div>
+        <div class="dash-topo-acoes">
+            <a href="{% url 'questoes:novo_erro' %}{% if disciplina %}?disciplina={{ disciplina.id }}{% endif %}" class="btn"
+               title="Uma questão que você errou numa prova, lista ou exercício fora do Studyhub">+ erro</a>
+        </div>
+    </header>
+
+    {# ===== Filtro: todas ou uma disciplina; e os dominados ===== #}
+    <nav class="qz-filtros" aria-label="Filtrar por disciplina">
+        <a href="{% url 'questoes:erros' %}" {% if not disciplina and not ver_dominados %}aria-current="page"{% endif %}>todas <small>{{ total_pendentes }}</small></a>
+        {% for d, n in filtros %}
+            <a href="?disciplina={{ d.id }}" style="--cor: {{ d.cor }}" {% if disciplina.id == d.id and not ver_dominados %}aria-current="page"{% endif %}>
+                <i class="bolinha"></i>{{ d.nome }} <small>{{ n }}</small>
+            </a>
+        {% endfor %}
+        <a href="?dominados=1{% if disciplina %}&disciplina={{ disciplina.id }}{% endif %}" class="qz-filtro-dominados"
+           {% if ver_dominados %}aria-current="page"{% endif %}>✓ dominados <small>{{ total_dominados }}</small></a>
+    </nav>
+
+    {# ===== Uma disciplina escolhida: onde você mais erra ===== #}
+    {% if topicos_mais_errados %}
+        <section class="card qz-onde-erro" style="--cor: {{ disciplina.cor }}">
+            <div>
+                <h2 class="rotulo">tópicos que você mais erra</h2>
+                <ol class="qz-barras">
+                    {% for t in topicos_mais_errados %}
+                        <li>
+                            <span class="qz-barras-nome">{{ t.nome }}</span>
+                            <span class="qz-barras-trilho"><span style="width: {% widthratio t.vezes maior 100 %}%"></span></span>
+                            <span class="qz-barras-n">{{ t.vezes }} {% if t.vezes == 1 %}erro{% else %}erros{% endif %}{% if t.questoes != t.vezes %} <small>em {{ t.questoes }} {% if t.questoes == 1 %}questão{% else %}questões{% endif %}</small>{% endif %}</span>
+                            <form method="post" action="{% url 'questoes:revisar_erros' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="disciplina" value="{{ disciplina.id }}">
+                                <input type="hidden" name="topico" value="{% if t.id %}{{ t.id }}{% else %}sem{% endif %}">
+                                <button class="btn-texto" title="Revisar só os erros deste tópico">revisar</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ol>
+            </div>
+            {% if motivos %}
+                <div>
+                    <h2 class="rotulo">por que você errou</h2>
+                    <ul class="qz-motivos-resumo">
+                        {% for texto, n in motivos %}<li><strong>{{ n }}</strong> {{ texto }}</li>{% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </section>
+    {% endif %}
+
+    {# ===== Os erros, por disciplina ===== #}
+    {% for g in grupos %}
+        <section class="qz-erros-grupo" style="--cor: {{ g.disciplina.cor }}">
+            <header class="qz-erros-grupo-topo">
+                <h2 class="fc-titulo"><i class="bolinha"></i>{{ g.disciplina.nome }}
+                    <small>{{ g.erros|length }} {% if ver_dominados %}{% if g.erros|length == 1 %}dominada{% else %}dominadas{% endif %}{% else %}{% if g.erros|length == 1 %}erro{% else %}erros{% endif %}{% endif %}</small></h2>
+                {% if not ver_dominados %}
+                    <form method="post" action="{% url 'questoes:revisar_erros' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="disciplina" value="{{ g.disciplina.id }}">
+                        <button class="btn btn-com-icone" title="Um questionário só com estes erros, sorteados">
+                            {% include "componentes/icone.html" with nome="play" %} revisar {% if g.erros|length == 1 %}o erro{% else %}os {{ g.erros|length }}{% endif %}
+                        </button>
+                    </form>
+                {% endif %}
+            </header>
+
+            {% for e in g.erros %}
+                {% with q=e.questao %}
+                <article class="card qz-erro" id="erro-{{ e.id }}">
+                    <p class="qz-erro-onde">
+                        <span>{% if q.topico %}{{ q.topico.nome }}{% else %}sem tópico{% endif %}</span>
+                        <span class="qz-tipo">{{ e.origem|default:"questionário" }}</span>
+                        <span class="qz-tipo">errou {{ e.vezes }}x · última {{ e.errou_em|date:"d/m" }}</span>
+                        {% if e.dominado_em %}<span class="qz-tipo qz-dominado">✓ dominada em {{ e.dominado_em|date:"d/m" }}</span>{% endif %}
+                    </p>
+                    <p class="qz-erro-enunciado">{{ q.enunciado }}</p>
+
+                    {% if q.tipo == 'multipla' %}
+                        <ul class="qz-alternativas-lista">
+                            {% for a in q.alternativas.all %}
+                                <li class="{% if a.correta %}certa{% elif a.letra == e.resposta_dada %}marcada{% endif %}">{{ a.letra }}) {{ a.texto }}{% if a.correta %} <strong>✓ certa</strong>{% elif a.letra == e.resposta_dada %} <strong>✗ sua resposta</strong>{% endif %}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="qz-comparar">
+                            <div><p class="rotulo">✗ sua resposta</p><p class="qz-sua">{{ e.texto_da_resposta_dada|default:"(não anotada)" }}</p></div>
+                            <div><p class="rotulo">✓ certa</p><p class="qz-esperada-grande">{{ q.texto_da_resposta }}</p></div>
+                        </div>
+                    {% endif %}
+                    {% if q.explicacao %}<p class="qz-explicacao">{{ q.explicacao }}</p>{% endif %}
+
+                    {# por que errei + anotação (os botões do motivo já salvam) #}
+                    <form method="post" action="{% url 'questoes:salvar_erro' e.id %}" class="qz-anotacao">
+                        {% csrf_token %}
+                        <input type="hidden" name="proximo" value="{{ request.get_full_path }}#erro-{{ e.id }}">
+                        <div class="qz-motivos" role="group" aria-label="Por que errei">
+                            <span class="rotulo">por que errei</span>
+                            {% for valor, texto in motivos_opcoes %}
+                                <button class="qz-motivo" name="motivo" value="{{ valor }}"
+                                        aria-pressed="{% if e.motivo == valor %}true{% else %}false{% endif %}">{{ texto }}</button>
+                            {% endfor %}
+                        </div>
+                        <textarea name="anotacao" rows="2" maxlength="5000" aria-label="Anotação"
+                                  placeholder="anotação: o que confundiu, o macete para lembrar…">{{ e.anotacao }}</textarea>
+                        <footer class="qz-erro-botoes">
+                            <button class="btn btn-claro">salvar anotação</button>
+                            <a href="{% url 'questoes:editar' q.id %}" class="btn-texto">editar questão</a>
+                            {# o "dominei" é de outro formulário (lá embaixo): o atributo form="" liga o botão a ele #}
+                            {% if e.dominado_em %}
+                                <button class="btn btn-claro qz-dominei" form="dominei-{{ e.id }}" name="acao" value="voltar">↺ voltar para os erros</button>
+                            {% else %}
+                                <button class="btn qz-dominei" form="dominei-{{ e.id }}" title="Tira a questão do caderno de erros">✓ dominei</button>
+                            {% endif %}
+                        </footer>
+                    </form>
+                    <form method="post" action="{% url 'questoes:erro_dominei' e.id %}" id="dominei-{{ e.id }}" hidden>
+                        {% csrf_token %}
+                        <input type="hidden" name="proximo" value="{{ request.get_full_path }}">
+                    </form>
+                </article>
+                {% endwith %}
+            {% endfor %}
+        </section>
+    {% empty %}
+        <div class="card vazio-card qz-vazio">
+            {% if ver_dominados %}
+                <p>Nenhuma questão dominada ainda. Quando você marcar "dominei" num erro, ele aparece aqui.</p>
+            {% else %}
+                <p>Nenhum erro para revisar{% if disciplina %} em {{ disciplina.nome }}{% endif %}.</p>
+                <p>Quando você errar uma questão no questionário, ela entra aqui sozinha.
+                   Errou numa prova ou lista? <a href="{% url 'questoes:novo_erro' %}{% if disciplina %}?disciplina={{ disciplina.id }}{% endif %}">Anote com o "+ erro"</a>.</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

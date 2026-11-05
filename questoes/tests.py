@@ -5,7 +5,7 @@ from django.urls import reverse
 from estudos.models import Categoria, Disciplina, Periodo, Topico
 
 from .importacao import ler_questoes
-from .models import Alternativa, Questao, Questionario, Resposta
+from .models import Alternativa, Erro, Questao, Questionario, Resposta, registrar_erro
 
 EXEMPLO = """Aqui estão as questões:
 
@@ -338,3 +338,145 @@ class QuestionarioTests(Base):
         self.client.post(responder, {'questao': self.q_multipla.id, 'alternativa': outra.alternativas.first().id})
         self.client.post(responder, {'questao': self.q_vf.id, 'vf': 'F'})  # não é a questão da vez
         self.assertFalse(Resposta.objects.exists())
+
+
+class CadernoDeErrosTests(Base):
+    def setUp(self):
+        super().setUp()
+        self.q = self.multipla(topico=self.bgp)
+        self.q_vf = Questao.objects.create(disciplina=self.redes, tipo='vf', enunciado='BGP é IGP.', resposta='F')
+
+    def responder_errado(self):
+        """Um questionário de 1 questão (a múltipla), respondido com a alternativa errada."""
+        item = Questionario.objects.create(disciplina=self.redes, questoes=[self.q.id])
+        errada = self.q.alternativas.get(texto='80')
+        self.client.post(reverse('questoes:responder', args=[item.id]), {'questao': self.q.id, 'alternativa': errada.id})
+        return item, Resposta.objects.filter(questionario=item).get()
+
+    def test_errar_no_questionario_entra_no_caderno(self):
+        item, resposta = self.responder_errado()
+        erro = Erro.objects.get()
+        self.assertEqual((erro.questao, erro.resposta_dada, erro.vezes, erro.origem), (self.q, 'A', 1, ''))
+        self.assertEqual(erro.texto_da_resposta_dada(), 'A) 80')
+        # a correção pergunta "por que errou?"
+        pagina = self.client.get(reverse('questoes:questionario', args=[item.id]) + f'?ver={resposta.id}')
+        self.assertContains(pagina, 'Por que errou?')
+        self.assertContains(pagina, 'falta de atenção')
+
+        # errar de novo conta mais uma vez (não duplica)
+        self.responder_errado()
+        erro.refresh_from_db()
+        self.assertEqual((Erro.objects.count(), erro.vezes), (1, 2))
+
+    def test_acertar_nao_entra(self):
+        item = Questionario.objects.create(disciplina=self.redes, questoes=[self.q_vf.id])
+        self.client.post(reverse('questoes:responder', args=[item.id]), {'questao': self.q_vf.id, 'vf': 'F'})
+        self.assertFalse(Erro.objects.exists())
+
+    def test_motivo_e_anotacao(self):
+        item, resposta = self.responder_errado()
+        erro = Erro.objects.get()
+        aqui = reverse('questoes:questionario', args=[item.id]) + f'?ver={resposta.id}'
+        volta = self.client.post(reverse('questoes:salvar_erro', args=[erro.id]),
+                                 {'motivo': 'confundi', 'anotacao': ' 179 é BGP ', 'proximo': aqui})
+        self.assertRedirects(volta, aqui)  # volta para a correção
+        erro.refresh_from_db()
+        self.assertEqual((erro.motivo, erro.anotacao), ('confundi', '179 é BGP'))
+        # só o motivo: a anotação fica como estava
+        self.client.post(reverse('questoes:salvar_erro', args=[erro.id]), {'motivo': 'atencao'})
+        erro.refresh_from_db()
+        self.assertEqual((erro.motivo, erro.anotacao), ('atencao', '179 é BGP'))
+        # link de fora do site não é seguido
+        volta = self.client.post(reverse('questoes:salvar_erro', args=[erro.id]),
+                                 {'motivo': 'atencao', 'proximo': 'https://exemplo.com/'})
+        self.assertTrue(volta.url.startswith(reverse('questoes:erros')))
+
+    def test_pagina_dominei_e_voltar(self):
+        self.responder_errado()
+        erro = Erro.objects.get()
+        pagina = self.client.get(reverse('questoes:erros') + f'?disciplina={self.redes.id}')
+        self.assertContains(pagina, 'Qual porta o BGP usa?')
+        self.assertContains(pagina, 'tópicos que você mais erra')
+        self.assertContains(pagina, '✗ sua resposta')
+
+        self.client.post(reverse('questoes:erro_dominei', args=[erro.id]))
+        erro.refresh_from_db()
+        self.assertIsNotNone(erro.dominado_em)
+        self.assertNotContains(self.client.get(reverse('questoes:erros')), 'Qual porta o BGP usa?')
+        self.assertContains(self.client.get(reverse('questoes:erros') + '?dominados=1'), 'Qual porta o BGP usa?')
+
+        # errar de novo uma dominada: ela volta para a lista
+        registrar_erro(self.q, 'C')
+        erro.refresh_from_db()
+        self.assertIsNone(erro.dominado_em)
+        # e o botão "voltar para os erros" também devolve
+        self.client.post(reverse('questoes:erro_dominei', args=[erro.id]))
+        self.client.post(reverse('questoes:erro_dominei', args=[erro.id]), {'acao': 'voltar'})
+        erro.refresh_from_db()
+        self.assertIsNone(erro.dominado_em)
+
+    def test_acertar_uma_que_estava_nos_erros_oferece_dominei(self):
+        registrar_erro(self.q_vf, 'V')
+        item = Questionario.objects.create(disciplina=self.redes, questoes=[self.q_vf.id])
+        self.client.post(reverse('questoes:responder', args=[item.id]), {'questao': self.q_vf.id, 'vf': 'F'})
+        resposta = Resposta.objects.get()
+        pagina = self.client.get(reverse('questoes:questionario', args=[item.id]) + f'?ver={resposta.id}')
+        self.assertContains(pagina, 'Já domina?')
+
+    def test_revisar_so_os_erros(self):
+        registrar_erro(self.q, 'A')
+        registrar_erro(self.q_vf, 'V')
+        Erro.objects.filter(questao=self.q_vf).update(dominado_em=self.q_vf.criada_em)  # dominada: não entra
+        resposta = self.client.post(reverse('questoes:revisar_erros'), {'disciplina': self.redes.id})
+        item = Questionario.objects.get()
+        self.assertRedirects(resposta, reverse('questoes:questionario', args=[item.id]))
+        self.assertEqual((item.questoes, item.de_erros), ([self.q.id], True))
+        self.assertContains(self.client.get(reverse('questoes:questionario', args=[item.id])), 'Revisão dos erros')
+
+        # por tópico: "sem" = as questões sem tópico (nenhum erro pendente aqui)
+        resposta = self.client.post(reverse('questoes:revisar_erros'), {'disciplina': self.redes.id, 'topico': 'sem'})
+        self.assertRedirects(resposta, reverse('questoes:erros') + f'?disciplina={self.redes.id}')
+        self.assertEqual(Questionario.objects.count(), 1)
+
+    def test_erro_de_fora(self):
+        dados = {'disciplina': self.redes.id, 'topico': self.bgp.id, 'origem': 'Prova GA',
+                 'enunciado': 'Qual a porta do BGP?', 'resposta_dada': '80', 'resposta_certa': '179',
+                 'motivo': 'nao_sabia', 'anotacao': 'decorar'}
+        resposta = self.client.post(reverse('questoes:novo_erro'), dados)
+        erro = Erro.objects.get()
+        self.assertRedirects(resposta, reverse('questoes:erros') + f'?disciplina={self.redes.id}#erro-{erro.id}',
+                             fetch_redirect_response=False)
+        self.assertEqual((erro.origem, erro.motivo, erro.resposta_dada, erro.anotacao),
+                         ('Prova GA', 'nao_sabia', '80', 'decorar'))
+        self.assertEqual((erro.questao.tipo, erro.questao.resposta, erro.questao.topico), ('aberta', '179', self.bgp))
+
+        # "salvar e anotar outro": volta com a mesma disciplina, tópico e prova
+        resposta = self.client.post(reverse('questoes:novo_erro'), {**dados, 'outro': '1'})
+        self.assertIn('origem=Prova+GA', resposta.url)
+        self.assertContains(self.client.get(resposta.url), 'value="Prova GA"')
+
+        # sem a resposta certa: não salva e mostra o erro
+        resposta = self.client.post(reverse('questoes:novo_erro'), {**dados, 'resposta_certa': ''})
+        self.assertContains(resposta, 'Escreva a resposta certa.')
+        self.assertEqual(Erro.objects.count(), 2)
+
+    def test_atalhos(self):
+        registrar_erro(self.q, 'A')
+        self.assertContains(self.client.get(reverse('questoes:disciplina', args=[self.redes.id])), 'erros (1)')
+        self.assertContains(self.client.get(reverse('estudos:disciplina', args=[self.redes.id])), '1 para revisar')
+        # no caderno de erros, o menu marca só "Erros"
+        menu = self.client.get(reverse('questoes:erros')).content.decode()
+        self.assertEqual(menu.count('class="menu-item ativo"'), 1)
+        self.assertIn(f'href="{reverse("questoes:erros")}" class="menu-item ativo"', menu)
+
+    def test_erros_de_antes_entram_pela_migracao(self):
+        # as respostas erradas de antes do caderno existir viram erros (contando as vezes)
+        from importlib import import_module
+
+        from django.apps import apps
+        migracao = import_module('questoes.migrations.0003_caderno_de_erros')
+        for dada, acertou in [('A', False), ('B', True), ('C', False)]:
+            Resposta.objects.create(questao=self.q, resposta_dada=dada, acertou=acertou)
+        migracao.trazer_erros_antigos(apps, None)
+        erro = Erro.objects.get()
+        self.assertEqual((erro.vezes, erro.resposta_dada), (2, 'C'))
