@@ -252,8 +252,46 @@ class QuestionarioTests(Base):
         self.client.post(reverse('questoes:criar_questionario'), {'disciplina': self.redes.id, 'quantidade': 5})
         self.assertEqual(len(Questionario.objects.first().questoes), 3)
         self.client.post(reverse('questoes:criar_questionario'),
-                         {'disciplina': self.redes.id, 'topico': self.bgp.id, 'quantidade': 0})
-        self.assertEqual(Questionario.objects.first().questoes, [self.q_multipla.id])
+                         {'disciplina': self.redes.id, 'topicos': [self.bgp.id], 'quantidade': 0})
+        item = Questionario.objects.first()
+        self.assertEqual(item.questoes, [self.q_multipla.id])
+        self.assertEqual(item.nome_dos_topicos(), 'BGP')
+        self.assertContains(self.client.get(reverse('questoes:questionario', args=[item.id])), 'Questionário · BGP')
+
+    def test_varios_topicos_e_sem_topico(self):
+        ospf = Topico.objects.create(disciplina=self.redes, nome='OSPF')
+        q_ospf = self.multipla('Qual métrica o OSPF usa?', topico=ospf)
+        Topico.objects.create(disciplina=self.redes, nome='RIP')  # sem questões: não aparece para marcar
+
+        resposta = self.client.get(reverse('questoes:disciplina', args=[self.redes.id]))
+        self.assertContains(resposta, 'type="checkbox" name="topicos"', count=2)  # BGP e OSPF
+        self.assertContains(resposta, 'type="checkbox" name="sem_topico"')  # as 2 questões sem tópico
+
+        # BGP + OSPF: só as questões dos dois tópicos
+        self.client.post(reverse('questoes:criar_questionario'),
+                         {'disciplina': self.redes.id, 'topicos': [self.bgp.id, ospf.id], 'quantidade': 0})
+        item = Questionario.objects.first()
+        self.assertEqual(sorted(item.questoes), sorted([self.q_multipla.id, q_ospf.id]))
+        self.assertEqual(item.nome_dos_topicos(), 'BGP, OSPF')
+
+        # OSPF + sem tópico
+        self.client.post(reverse('questoes:criar_questionario'),
+                         {'disciplina': self.redes.id, 'topicos': [ospf.id], 'sem_topico': '1', 'quantidade': 0})
+        item = Questionario.objects.first()
+        self.assertEqual(sorted(item.questoes), sorted([q_ospf.id, self.q_vf.id, self.q_aberta.id]))
+        self.assertEqual(item.nome_dos_topicos(), 'OSPF, sem tópico')
+
+        # refazer as erradas mantém os mesmos tópicos
+        Resposta.objects.create(questionario=item, questao=q_ospf, acertou=False)
+        self.client.post(reverse('questoes:refazer_erradas', args=[item.id]))
+        self.assertEqual(Questionario.objects.first().nome_dos_topicos(), 'OSPF, sem tópico')
+
+    def test_topico_de_outra_disciplina_e_recusado(self):
+        resposta = self.client.post(reverse('questoes:criar_questionario'),
+                                    {'disciplina': self.redes.id, 'topicos': [self.derivada.id], 'quantidade': 0},
+                                    follow=True)
+        self.assertContains(resposta, 'O tópico escolhido não é dessa disciplina.')
+        self.assertFalse(Questionario.objects.exists())
 
     def test_disciplina_sem_questoes(self):
         resposta = self.client.post(reverse('questoes:criar_questionario'), {'disciplina': self.calculo.id, 'quantidade': 10})

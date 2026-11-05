@@ -26,6 +26,52 @@
 
 .qz-comecar-form select { max-width: 260px; }
 
+/* tópicos do questionário: "botões" de marcar (vários ao mesmo tempo) */
+.qz-topicos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    flex-basis: 100%;
+    order: 1;  /* fica numa linha própria, embaixo de "quantas" e "começar" */
+    border: none;
+    min-width: 0;
+}
+
+.qz-topicos legend {
+    float: left;  /* deixa a legenda na mesma linha dos tópicos */
+    margin-right: 4px;
+    font-family: var(--fonte-mono);
+    font-size: 0.78rem;
+    color: var(--texto-suave);
+}
+
+.qz-comecar-form .qz-topico { position: relative; }
+.qz-topico input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+.qz-topico span {
+    display: inline-block;
+    padding: 4px 10px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    font-family: var(--fonte-texto);
+    font-size: 0.85rem;
+    color: var(--texto);
+    cursor: pointer;
+}
+
+.qz-topico span:hover { background: var(--rosa-fundo); }
+.qz-topico small { font-family: var(--fonte-mono); color: var(--texto-suave); }
+
+/* marcado: borda forte + fundo + ✓ (não só a cor) */
+.qz-topico input:checked + span { border-color: var(--rosa-forte); background: var(--rosa-fundo); font-weight: 600; }
+.qz-topico input:checked + span::before { content: '✓ '; }
+.qz-topico input:focus-visible + span { outline: 2px solid var(--lilas); }
+
+.qz-topicos-resumo { margin-left: 4px; font-family: var(--fonte-mono); font-size: 0.72rem; color: var(--texto-suave); }
+
+.fc-baralho-acoes form { display: inline; }
+
 .qz-ultimos {
     display: flex;
     flex-wrap: wrap;

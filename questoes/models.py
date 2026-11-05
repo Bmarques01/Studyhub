@@ -63,8 +63,9 @@ class Questionario(models.Model):
     """Uma rodada de questões: quais caíram (na ordem) e as respostas dadas."""
 
     disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, related_name='questionarios')
-    topico = models.ForeignKey(Topico, on_delete=models.SET_NULL, null=True, blank=True,
-                               related_name='questionarios')
+    # Os tópicos escolhidos (nenhum = a disciplina inteira) e se entraram as questões sem tópico
+    topicos = models.ManyToManyField(Topico, blank=True, related_name='questionarios')
+    sem_topico = models.BooleanField(default=False)
     questoes = models.JSONField(default=list)  # ids das questões, na ordem em que aparecem
     criado_em = models.DateTimeField(auto_now_add=True)
 
@@ -73,6 +74,13 @@ class Questionario(models.Model):
 
     def __str__(self):
         return f'{self.disciplina} · {timezone.localtime(self.criado_em):%d/%m %H:%M}'
+
+    def nome_dos_topicos(self):
+        """Ex.: "BGP, OSPF, sem tópico". Vazio = a disciplina inteira."""
+        nomes = [t.nome for t in self.topicos.all()]
+        if self.sem_topico:
+            nomes.append('sem tópico')
+        return ', '.join(nomes)
 
 
 class Resposta(models.Model):

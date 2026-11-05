@@ -15,7 +15,7 @@
     <header class="dash-topo">
         <div>
             <a href="{% url 'questoes:disciplina' item.disciplina.id %}" class="voltar">‹ {{ item.disciplina.nome }}</a>
-            <h1>Questionário{% if item.topico %} · {{ item.topico.nome }}{% endif %}</h1>
+            {% with nomes=item.nome_dos_topicos %}<h1>Questionário{% if nomes %} · {{ nomes }}{% endif %}</h1>{% endwith %}
             <p class="dash-data">
                 {% if momento == 'resultado' %}concluído{% else %}questão {% if numero %}{{ numero }}{% else %}{{ feitas }}{% endif %} de {{ total }}{% endif %}
                 · {{ certas }} {% if certas == 1 %}acerto{% else %}acertos{% endif %}

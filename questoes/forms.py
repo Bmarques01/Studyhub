@@ -87,16 +87,19 @@ class ImportarForm(forms.Form):
 
 
 class QuestionarioForm(forms.Form):
-    """Começar um questionário: de uma disciplina inteira ou de um tópico."""
+    """Começar um questionário: da disciplina inteira ou de alguns tópicos dela.
+    Nenhum tópico marcado = todas as questões da disciplina."""
 
     QUANTIDADES = [(5, '5'), (10, '10'), (20, '20'), (0, 'todas')]
 
     disciplina = forms.ModelChoiceField(queryset=Disciplina.objects.all())
-    topico = forms.ModelChoiceField(queryset=Topico.objects.all(), required=False)
+    topicos = forms.ModelMultipleChoiceField(queryset=Topico.objects.all(), required=False)
+    sem_topico = forms.BooleanField(required=False)  # as questões que não têm tópico
     quantidade = forms.TypedChoiceField(choices=QUANTIDADES, coerce=int, required=False, empty_value=10)
 
     def clean(self):
         dados = super().clean()
-        conferir_topico(dados)
+        disciplina = dados.get('disciplina')
+        if disciplina and any(t.disciplina_id != disciplina.id for t in dados.get('topicos') or []):
+            raise forms.ValidationError('O tópico escolhido não é dessa disciplina.')
         return dados
-

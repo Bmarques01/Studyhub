@@ -55,6 +55,21 @@ if (listaAlternativas && btnMais) {
     atualizarBotao();
 }
 
+// ===== Questionário: quantas questões os tópicos marcados somam =====
+document.querySelectorAll('[data-topicos]').forEach(grupo => {
+    const resumo = grupo.querySelector('[data-resumo]');
+    const caixas = grupo.querySelectorAll('input[type=checkbox]');
+    function atualizar() {
+        const marcadas = [...caixas].filter(c => c.checked);
+        const soma = marcadas.reduce((total, c) => total + Number(c.dataset.n), 0);
+        resumo.textContent = marcadas.length
+            ? `${soma} ${soma === 1 ? 'questão' : 'questões'} nos tópicos marcados`
+            : `nenhum marcado = todos (${resumo.dataset.total})`;
+    }
+    caixas.forEach(c => c.addEventListener('change', atualizar));
+    atualizar();  // o navegador pode lembrar as marcações ao voltar para a página
+});
+
 // ===== Excluir: pergunta antes =====
 document.querySelectorAll('form[data-confirmar]').forEach(form => form.addEventListener('submit', evento => {
     if (!confirm(form.dataset.confirmar)) evento.preventDefault();

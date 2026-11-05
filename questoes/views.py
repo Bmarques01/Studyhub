@@ -108,9 +108,10 @@ def disciplina(request, disciplina_id):
     for questao in questoes:
         contagem[questao.topico_id] = contagem.get(questao.topico_id, 0) + 1
     topicos = [(t, contagem[t.id]) for t in disciplina.topicos.order_by('nome') if t.id in contagem]
+    sem_topico = contagem.get(None, 0)  # quantas questões não têm tópico
 
     questionarios = []
-    for q in disciplina.questionarios.select_related('topico').annotate(
+    for q in disciplina.questionarios.prefetch_related('topicos').annotate(
             feitas=Count('respostas'), certas=Count('respostas', filter=Q(respostas__acertou=True)))[:5]:
         q.total = len(q.questoes)
         questionarios.append(q)
@@ -120,6 +121,7 @@ def disciplina(request, disciplina_id):
         'blocos': list(blocos.values()),
         'total_questoes': len(questoes),
         'topicos': topicos,
+        'sem_topico': sem_topico,
         'quantidades': QuestionarioForm.QUANTIDADES,
         'questionarios': questionarios,
     })
@@ -269,8 +271,12 @@ def criar_questionario(request):
         return redirect('questoes:index')
     dados = form.cleaned_data
     questoes = dados['disciplina'].questoes.all()
-    if dados['topico']:
-        questoes = questoes.filter(topico=dados['topico'])
+    # tópicos marcados (e/ou "sem tópico"): só as questões deles; nada marcado: a disciplina inteira
+    if dados['topicos'] or dados['sem_topico']:
+        filtro = Q(topico__in=dados['topicos'])
+        if dados['sem_topico']:
+            filtro |= Q(topico=None)
+        questoes = questoes.filter(filtro)
     ids = list(questoes.values_list('id', flat=True))
     if not ids:
         messages.error(request, 'Não há questões para esse questionário ainda.')
@@ -278,7 +284,8 @@ def criar_questionario(request):
     random.shuffle(ids)
     if dados['quantidade']:
         ids = ids[:dados['quantidade']]
-    novo = Questionario.objects.create(disciplina=dados['disciplina'], topico=dados['topico'], questoes=ids)
+    novo = Questionario.objects.create(disciplina=dados['disciplina'], sem_topico=dados['sem_topico'], questoes=ids)
+    novo.topicos.set(dados['topicos'])
     return redirect('questoes:questionario', questionario_id=novo.id)
 
 
@@ -295,7 +302,7 @@ def situacao_do_questionario(questionario):
 
 def questionario(request, questionario_id):
     """Uma tela só, em 3 momentos: a pergunta, a correção (?ver=ID da resposta) e o resultado final."""
-    item = get_object_or_404(Questionario.objects.select_related('disciplina', 'topico'), id=questionario_id)
+    item = get_object_or_404(Questionario.objects.select_related('disciplina'), id=questionario_id)
     questoes, respostas, proxima = situacao_do_questionario(item)
     contexto = {
         'item': item,
@@ -365,5 +372,6 @@ def refazer_erradas(request, questionario_id):
     if not erradas:
         return redirect('questoes:questionario', questionario_id=item.id)
     random.shuffle(erradas)
-    novo = Questionario.objects.create(disciplina=item.disciplina, topico=item.topico, questoes=erradas)
+    novo = Questionario.objects.create(disciplina=item.disciplina, sem_topico=item.sem_topico, questoes=erradas)
+    novo.topicos.set(item.topicos.all())
     return redirect('questoes:questionario', questionario_id=novo.id)

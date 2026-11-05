@@ -37,14 +37,19 @@
                 {% csrf_token %}
                 <input type="hidden" name="disciplina" value="{{ disciplina.id }}">
                 <strong class="rotulo">fazer questionário</strong>
-                <label>de
-                    <select name="topico">
-                        <option value="">todos os tópicos ({{ total_questoes }})</option>
+                {# Tópicos: marque um ou vários. Nenhum marcado = a disciplina inteira. #}
+                {% if topicos %}
+                    <fieldset class="qz-topicos" data-topicos>
+                        <legend>tópicos</legend>
                         {% for t, n in topicos %}
-                            <option value="{{ t.id }}">{{ t.nome }} ({{ n }})</option>
+                            <label class="qz-topico"><input type="checkbox" name="topicos" value="{{ t.id }}" data-n="{{ n }}"><span>{{ t.nome }} <small>{{ n }}</small></span></label>
                         {% endfor %}
-                    </select>
-                </label>
+                        {% if sem_topico %}
+                            <label class="qz-topico"><input type="checkbox" name="sem_topico" value="1" data-n="{{ sem_topico }}"><span>sem tópico <small>{{ sem_topico }}</small></span></label>
+                        {% endif %}
+                        <small class="qz-topicos-resumo" data-resumo data-total="{{ total_questoes }}">nenhum marcado = todos ({{ total_questoes }})</small>
+                    </fieldset>
+                {% endif %}
                 <label>quantas
                     <select name="quantidade">
                         {% for valor, texto in quantidades %}
@@ -58,7 +63,7 @@
                 <p class="qz-ultimos">
                     <span>últimos:</span>
                     {% for q in questionarios %}
-                        <a href="{% url 'questoes:questionario' q.id %}" title="{{ q.criado_em|date:'d/m H:i' }}{% if q.topico %} · {{ q.topico.nome }}{% endif %}">
+                        <a href="{% url 'questoes:questionario' q.id %}" title="{{ q.criado_em|date:'d/m H:i' }}{% with nomes=q.nome_dos_topicos %}{% if nomes %} · {{ nomes }}{% endif %}{% endwith %}">
                             {{ q.certas }}/{{ q.total }}{% if q.feitas < q.total %} <small>(parou)</small>{% endif %}
                         </a>
                     {% endfor %}
@@ -75,6 +80,16 @@
                 <span class="sub">{{ b.questoes|length }} {% if b.questoes|length == 1 %}questão{% else %}questões{% endif %}</span>
                 <div class="fc-baralho-acoes">
                     <a href="{% url 'questoes:nova' %}?disciplina={{ disciplina.id }}{% if b.topico %}&topico={{ b.topico.id }}{% endif %}" class="btn-texto">+ questão</a>
+                    {# praticar só este tópico: todas as questões dele, sorteadas #}
+                    <form method="post" action="{% url 'questoes:criar_questionario' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="disciplina" value="{{ disciplina.id }}">
+                        {% if b.topico %}<input type="hidden" name="topicos" value="{{ b.topico.id }}">{% else %}<input type="hidden" name="sem_topico" value="1">{% endif %}
+                        <input type="hidden" name="quantidade" value="0">
+                        <button class="btn btn-com-icone" title="Questionário com todas as questões deste tópico">
+                            {% include "componentes/icone.html" with nome="play" %} praticar
+                        </button>
+                    </form>
                 </div>
             </header>
             <ol class="qz-lista">
