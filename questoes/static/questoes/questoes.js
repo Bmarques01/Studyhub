@@ -86,6 +86,23 @@ document.querySelectorAll('[data-arquivo]').forEach(caixa => {
     atualizar();
 });
 
+// ===== Janelas: botão com data-abrir="id" abre; cancelar, Esc ou clicar fora fecham =====
+document.querySelectorAll('[data-abrir]').forEach(botao => botao.addEventListener('click', () => {
+    const dialogo = document.getElementById(botao.dataset.abrir);
+    dialogo.showModal();
+    dialogo.querySelector('input[type=text]')?.focus();
+}));
+document.querySelectorAll('dialog').forEach(dialogo => {
+    dialogo.querySelectorAll('[data-fechar]').forEach(b => b.addEventListener('click', () => dialogo.close()));
+    dialogo.addEventListener('click', evento => {
+        // o clique no fundo escuro tem a janela como alvo, mas fica fora do retângulo dela
+        const caixa = dialogo.getBoundingClientRect();
+        const fora = evento.clientX < caixa.left || evento.clientX > caixa.right
+            || evento.clientY < caixa.top || evento.clientY > caixa.bottom;
+        if (evento.target === dialogo && fora) dialogo.close();
+    });
+});
+
 // ===== Excluir: pergunta antes =====
 document.querySelectorAll('form[data-confirmar]').forEach(form => form.addEventListener('submit', evento => {
     if (!confirm(form.dataset.confirmar)) evento.preventDefault();

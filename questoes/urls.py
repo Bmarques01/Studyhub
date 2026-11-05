@@ -7,6 +7,7 @@ app_name = 'questoes'
 urlpatterns = [
     path('', views.index, name='index'),
     path('disciplina/<int:disciplina_id>/', views.disciplina, name='disciplina'),
+    path('disciplina/nova/', views.nova_disciplina, name='nova_disciplina'),
     path('nova/', views.nova, name='nova'),
     path('importar/', views.importar, name='importar'),
     path('<int:questao_id>/editar/', views.editar, name='editar'),

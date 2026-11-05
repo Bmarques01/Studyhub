@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
 <link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
 <link rel="stylesheet" href="{% static 'questoes/questoes.css' %}">
+<script src="{% static 'questoes/questoes.js' %}" defer></script>
 {% endblock %}
 
 {% block conteudo %}
@@ -21,6 +22,7 @@
             </p>
         </div>
         <div class="dash-topo-acoes">
+            <button type="button" class="btn btn-claro" data-abrir="dialogo-disciplina">+ disciplina</button>
             <a href="{% url 'questoes:importar' %}" class="btn btn-claro"
                title="Colar ou enviar várias questões (ex.: geradas pelo Claude)">importar</a>
             <a href="{% url 'questoes:nova' %}" class="btn">+ questão</a>
@@ -70,8 +72,35 @@
             </div>
         </section>
     {% empty %}
-        <p class="card vazio-card">Nenhuma disciplina ainda. Cadastre em <a href="{% url 'estudos:index' %}">Estudos</a>
-            e volte aqui para criar as questões.</p>
+        <p class="card vazio-card">Nenhuma disciplina ainda. Clique em <strong>+ disciplina</strong> para criar a primeira.</p>
     {% endfor %}
 </div>
+
+{# ===== Janela "+ disciplina" (a disciplina é a mesma das Estudos, dos flashcards e do pomodoro) ===== #}
+<dialog id="dialogo-disciplina" class="fc-dialogo qz-dialogo" aria-labelledby="dialogo-disciplina-titulo">
+    <h2 id="dialogo-disciplina-titulo">Nova disciplina</h2>
+    {% if locais %}
+        <form method="post" action="{% url 'questoes:nova_disciplina' %}" class="fc-form">
+            {% csrf_token %}
+            <label>nome
+                <input type="text" name="nome" required maxlength="100" placeholder="Ex.: Redes de Computadores II">
+            </label>
+            <label>onde fica
+                <select name="local" required>
+                    {% for valor, rotulo in locais %}
+                        <option value="{{ valor }}" {% if valor == local_atual %}selected{% endif %}>{{ rotulo }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="qz-dialogo-cor">cor <input type="color" name="cor" value="#e0609a"></label>
+            <footer>
+                <button type="button" class="btn btn-claro" data-fechar>cancelar</button>
+                <button class="btn">criar disciplina</button>
+            </footer>
+        </form>
+    {% else %}
+        <p>Primeiro crie um curso (ex.: a graduação) em <a href="{% url 'estudos:index' %}">Estudos</a>.</p>
+        <footer><button type="button" class="btn btn-claro" data-fechar>fechar</button></footer>
+    {% endif %}
+</dialog>
 {% endblock %}

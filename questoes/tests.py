@@ -2,7 +2,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
-from estudos.models import Categoria, Disciplina, Topico
+from estudos.models import Categoria, Disciplina, Periodo, Topico
 
 from .importacao import ler_questoes
 from .models import Alternativa, Questao, Questionario, Resposta
@@ -92,6 +92,27 @@ class PaginasTests(Base):
         self.assertContains(resposta, 'Qual porta o BGP usa?')
         self.assertContains(resposta, 'nunca respondida')
         self.assertContains(resposta, 'fazer questionário')
+
+    def test_nova_disciplina(self):
+        # a janela oferece os períodos da graduação (e a categoria sem divisão, que vale ela mesma)
+        graduacao = Categoria.objects.create(nome='Graduação', tipo='graduacao')
+        semestre = Periodo.objects.create(categoria=graduacao, nome='2026/2')
+        resposta = self.client.get(reverse('questoes:index'))
+        self.assertContains(resposta, f'value="p:{semestre.id}"')
+        self.assertContains(resposta, 'Graduação · 2026/2')
+
+        resposta = self.client.post(reverse('questoes:nova_disciplina'),
+                                    {'nome': 'Sistemas Operacionais', 'cor': '#5b4bd0', 'local': f'p:{semestre.id}'})
+        nova = Disciplina.objects.get(nome='Sistemas Operacionais')
+        self.assertRedirects(resposta, reverse('questoes:disciplina', args=[nova.id]))  # já abre a página dela
+        self.assertEqual((nova.categoria, nova.periodo, nova.cor), (graduacao, semestre, '#5b4bd0'))
+
+    def test_nova_disciplina_sem_nome_ou_sem_local(self):
+        antes = Disciplina.objects.count()
+        resposta = self.client.post(reverse('questoes:nova_disciplina'), {'nome': 'X', 'cor': '#e0609a', 'local': ''})
+        self.assertRedirects(resposta, reverse('questoes:index'))
+        self.client.post(reverse('questoes:nova_disciplina'), {'nome': '', 'cor': '#e0609a', 'local': 'c:1'})
+        self.assertEqual(Disciplina.objects.count(), antes)
 
     def test_menu_e_ferramenta_da_disciplina(self):
         self.assertContains(self.client.get(reverse('questoes:index')), 'Questões')

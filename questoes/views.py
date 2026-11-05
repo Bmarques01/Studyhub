@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from estudos.models import Disciplina, Topico
-from estudos.views import avisar_erros, opcoes_de_disciplina
+from estudos.views import avisar_erros, locais_para_disciplina, opcoes_de_disciplina, salvar_nova_disciplina
 from flashcards.views import ler_id, periodos_atuais
 
 from .forms import ImportarForm, QuestaoForm, QuestionarioForm
@@ -83,10 +83,24 @@ def index(request):
                                            'disciplinas': []})
         grupo['disciplinas'].append(d)
 
+    # janela "+ disciplina": já vem escolhido o período que você está cursando
+    locais = locais_para_disciplina()
+    atual = next((valor for valor, _ in locais if valor.startswith('p:') and int(valor[2:]) in atuais), '')
     return render(request, 'questoes/index.html', {
         'grupos': list(grupos.values()),
         'total_questoes': sum(total_por_disciplina.values()),
+        'locais': locais,
+        'local_atual': atual,
     })
+
+
+@require_POST
+def nova_disciplina(request):
+    """Cria a disciplina (a mesma das Estudos) e já abre a página dela aqui, pronta para as questões."""
+    disciplina = salvar_nova_disciplina(request)
+    if disciplina:
+        return redirect('questoes:disciplina', disciplina.id)
+    return redirect('questoes:index')
 
 
 # ===== Página de uma disciplina: as questões, separadas por tópico =====

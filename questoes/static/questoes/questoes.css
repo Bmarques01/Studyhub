@@ -486,3 +486,18 @@ button.qz-alternativa:hover { border-color: var(--rosa); background: var(--rosa-
     .qz-linha, .qz-comparar { grid-template-columns: minmax(0, 1fr); }
     .qz-palco, .qz-final { padding: 20px; }
 }
+
+/* Janela "+ disciplina" (usa o visual da janela dos flashcards) */
+.qz-dialogo { width: min(440px, 94vw); }
+.qz-dialogo h2 { font-size: 1.15rem; margin-bottom: 14px; }
+.qz-dialogo select {
+    padding: 9px 12px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    background: var(--branco);
+    font-family: var(--fonte-texto);
+    font-size: 0.95rem;
+    color: var(--texto);
+}
+.qz-dialogo .fc-form label.qz-dialogo-cor { flex-direction: row; align-items: center; justify-content: space-between; }
+.qz-dialogo footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }

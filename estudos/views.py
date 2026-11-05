@@ -268,22 +268,41 @@ def ler_local(valor):
     return None, None
 
 
-@require_POST
-def criar_disciplina(request):
+def salvar_nova_disciplina(request):
+    """Cria a disciplina com o que veio no POST (nome, cor e "local").
+    Devolve a disciplina criada, ou None (e avisa o erro). Usada aqui e na tela de Questões."""
     categoria, periodo = ler_local(request.POST.get('local'))
     if not categoria:
         messages.error(request, 'Escolha onde colocar a disciplina.')
-        return redirect('estudos:index')
+        return None
 
     form = DisciplinaForm(request.POST)
-    if form.is_valid():
-        disciplina = form.save(commit=False)  # ainda não salva: falta dizer onde ela fica
-        disciplina.categoria = categoria
-        disciplina.periodo = periodo
-        disciplina.save()
-        messages.success(request, f'Disciplina "{disciplina.nome}" criada.')
-    else:
+    if not form.is_valid():
         avisar_erros(request, form)
+        return None
+    disciplina = form.save(commit=False)  # ainda não salva: falta dizer onde ela fica
+    disciplina.categoria = categoria
+    disciplina.periodo = periodo
+    disciplina.save()
+    messages.success(request, f'Disciplina "{disciplina.nome}" criada.')
+    return disciplina
+
+
+def locais_para_disciplina():
+    """Onde uma disciplina nova pode ficar, para um <select>: [(valor, rótulo), ...].
+    Um item por período; a categoria sem divisão (ex.: "outro") vale ela mesma."""
+    locais = []
+    for categoria in Categoria.objects.prefetch_related('periodos'):
+        for periodo in categoria.periodos.all():
+            locais.append((f'p:{periodo.id}', f'{categoria.nome} · {periodo.nome}'))
+        if not categoria.divisao:
+            locais.append((f'c:{categoria.id}', categoria.nome))
+    return locais
+
+
+@require_POST
+def criar_disciplina(request):
+    salvar_nova_disciplina(request)
     return redirect('estudos:index')
 
 
