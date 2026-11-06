@@ -2,7 +2,7 @@ import io
 from decimal import Decimal
 
 from django.core.management import call_command
-from django.test import TestCase
+from config.testes import TestCase
 from django.urls import reverse
 from django.utils import timezone
 

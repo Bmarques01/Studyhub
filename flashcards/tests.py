@@ -1,7 +1,7 @@
 import json
 from datetime import timedelta
 
-from django.test import TestCase
+from config.testes import TestCase
 from django.urls import reverse
 from django.utils import timezone
 

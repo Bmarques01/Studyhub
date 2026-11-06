@@ -28,11 +28,25 @@ cd Studyhub
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py createsuperuser  # a conta para entrar (a Bruna digita a senha)
 .\.venv\Scripts\python.exe manage.py receber_dados    # traz os dados do repositório privado
 .\.venv\Scripts\python.exe manage.py runserver
 ```
 
 Abrir http://127.0.0.1:8000.
+
+## Conta (login)
+
+- Todas as páginas exigem login: `LoginRequiredMiddleware` do Django em `config/settings.py`
+  (`LOGIN_URL = 'entrar'`). Telas do próprio Django: `/entrar/`, `/sair/` (só POST, botão no menu),
+  `/conta/senha/` (`config/contas.py`); templates em `templates/registration/`.
+- **Sem cadastro pelo site**, de propósito (é para ir para a internet). A conta é criada com
+  `manage.py createsuperuser` em cada computador: as contas **não** vão no `enviar_dados` (o app `auth`
+  fica fora de `APPS`).
+- A sessão dura 60 dias e se renova a cada página (`SESSION_SAVE_EVERY_REQUEST`), para não cair no meio
+  de um pomodoro.
+- Testes: os apps importam `TestCase` de `config/testes.py`, cujo cliente entra numa conta de teste
+  sozinho. Teste novo → usar esse `TestCase` (o `config/tests.py` usa o do Django para testar o login).
 
 ## Dados entre computadores (sincronização)
 
@@ -149,6 +163,9 @@ DevTools Protocol pelo `WebSocket` nativo: clicar, digitar (`Input.insertText`),
    (e de flashcards no formato `F:` / `V:`); no caderno de erros, um botão "virar flashcard". Precisa de
    chave da API da Anthropic (a Bruna ainda vai criar). Antes de escrever o código, ler a skill
    `claude-api`.
-2. **Planejador de semestres** (pré-requisitos + previsão de formatura) e **atividades complementares**
+2. **Deploy na AWS** (combinado: o Time Tracking — projeto id 2 — fica **só no computador**, não vai para
+   a nuvem). Falta: configurações de produção (SECRET_KEY/DEBUG/ALLOWED_HOSTS por variável de ambiente,
+   HTTPS), gunicorn, arquivos estáticos, backup do banco no S3, limite de tentativas de login.
+3. **Planejador de semestres** (pré-requisitos + previsão de formatura) e **atividades complementares**
    (100h, com limite por modalidade) no app `curso`.
-3. Projetos: versões/changelog e integração com o GitHub.
+4. Projetos: versões/changelog e integração com o GitHub.

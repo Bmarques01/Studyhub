@@ -1,5 +1,5 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from config.testes import TestCase
 from django.urls import reverse
 
 from estudos.models import Categoria, Disciplina, Periodo, Topico

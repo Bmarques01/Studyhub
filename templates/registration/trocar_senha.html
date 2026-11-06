@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block titulo %}Trocar senha{% endblock %}
+
+{% block conteudo %}
+<section class="card entrar-card">
+    <h1 class="rotulo">trocar senha</h1>
+
+    <form method="post" class="form-conta">
+        {% csrf_token %}
+        <label>Senha atual
+            <input type="password" name="old_password" autocomplete="current-password" required autofocus>
+        </label>
+        {% if form.old_password.errors %}<div class="erro-form">{{ form.old_password.errors }}</div>{% endif %}
+
+        <label>Senha nova
+            <input type="password" name="new_password1" autocomplete="new-password" required>
+            <span class="ajuda">{{ form.new_password1.help_text|safe }}</span>
+        </label>
+        {% if form.new_password1.errors %}<div class="erro-form">{{ form.new_password1.errors }}</div>{% endif %}
+
+        <label>Senha nova de novo
+            <input type="password" name="new_password2" autocomplete="new-password" required>
+        </label>
+        {% if form.new_password2.errors %}<div class="erro-form">{{ form.new_password2.errors }}</div>{% endif %}
+
+        <button type="submit" class="btn">trocar senha</button>
+    </form>
+</section>
+{% endblock %}

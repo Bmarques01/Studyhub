@@ -55,6 +55,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Porteiro: toda página exige login (quem não entrou vai para a tela de entrar)
+    'django.contrib.auth.middleware.LoginRequiredMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -107,6 +109,16 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+# Login (config/contas.py)
+LOGIN_URL = 'entrar'
+LOGIN_REDIRECT_URL = 'dashboard:index'
+LOGOUT_REDIRECT_URL = 'entrar'
+# Fica logada por 60 dias desde a última visita (cada página renova o prazo),
+# para não cair no meio de um pomodoro.
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 60
+SESSION_SAVE_EVERY_REQUEST = True
 
 
 # Internationalization

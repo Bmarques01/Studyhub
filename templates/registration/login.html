@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar · Studyhub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+</head>
+<body>
+{# Tela sem o menu: quem não entrou não vê nada do Studyhub #}
+<main class="entrar">
+    <section class="card entrar-card">
+        <span class="logo"><span class="logo-prompt">&gt;</span> studyhub<span class="logo-cursor">_</span></span>
+        <h1 class="rotulo">entrar</h1>
+
+        <form method="post" class="form-conta">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="erro-form" role="alert">Usuário ou senha incorretos.</div>
+            {% endif %}
+            <label>Usuário
+                <input type="text" name="username" value="{{ form.username.value|default:'' }}"
+                       autocomplete="username" autocapitalize="none" required autofocus>
+            </label>
+            <label>Senha
+                <input type="password" name="password" autocomplete="current-password" required>
+            </label>
+            {# Depois de entrar, volta para a página que você tentou abrir #}
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="btn">entrar</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

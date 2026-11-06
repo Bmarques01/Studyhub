@@ -61,10 +61,22 @@
         </nav>
         {% endwith %}
 
+        {% with nome=user.first_name|default:user.username %}
         <div class="usuaria">
-            <span class="avatar">B</span>
-            <strong>Bruna</strong>
+            <span class="avatar">{{ nome|first|upper }}</span>
+            <div class="usuaria-texto">
+                <strong>{{ nome }}</strong>
+                <a href="{% url 'trocar_senha' %}">trocar senha</a>
+            </div>
+            {# Sair é um formulário (POST), para nenhum link de fora deslogar você sem querer #}
+            <form method="post" action="{% url 'sair' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-icone" title="Sair" aria-label="Sair">
+                    {% include "componentes/icone.html" with nome="sair" %}
+                </button>
+            </form>
         </div>
+        {% endwith %}
     </aside>
 
     <main class="conteudo">
