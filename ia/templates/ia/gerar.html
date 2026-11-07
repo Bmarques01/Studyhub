@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Gerar com IA{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<link rel="stylesheet" href="{% static 'questoes/questoes.css' %}">
+<link rel="stylesheet" href="{% static 'ia/ia.css' %}">
+<script src="{% static 'questoes/questoes.js' %}" defer></script>
+<script src="{% static 'ia/ia.js' %}" defer></script>
+{% endblock %}
+
+{% block conteudo %}
+{% with disciplina_id=form.disciplina.value|default:'' topico_id=form.topico.value|default:'' %}
+<div class="dash">
+    <header class="dash-topo">
+        <div>
+            <a href="{% if disciplina_id %}{% url 'questoes:disciplina' disciplina_id %}{% else %}{% url 'questoes:index' %}{% endif %}" class="voltar">‹ voltar</a>
+            <h1>Gerar com IA</h1>
+            <p class="dash-data">envie os slides ou o texto da aula · o Claude escreve questões e flashcards · você revisa antes de salvar</p>
+        </div>
+    </header>
+
+    <div class="qz-importar">
+        <form method="post" enctype="multipart/form-data" class="card qz-form" data-escolha-disciplina data-gerar>
+            {% csrf_token %}
+            <div class="qz-linha">
+                <label>disciplina
+                    <select name="disciplina" required data-disciplina>
+                        <option value="">escolha…</option>
+                        {% for rotulo, disciplinas in opcoes %}
+                            <optgroup label="{{ rotulo }}">
+                                {% for d in disciplinas %}
+                                    <option value="{{ d.id }}" {% if d.id|stringformat:'s' == disciplina_id|stringformat:'s' %}selected{% endif %}>{{ d.nome }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label><span>tópico <small>(opcional)</small></span>
+                    <select name="topico" data-topico data-inicial="{{ topico_id }}">
+                        <option value="">sem tópico</option>
+                    </select>
+                </label>
+            </div>
+
+            {# ===== Material ===== #}
+            <fieldset class="ia-material">
+                <legend>material da aula</legend>
+                <div class="qz-arquivo" data-arquivo>
+                    <label class="btn btn-claro btn-com-icone">
+                        <input type="file" name="arquivo" accept=".pdf,.txt,.md,application/pdf,text/plain" class="qz-arquivo-input">
+                        {% include "componentes/icone.html" with nome="enviar" %} enviar slides (PDF) ou .txt
+                    </label>
+                    <small class="qz-arquivo-nome" data-arquivo-nome>nenhum arquivo escolhido</small>
+                    <button type="button" class="btn-icone" data-arquivo-limpar title="Tirar o arquivo" hidden>✕</button>
+                </div>
+                <p class="ou">ou cole o texto</p>
+                <textarea name="texto" rows="6" placeholder="Cole aqui o conteúdo da aula, um resumo, um capítulo...">{{ form.texto.value|default:'' }}</textarea>
+            </fieldset>
+
+            {# ===== O que gerar ===== #}
+            <fieldset class="ia-oque">
+                <legend>o que gerar</legend>
+                <div class="ia-opcao">
+                    <label class="qz-tipo-opcao"><input type="checkbox" name="gerar_questoes" {% if form.gerar_questoes.value %}checked{% endif %} data-liga="questoes"><span>questões</span></label>
+                    <div class="ia-detalhes" data-detalhes="questoes">
+                        <label class="ia-quantidade">quantidade
+                            <input type="number" name="quantidade_questoes" min="1" max="30" value="{{ form.quantidade_questoes.value|default:10 }}">
+                        </label>
+                        <div class="ia-tipos" role="group" aria-label="Tipos de questão">
+                            {% for valor, texto in form.fields.tipos.choices %}
+                                <label class="qz-tipo-opcao"><input type="checkbox" name="tipos" value="{{ valor }}"
+                                    {% if valor in form.tipos.value %}checked{% endif %}><span>{% if valor == 'multipla' %}múltipla escolha{% elif valor == 'vf' %}V/F{% else %}aberta{% endif %}</span></label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="ia-opcao">
+                    <label class="qz-tipo-opcao"><input type="checkbox" name="gerar_flashcards" {% if form.gerar_flashcards.value %}checked{% endif %} data-liga="flashcards"><span>flashcards</span></label>
+                    <div class="ia-detalhes" data-detalhes="flashcards">
+                        <label class="ia-quantidade">quantidade
+                            <input type="number" name="quantidade_flashcards" min="1" max="50" value="{{ form.quantidade_flashcards.value|default:15 }}">
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <label><span>pedido extra <small>(opcional)</small></span>
+                <input type="text" name="pedido_extra" maxlength="500" value="{{ form.pedido_extra.value|default:'' }}"
+                       placeholder="ex.: foque no que cai na prova, nível difícil, inclua cálculos de sub-rede">
+            </label>
+
+            <footer class="qz-form-botoes">
+                <small class="ia-espera" data-espera hidden>gerando… isso pode levar de 30 segundos a 2 minutos. Não feche a página.</small>
+                <button class="btn btn-com-icone" data-botao-gerar>✦ gerar</button>
+            </footer>
+        </form>
+
+        {# ===== Custos ===== #}
+        <aside class="card qz-ajuda ia-custos">
+            <h2 class="rotulo">custo da IA</h2>
+            <p class="ia-total"><strong>US$ {{ total_mes|floatformat:2 }}</strong> este mês
+                <small>· {{ geracoes_mes }} {% if geracoes_mes == 1 %}geração{% else %}gerações{% endif %}</small></p>
+            <p class="qz-dica">Cada geração custa em média alguns centavos de dólar (PDFs grandes custam mais).
+                O saldo de créditos fica em platform.claude.com.</p>
+
+            {% if historico %}
+                <h2 class="rotulo">últimas gerações</h2>
+                <ul class="ia-historico">
+                    {% for g in historico %}
+                        <li>
+                            <a href="{% url 'ia:revisao' g.id %}">
+                                <strong>{{ g.disciplina.nome|default:"(disciplina excluída)" }}{% if g.topico %} · {{ g.topico.nome }}{% endif %}</strong>
+                                <small>{{ g.criada_em|date:"d/m H:i" }} · {{ g.material|truncatechars:30 }}</small>
+                            </a>
+                            <span class="ia-custo">US$ {{ g.custo|floatformat:2 }}</span>
+                            {% if g.erro %}<small class="ia-falhou">não deu certo</small>
+                            {% elif g.questoes_salvas or g.flashcards_salvos %}<small class="ia-salvo">✓ salvo</small>
+                            {% else %}<small class="ia-pendente">a revisar</small>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </aside>
+    </div>
+</div>
+{% endwith %}
+{{ topicos|json_script:"dados-topicos" }}
+{% endblock %}

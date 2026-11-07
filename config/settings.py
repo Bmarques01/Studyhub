@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'cadernos',
     'flashcards',
     'questoes',
+    'ia',
 ]
 
 MIDDLEWARE = [

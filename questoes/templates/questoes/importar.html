@@ -75,28 +75,7 @@
                     {% endif %}
                     {% if previa %}
                         <p class="rotulo">✓ {{ previa|length }} {% if previa|length == 1 %}questão encontrada{% else %}questões encontradas{% endif %}</p>
-                        <ol class="qz-lista">
-                            {% for q in previa %}
-                                <li class="qz-item">
-                                    <div class="qz-item-texto">
-                                        <span class="qz-tipo">{% if q.tipo == 'multipla' %}múltipla escolha{% elif q.tipo == 'vf' %}verdadeiro ou falso{% else %}aberta{% endif %}</span>
-                                        <p>{{ q.enunciado }}</p>
-                                        {% if q.tipo == 'multipla' %}
-                                            <ul class="qz-alternativas-lista">
-                                                {% for texto, certa in q.alternativas %}
-                                                    <li {% if certa %}class="certa"{% endif %}>{{ forloop.counter0|add:65|stringformat:"c" }}) {{ texto }}{% if certa %} <strong>✓ certa</strong>{% endif %}</li>
-                                                {% endfor %}
-                                            </ul>
-                                        {% elif q.tipo == 'vf' %}
-                                            <p class="qz-esperada"><strong>Resposta:</strong> {% if q.resposta == 'V' %}Verdadeiro{% else %}Falso{% endif %}</p>
-                                        {% else %}
-                                            <p class="qz-esperada"><strong>Resposta esperada:</strong> <span class="qz-pre">{{ q.resposta }}</span></p>
-                                        {% endif %}
-                                        {% if q.explicacao %}<p class="qz-explicacao">{{ q.explicacao }}</p>{% endif %}
-                                    </div>
-                                </li>
-                            {% endfor %}
-                        </ol>
+                        {% include "questoes/_previa.html" %}
                     {% endif %}
                 </section>
             {% endif %}

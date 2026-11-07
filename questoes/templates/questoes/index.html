@@ -25,6 +25,8 @@
             <button type="button" class="btn btn-claro" data-abrir="dialogo-disciplina">+ disciplina</button>
             <a href="{% url 'questoes:importar' %}" class="btn btn-claro"
                title="Colar ou enviar várias questões (ex.: geradas pelo Claude)">importar</a>
+            <a href="{% url 'ia:gerar' %}" class="btn btn-claro"
+               title="Enviar os slides ou o texto da aula e o Claude escreve questões e flashcards">✦ gerar com IA</a>
             <a href="{% url 'questoes:nova' %}" class="btn">+ questão</a>
         </div>
     </header>

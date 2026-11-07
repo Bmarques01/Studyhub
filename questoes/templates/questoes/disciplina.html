@@ -28,6 +28,8 @@
             <a href="{% url 'questoes:erros' %}?disciplina={{ disciplina.id }}" class="btn btn-claro"
                title="Caderno de erros desta disciplina">erros{% if erros_pendentes %} ({{ erros_pendentes }}){% endif %}</a>
             <a href="{% url 'questoes:importar' %}?disciplina={{ disciplina.id }}" class="btn btn-claro">importar</a>
+            <a href="{% url 'ia:gerar' %}?disciplina={{ disciplina.id }}" class="btn btn-claro"
+               title="Enviar os slides ou o texto da aula e o Claude escreve questões e flashcards">✦ gerar com IA</a>
             <a href="{% url 'questoes:nova' %}?disciplina={{ disciplina.id }}" class="btn">+ questão</a>
         </div>
     </header>

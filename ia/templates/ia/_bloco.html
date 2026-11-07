@@ -1,0 +1,52 @@
+{# Um bloco da revisão (questões ou flashcards). Recebe: geracao, tipo, titulo, texto, salvos, itens, problemas #}
+<section class="card ia-bloco" id="{{ tipo }}">
+    <header class="card-topo">
+        <h2 class="rotulo">{{ titulo }}</h2>
+        <span class="sub">{{ itens|length }} {% if tipo == 'questoes' %}{% if itens|length == 1 %}questão{% else %}questões{% endif %}{% else %}{% if itens|length == 1 %}cartão{% else %}cartões{% endif %}{% endif %}</span>
+    </header>
+
+    {% if salvos %}
+        <p class="ia-salvos">✓ {{ salvos }} {% if tipo == 'questoes' %}{% if salvos == 1 %}questão salva{% else %}questões salvas{% endif %}{% else %}{% if salvos == 1 %}flashcard salvo{% else %}flashcards salvos{% endif %}{% endif %}.
+            {% if geracao.disciplina %}
+                <a href="{% if tipo == 'questoes' %}{% url 'questoes:disciplina' geracao.disciplina_id %}{% else %}{% url 'flashcards:disciplina' geracao.disciplina_id %}{% endif %}">ver em {{ geracao.disciplina.nome }} →</a>
+            {% endif %}
+        </p>
+    {% else %}
+        <div class="ia-revisar">
+            <form method="post" action="{% url 'ia:salvar' geracao.id tipo %}" class="qz-form ia-editar">
+                {% csrf_token %}
+                <label>texto <small>(edite se quiser)</small>
+                    <textarea name="texto" rows="18" class="qz-texto" spellcheck="false">{{ texto }}</textarea>
+                </label>
+                <footer class="qz-form-botoes">
+                    <button class="btn btn-claro" name="acao" value="previa">atualizar prévia</button>
+                    {% if itens %}
+                        <button class="btn" name="acao" value="salvar">salvar {{ itens|length }} {% if tipo == 'questoes' %}{% if itens|length == 1 %}questão{% else %}questões{% endif %}{% else %}{% if itens|length == 1 %}flashcard{% else %}flashcards{% endif %}{% endif %}</button>
+                    {% endif %}
+                </footer>
+            </form>
+
+            <div class="ia-previa">
+                {% if problemas %}
+                    <div class="qz-problemas">
+                        <strong>⚠ {{ problemas|length }} {% if problemas|length == 1 %}item ficou{% else %}itens ficaram{% endif %} de fora:</strong>
+                        <ul>
+                            {% for p in problemas %}
+                                <li>{% if tipo == 'questoes' %}“{{ p.0 }}” · {{ p.1 }}{% else %}“{{ p }}” · falta F: ou V:{% endif %}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                {% if tipo == 'questoes' %}
+                    {% include "questoes/_previa.html" with previa=itens %}
+                {% else %}
+                    <ol class="ia-cartoes">
+                        {% for frente, verso in itens %}
+                            <li><strong>{{ frente }}</strong><span class="qz-pre">{{ verso }}</span></li>
+                        {% endfor %}
+                    </ol>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</section>

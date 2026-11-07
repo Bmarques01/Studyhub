@@ -1,0 +1,69 @@
+/* ===== Gerar com IA ===== */
+.ia-material, .ia-oque { display: flex; flex-direction: column; gap: 10px; }
+.ia-material .ou { font-size: 0.8rem; color: var(--texto-suave); }
+
+.ia-opcao { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.ia-detalhes { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.ia-detalhes.desligado { opacity: 0.4; }
+.ia-tipos { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.qz-form .ia-quantidade { flex-direction: row; align-items: center; gap: 8px; }
+.ia-quantidade input {
+    width: 72px;
+    padding: 7px 10px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 0.9rem;
+    color: var(--texto);
+}
+
+.ia-espera { color: var(--lilas); font-size: 0.85rem; }
+.ia-espera[hidden] { display: none; }
+
+/* custos e histórico */
+.ia-total { font-size: 1.1rem; }
+.ia-total strong { font-family: var(--fonte-mono); }
+.ia-historico { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.ia-historico li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--rosa-fundo);
+}
+.ia-historico a { display: flex; flex-direction: column; color: var(--texto); text-decoration: none; min-width: 0; }
+.ia-historico a:hover strong { color: var(--rosa-forte); }
+.ia-historico a small { color: var(--texto-suave); font-size: 0.75rem; }
+.ia-custo { font-family: var(--fonte-mono); font-size: 0.8rem; }
+.ia-historico li > small { grid-column: 2; font-size: 0.72rem; text-align: right; }
+.ia-salvo { color: #2f7a4f; }
+.ia-falhou { color: #9c2f5f; }
+.ia-pendente { color: var(--lilas); }
+
+/* ===== Revisão ===== */
+.ia-aviso { margin-bottom: 16px; color: var(--texto-suave); font-size: 0.9rem; }
+.ia-bloco { margin-bottom: 24px; }
+
+.ia-revisar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1100px) {
+    .ia-revisar { grid-template-columns: minmax(0, 1fr); }
+}
+
+.ia-editar { padding: 0; max-width: none; }
+.ia-previa { display: flex; flex-direction: column; gap: 12px; max-height: 70vh; overflow-y: auto; }
+
+.ia-salvos { color: #2f7a4f; font-weight: 600; }
+.ia-salvos a { color: var(--rosa-forte); margin-left: 6px; }
+
+.ia-cartoes { display: flex; flex-direction: column; gap: 8px; padding-left: 22px; }
+.ia-cartoes li { padding: 8px 12px; border-radius: 10px; background: var(--rosa-fundo); }
+.ia-cartoes strong { display: block; }
+.ia-cartoes span { color: var(--texto-suave); font-size: 0.92rem; }

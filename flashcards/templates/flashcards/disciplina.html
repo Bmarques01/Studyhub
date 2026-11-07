@@ -27,6 +27,8 @@
             <a href="{% url 'estudos:disciplina' disciplina.id %}" class="btn btn-claro">disciplina</a>
             <a href="{% url 'pomodoro:index' %}?disciplina={{ disciplina.id }}" class="btn btn-claro"
                title="Ligue um pomodoro para o tempo de revisão contar nas suas horas">pomodoro</a>
+            <a href="{% url 'ia:gerar' %}?disciplina={{ disciplina.id }}&amp;so=flashcards" class="btn btn-claro"
+               title="Enviar os slides ou o texto da aula e o Claude escreve os cartões">✦ gerar com IA</a>
             <button type="button" class="btn btn-claro" data-abrir-novo data-disciplina="{{ disciplina.id }}">+ novo</button>
             {% if para_revisar %}
                 <a href="{% url 'flashcards:revisar' %}?disciplina={{ disciplina.id }}" class="btn btn-com-icone">

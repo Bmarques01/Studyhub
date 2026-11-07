@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Revisar geração{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'flashcards/flashcards.css' %}">
+<link rel="stylesheet" href="{% static 'questoes/questoes.css' %}">
+<link rel="stylesheet" href="{% static 'ia/ia.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash">
+    <header class="dash-topo">
+        <div>
+            <a href="{% url 'ia:gerar' %}{% if geracao.disciplina %}?disciplina={{ geracao.disciplina_id }}{% if geracao.topico %}&topico={{ geracao.topico_id }}{% endif %}{% endif %}" class="voltar">‹ gerar com IA</a>
+            <h1>Revisar o que a IA gerou</h1>
+            <p class="dash-data">
+                {{ geracao.disciplina.nome|default:"(disciplina excluída)" }}{% if geracao.topico %} · {{ geracao.topico.nome }}{% endif %} ·
+                {{ geracao.material }} · {{ geracao.criada_em|date:"d/m/Y H:i" }} ·
+                custou US$ {{ geracao.custo|floatformat:2 }}
+            </p>
+        </div>
+    </header>
+
+    {% if geracao.erro %}
+        <section class="card"><p class="qz-problemas">⚠ {{ geracao.erro }}</p></section>
+    {% else %}
+        <p class="ia-aviso">Confira antes de salvar: a IA pode errar. Edite o texto à vontade (no mesmo formato da importação),
+            clique em "atualizar prévia" e só então salve.</p>
+
+        {% if geracao.pediu_questoes %}
+            {% include "ia/_bloco.html" with tipo="questoes" titulo="questões" texto=geracao.texto_questoes salvos=geracao.questoes_salvas itens=questoes problemas=problemas_questoes %}
+        {% endif %}
+        {% if geracao.pediu_flashcards %}
+            {% include "ia/_bloco.html" with tipo="flashcards" titulo="flashcards" texto=geracao.texto_flashcards salvos=geracao.flashcards_salvos itens=cartoes problemas=problemas_cartoes %}
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
