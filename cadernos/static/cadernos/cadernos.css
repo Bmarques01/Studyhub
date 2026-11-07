@@ -659,10 +659,47 @@ input.titulo-pagina[type="text"]:focus { border-bottom-color: var(--rosa-claro);
 }
 
 /* ===== Janela do resumo com IA ===== */
-.detalhe-resumo { display: flex; flex-direction: column; gap: 6px; border: none; }
-.detalhe-resumo legend { margin-bottom: 4px; }
-.detalhe-resumo label { flex-direction: row !important; align-items: center; gap: 8px; }
-.detalhe-resumo small { color: var(--texto-suave); }
+.detalhe-resumo { border: none; min-width: 0; }
+
+/* "detalhe" com a mesma fonte dos outros rótulos da janela */
+.detalhe-resumo legend {
+    margin-bottom: 6px;
+    font-family: var(--fonte-mono);
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.opcoes-detalhe { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.dialogo-material .opcao-detalhe { position: relative; display: block; cursor: pointer; }
+.opcao-detalhe input { position: absolute; width: 1px; height: 1px; opacity: 0; }  /* a bolinha some; o cartão é o visual */
+
+.opcao-detalhe span {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    height: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--rosa-bebe);
+    border-radius: 12px;
+    font-family: var(--fonte-texto);
+    color: var(--texto);
+}
+
+.opcao-detalhe strong { font-size: 0.92rem; }
+.opcao-detalhe small { font-size: 0.75rem; color: var(--texto-suave); }
+.opcao-detalhe .preco { font-family: var(--fonte-mono); font-size: 0.7rem; }
+
+/* no resumo, o que ela escreve fica na fonte do texto (a do "colar HTML" é a de código) */
+#dialogo-resumo textarea, #dialogo-resumo input[type="text"] { font-family: var(--fonte-texto); }
+.opcao-detalhe:hover span { border-color: var(--rosa-claro); }
+
+/* a escolhida: borda e fundo rosa + ✓ (não só a cor) */
+.opcao-detalhe input:checked + span { border-color: var(--rosa-forte); background: var(--rosa-fundo); }
+.opcao-detalhe input:checked + span strong::before { content: '✓ '; color: var(--rosa-forte); }
+.opcao-detalhe input:focus-visible + span { outline: 2px solid var(--lilas); outline-offset: 2px; }
+
+@media (max-width: 480px) { .opcoes-detalhe { grid-template-columns: 1fr; } }
 .espera-resumo { color: var(--lilas); font-size: 0.85rem; }
 .espera-resumo[hidden] { display: none; }
 

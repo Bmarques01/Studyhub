@@ -200,20 +200,29 @@
         <label>cole o texto da aula
             <textarea name="texto" rows="5" placeholder="Cole aqui o conteúdo da aula..."></textarea>
         </label>
+        {# Duas opções em "cartões": a bolinha do rádio fica escondida e o cartão marcado ganha ✓ #}
         <fieldset class="detalhe-resumo">
             <legend>detalhe</legend>
-            <label><input type="radio" name="detalhe" value="curto"> resumo curto <small>(mais rápido, ~US$ 0,10 a 0,30)</small></label>
-            <label><input type="radio" name="detalhe" value="completo" checked> completo, com exemplos <small>(alguns minutos, ~US$ 0,50 a 1)</small></label>
+            <div class="opcoes-detalhe">
+                <label class="opcao-detalhe">
+                    <input type="radio" name="detalhe" value="curto">
+                    <span><strong>resumo curto</strong><small>só o essencial · ~1 min</small><small class="preco">~US$ 0,10 a 0,30</small></span>
+                </label>
+                <label class="opcao-detalhe">
+                    <input type="radio" name="detalhe" value="completo" checked>
+                    <span><strong>completo</strong><small>com exemplos · alguns min</small><small class="preco">~US$ 0,50 a 1</small></span>
+                </label>
+            </div>
         </fieldset>
         {% if topicos %}
-            <label>tópico <small>(opcional)</small>
+            <label><span>tópico <small>(opcional)</small></span>
                 <select name="topico">
                     <option value="">sem tópico</option>
                     {% for t in topicos %}<option value="{{ t.id }}">{{ t.nome }}</option>{% endfor %}
                 </select>
             </label>
         {% endif %}
-        <label>pedido extra <small>(opcional)</small>
+        <label><span>pedido extra <small>(opcional)</small></span>
             <input type="text" name="pedido_extra" maxlength="500" placeholder="ex.: explique sub-redes com contas passo a passo">
         </label>
         <p class="espera-resumo" data-espera-resumo hidden>gerando o guia… pode levar alguns minutos. Não feche a página.</p>
