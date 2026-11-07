@@ -19,7 +19,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Segredos (ex.: a chave da API do Claude) ficam no arquivo .env, que NÃO vai para o GitHub.
 # Modelo do que vai nele: .env.exemplo
-load_dotenv(BASE_DIR / '.env')
+# override=True: o que está no .env vale mais que uma variável já existente (inclusive vazia),
+# senão uma chave colada depois de ligar o servidor não seria lida nem no recarregamento.
+load_dotenv(BASE_DIR / '.env', override=True)
 
 
 # Quick-start development settings - unsuitable for production
