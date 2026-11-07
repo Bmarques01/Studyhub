@@ -131,6 +131,10 @@
                         <a href="{% url 'pomodoro:index' %}?{% if pagina.topico %}topico={{ pagina.topico_id }}{% else %}disciplina={{ caderno.disciplina_id }}{% endif %}"
                            class="btn btn-claro" title="Abrir o pomodoro nesta disciplina/tópico">▶ estudar isso</a>
                     {% endif %}
+                    <button type="button" class="btn btn-claro btn-com-icone btn-tela-cheia" data-tela-cheia
+                            aria-pressed="false" title="Só a folha na tela (Esc para sair)">
+                        {% include "componentes/icone.html" with nome="tela-cheia" %}<span>tela cheia</span>
+                    </button>
                     <form method="post" action="{% url 'cadernos:excluir_pagina' pagina.id %}" data-excluir-pagina="{{ pagina.id }}">
                         {% csrf_token %}
                         <button class="btn-excluir-pagina" title="Excluir esta página">

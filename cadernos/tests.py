@@ -69,6 +69,7 @@ class CadernoTests(TestCase):
         caderno = Caderno.objects.create(nome='Redes', disciplina=self.redes, papel='quadriculado', fonte='manuscrita')
         pagina = Pagina.objects.create(caderno=caderno, titulo='BGP', conteudo=DELTA)
         resposta = self.client.get(reverse('cadernos:pagina', args=[pagina.id]))
+        self.assertContains(resposta, 'data-tela-cheia')
         self.assertContains(resposta, 'id="editor"')
         self.assertContains(resposta, 'fonte-manuscrita papel-quadriculado')
         self.assertContains(resposta, 'id="conteudo-pagina"')

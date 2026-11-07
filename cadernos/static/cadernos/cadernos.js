@@ -143,3 +143,21 @@ if (quadroMaterial && area) {
         }, 400);
     });
 }
+
+// ===== Tela cheia: só a folha ocupa a tela (Esc ou o botão de novo para sair) =====
+const botaoTelaCheia = document.querySelector('[data-tela-cheia]');
+const areaDaFolha = document.querySelector('.folha-area');
+
+if (botaoTelaCheia && areaDaFolha) {
+    botaoTelaCheia.addEventListener('click', () => {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else areaDaFolha.requestFullscreen();
+    });
+
+    // O navegador avisa quando entra ou sai (inclusive pelo Esc): o botão acompanha
+    document.addEventListener('fullscreenchange', () => {
+        const cheia = document.fullscreenElement === areaDaFolha;
+        botaoTelaCheia.setAttribute('aria-pressed', cheia);
+        botaoTelaCheia.querySelector('span').textContent = cheia ? 'sair da tela cheia' : 'tela cheia';
+    });
+}
