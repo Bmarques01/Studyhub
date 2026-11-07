@@ -1,2 +1,4 @@
 django>=6.1,<6.2
 fsrs>=6.3,<7
+anthropic>=2.6,<3
+python-dotenv>=1.2,<2
