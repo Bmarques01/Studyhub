@@ -177,3 +177,104 @@ class TelasTests(TestCase):
     def test_tipo_invalido(self):
         geracao = Geracao.objects.create(disciplina=self.redes, material='x')
         self.assertEqual(self.client.post(reverse('ia:salvar', args=[geracao.id, 'outra'])).status_code, 404)
+
+
+GUIA = '<!DOCTYPE html><html><head><title>Guia de BGP</title><style>b{}</style></head>' \
+       '<body><h1>BGP</h1><p>Usa TCP 179.</p><script>var x = 1;</script></body></html>'
+
+
+def mensagem_html(texto, stop_reason='end_turn'):
+    return SimpleNamespace(stop_reason=stop_reason, model='claude-opus-5-5',
+                           content=[SimpleNamespace(type='text', text=texto)],
+                           usage=SimpleNamespace(input_tokens=50_000, output_tokens=20_000))
+
+
+class ResumoTests(TestCase):
+    def setUp(self):
+        from cadernos.models import Caderno
+        categoria = Categoria.objects.create(nome='Ciência da Computação')
+        self.redes = Disciplina.objects.create(nome='Redes', categoria=categoria)
+        self.bgp = Topico.objects.create(disciplina=self.redes, nome='BGP')
+        self.caderno = Caderno.objects.create(nome='Redes II', disciplina=self.redes)
+        self.url = reverse('ia:resumo', args=[self.caderno.id])
+
+    def test_extrair_html(self):
+        html, erro = gerador.extrair_html(mensagem_html('Aqui está:\n```html\n' + GUIA + '\n```'))
+        self.assertEqual((html, erro), (GUIA, None))
+        self.assertIsNotNone(gerador.extrair_html(mensagem_html('<!DOCTYPE html><html><body>cortado'))[1])
+        self.assertIn('curto', gerador.extrair_html(mensagem_html(GUIA, 'max_tokens'))[1])
+
+    @patch('ia.gerador.pedir_ao_claude', return_value=mensagem_html(GUIA))
+    def test_resumo_vira_pagina_de_material(self, falso):
+        pdf = SimpleUploadedFile('aula3.pdf', b'%PDF-1.4 slides')
+        resposta = self.client.post(self.url, {'arquivo': pdf, 'detalhe': 'curto', 'topico': self.bgp.id,
+                                               'pedido_extra': 'com contas'})
+        pagina = self.caderno.paginas.get()
+        self.assertRedirects(resposta, reverse('cadernos:pagina', args=[pagina.id]), fetch_redirect_response=False)
+        self.assertEqual((pagina.tipo, pagina.titulo, pagina.topico), ('material', 'Guia de BGP', self.bgp))
+        self.assertEqual(pagina.html, GUIA)
+        # o pedido: PDF como documento, sem esquema JSON, com o nível de detalhe e o pedido extra
+        material, pedido = falso.call_args.args
+        self.assertEqual(material['type'], 'document')
+        self.assertIsNone(falso.call_args.kwargs['esquema'])
+        self.assertIn('ENXUTO', pedido)
+        self.assertIn('com contas', pedido)
+        # custo no histórico (50 mil × 4 + 20 mil × 20, por milhão = US$ 0,60)
+        geracao = Geracao.objects.get()
+        self.assertEqual((geracao.tipo, geracao.pagina, geracao.custo), ('resumo', pagina, Decimal('0.6')))
+        self.assertContains(self.client.get(reverse('ia:gerar')), '✓ no caderno')
+        # a "revisão" de um resumo leva direto para a página
+        self.assertRedirects(self.client.get(reverse('ia:revisao', args=[geracao.id])),
+                             reverse('cadernos:pagina', args=[pagina.id]), fetch_redirect_response=False)
+
+    @patch('ia.gerador.pedir_ao_claude', return_value=mensagem_html('<!DOCTYPE html><html>cortado', 'max_tokens'))
+    def test_resumo_cortado_nao_cria_pagina_mas_conta_custo(self, falso):
+        resposta = self.client.post(self.url, {'texto': 'aula', 'detalhe': 'completo'}, follow=True)
+        self.assertContains(resposta, 'foi cortado')
+        self.assertEqual(self.caderno.paginas.count(), 0)
+        self.assertEqual(custo_do_mes()[1], 1)
+
+    @patch('ia.gerador.pedir_ao_claude')
+    def test_resumo_invalido(self, falso):
+        self.assertContains(self.client.post(self.url, {'detalhe': 'curto'}, follow=True), 'Envie os slides')
+        outro = Topico.objects.create(disciplina=Disciplina.objects.create(nome='Cálculo', categoria=self.redes.categoria),
+                                      nome='Limite')
+        self.assertContains(self.client.post(self.url, {'texto': 'x', 'detalhe': 'curto', 'topico': outro.id}, follow=True),
+                            'não é da disciplina deste caderno')
+        falso.assert_not_called()
+
+    def test_botoes_no_caderno(self):
+        from cadernos.models import Pagina
+        pagina = Pagina.objects.create(caderno=self.caderno, titulo='Anotações', texto='O BGP usa TCP.')
+        resposta = self.client.get(reverse('cadernos:pagina', args=[pagina.id]))
+        self.assertContains(resposta, 'data-abrir-resumo')
+        self.assertContains(resposta, f'{reverse("ia:gerar")}?pagina={pagina.id}')
+
+    def test_texto_da_pagina(self):
+        from cadernos.models import Pagina
+        escrita = Pagina(caderno=self.caderno, texto='Minhas notas')
+        self.assertEqual(gerador.texto_da_pagina(escrita), 'Minhas notas')
+        material = Pagina(caderno=self.caderno, tipo='material', html=GUIA, texto='dúvida: iBGP')
+        texto = gerador.texto_da_pagina(material)
+        self.assertIn('Usa TCP 179.', texto)
+        self.assertIn('dúvida: iBGP', texto)
+        self.assertNotIn('var x', texto)  # o código do guia não entra
+
+    @patch('ia.gerador.pedir_ao_claude', return_value=mensagem_falsa())
+    def test_questoes_a_partir_de_uma_pagina(self, falso):
+        from cadernos.models import Pagina
+        pagina = Pagina.objects.create(caderno=self.caderno, titulo='BGP', topico=self.bgp, texto='O BGP usa TCP 179.')
+        tela = self.client.get(f'{reverse("ia:gerar")}?pagina={pagina.id}')
+        self.assertContains(tela, 'usando a página')
+        self.assertContains(tela, f'<option value="{self.redes.id}" selected>')
+        self.client.post(reverse('ia:gerar'), {'disciplina': self.redes.id, 'topico': self.bgp.id, 'pagina': pagina.id,
+                                               'gerar_flashcards': 'on', 'quantidade_flashcards': 2})
+        self.assertEqual(falso.call_args.args[0], {'type': 'text', 'text': '<material>\nO BGP usa TCP 179.\n</material>'})
+        self.assertEqual(Geracao.objects.get().material, 'página "BGP"')
+        # página vazia: avisa e não chama a IA
+        vazia = Pagina.objects.create(caderno=self.caderno, titulo='Vazia')
+        falso.reset_mock()
+        resposta = self.client.post(reverse('ia:gerar'), {'disciplina': self.redes.id, 'pagina': vazia.id,
+                                                          'gerar_flashcards': 'on', 'quantidade_flashcards': 2})
+        self.assertContains(resposta, 'página do caderno está vazia')
+        falso.assert_not_called()

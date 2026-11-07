@@ -12,6 +12,8 @@ A chave da API vem do arquivo .env (ANTHROPIC_API_KEY) e nunca vai para o navega
 import base64
 import json
 import os
+import re
+from html.parser import HTMLParser
 from decimal import Decimal
 
 import anthropic
@@ -128,19 +130,23 @@ def conteudo_do_material(pdf=None, texto=''):
     return {'type': 'text', 'text': f'<material>\n{texto}\n</material>'}
 
 
-def pedir_ao_claude(material, pedido):
+def pedir_ao_claude(material, pedido, sistema=SISTEMA, esquema=ESQUEMA, max_tokens=MAX_TOKENS):
     """A chamada à API (separada para os testes poderem trocá-la por uma resposta falsa).
-    Usa "stream" porque a resposta pode demorar; no fim pegamos a mensagem inteira."""
+    Usa "stream" porque a resposta pode demorar; no fim pegamos a mensagem inteira.
+    esquema=None: resposta em texto livre (o guia em HTML)."""
+    formato = {'effort': 'medium'}
+    if esquema:
+        formato['format'] = {'type': 'json_schema', 'schema': esquema}
     if not os.environ.get('ANTHROPIC_API_KEY'):
         raise ErroDaIA('Falta a chave da API: coloque ANTHROPIC_API_KEY no arquivo .env e reinicie o servidor.')
     cliente = anthropic.Anthropic()
     try:
         with cliente.beta.messages.stream(
             model=MODELO,
-            max_tokens=MAX_TOKENS,
-            system=SISTEMA,
+            max_tokens=max_tokens,
+            system=sistema,
             messages=[{'role': 'user', 'content': [material, {'type': 'text', 'text': pedido}]}],
-            output_config={'effort': 'medium', 'format': {'type': 'json_schema', 'schema': ESQUEMA}},
+            output_config=formato,
             # Se o Opus recusar (filtro de segurança), a própria API tenta outro modelo recomendado
             betas=['server-side-fallback-2026-07-01'],
             fallbacks='default',
@@ -228,6 +234,16 @@ def flashcards_em_texto(cartoes):
     return '\n\n'.join(blocos)
 
 
+def uso_e_custo(mensagem):
+    uso = mensagem.usage
+    return {
+        'modelo': mensagem.model,
+        'tokens_entrada': uso.input_tokens,
+        'tokens_saida': uso.output_tokens,
+        'custo': calcular_custo(mensagem.model, uso.input_tokens, uso.output_tokens),
+    }
+
+
 def gerar(*, disciplina, topico, quantidade_questoes, tipos, quantidade_flashcards, pedido_extra,
           pdf=None, texto=''):
     """Faz o pedido e devolve um dicionário com os campos para guardar numa Geracao.
@@ -235,12 +251,8 @@ def gerar(*, disciplina, topico, quantidade_questoes, tipos, quantidade_flashcar
     pedido = montar_pedido(disciplina, topico, quantidade_questoes, tipos, quantidade_flashcards, pedido_extra)
     mensagem = pedir_ao_claude(conteudo_do_material(pdf=pdf, texto=texto), pedido)
 
-    uso = mensagem.usage
     resultado = {
-        'modelo': mensagem.model,
-        'tokens_entrada': uso.input_tokens,
-        'tokens_saida': uso.output_tokens,
-        'custo': calcular_custo(mensagem.model, uso.input_tokens, uso.output_tokens),
+        **uso_e_custo(mensagem),
         'texto_questoes': '',
         'texto_flashcards': '',
         'erro': '',
@@ -261,3 +273,111 @@ TEXTO_MAXIMO = 300_000  # caracteres
 def eh_pdf(conteudo):
     return conteudo[:5] == b'%PDF-'
 
+
+
+# ===== Resumo no caderno: um guia de estudo em HTML (vira uma página de material) =====
+
+MAX_TOKENS_RESUMO = 64000  # um guia completo pode passar de 30 mil tokens
+
+SISTEMA_RESUMO = """Você transforma material de aula (slides ou texto) em um guia de estudo em HTML para uma \
+estudante brasileira de Ciência da Computação. O guia abre dentro do caderno digital dela, numa caixa isolada.
+
+Responda SOMENTE com o documento HTML completo, começando em <!DOCTYPE html> e terminando em </html>.
+Nada antes nem depois (sem cercas de código e sem comentários fora do HTML).
+
+Conteúdo:
+- Português do Brasil, linguagem simples e direta, sem enrolação. Baseie-se no material enviado.
+- <title> com um nome curto do assunto (ele vira o título da página no caderno).
+- Uma seção por tópico/aula, cada uma com: a ideia central em 1 ou 2 frases, a explicação,
+  tabelas quando ajudarem a comparar, e um "Teste-se" com perguntas cuja resposta fica escondida
+  em <details><summary>.
+- Não cite o material ("no slide 4"): o guia deve se entender sozinho.
+
+Visual e código:
+- Um arquivo só: CSS e JavaScript dentro do próprio HTML. Pode usar fontes do Google Fonts;
+  nenhuma outra biblioteca externa, nenhuma requisição de rede (fetch) e nenhum formulário.
+- Estilo: fundo escuro (#1a1216 a #241820), texto claro, destaques em rosa (#e0609a) e lilás (#a77bf3),
+  cantos arredondados; títulos em "Bricolage Grotesque", texto em "Figtree", rótulos e números em "JetBrains Mono".
+- Topo com o título, uma frase sobre o conteúdo e "chips" com os tópicos.
+- Índice lateral fixo com links para as seções; em tela estreita (menos de 900px), o índice vai para o topo.
+- Ao lado de cada item do índice, uma bolinha "estudado" que a estudante marca com um clique; guarde isso no
+  localStorage (chave começando com "guia-") e marque de novo ao abrir.
+- Tabelas legíveis no fundo escuro, contraste bom, nada de texto minúsculo."""
+
+DETALHES = {
+    'curto': ('Faça um resumo ENXUTO: só as ideias centrais de cada tópico, no máximo uma tabela por seção '
+              'e 2 perguntas no "Teste-se" de cada seção.'),
+    'completo': ('Faça um guia COMPLETO: todos os tópicos do material, com exemplos resolvidos passo a passo '
+                 'quando houver contas ou procedimentos, uma caixa de "pegadinhas" (o que costuma confundir), '
+                 '3 a 5 perguntas no "Teste-se" de cada seção e, no fim, uma seção "para decorar" com termos, '
+                 'números e siglas importantes.'),
+}
+
+
+def montar_pedido_resumo(disciplina, topico, detalhe, pedido_extra):
+    linhas = []
+    if disciplina:
+        linhas.append(f'Disciplina: {disciplina}.')
+    if topico:
+        linhas.append(f'Tópico: {topico}.')
+    linhas.append(DETALHES[detalhe])
+    if pedido_extra:
+        linhas.append(f'Pedido extra da estudante: {pedido_extra}')
+    return '\n'.join(linhas)
+
+
+def extrair_html(mensagem):
+    """(html, erro): o documento HTML da resposta, ou o motivo de não ter dado certo."""
+    if mensagem.stop_reason == 'refusal':
+        return None, 'O Claude recusou gerar a partir desse material.'
+    if mensagem.stop_reason == 'max_tokens':
+        return None, 'O guia ficou grande demais e foi cortado. Tente o resumo curto ou envie menos slides.'
+    texto = ''.join(bloco.text for bloco in mensagem.content if bloco.type == 'text')
+    inicio = re.search(r'<!doctype html|<html', texto, re.IGNORECASE)
+    fim = texto.lower().rfind('</html>')
+    if not inicio or fim == -1:
+        return None, 'A resposta não veio como um HTML completo. Tente de novo.'
+    return texto[inicio.start():fim + len('</html>')], None
+
+
+def gerar_resumo(*, disciplina, topico, detalhe, pedido_extra, pdf=None, texto=''):
+    """Pede o guia em HTML. Devolve os campos para a Geracao + 'html' (None se não deu certo)."""
+    pedido = montar_pedido_resumo(disciplina, topico, detalhe, pedido_extra)
+    mensagem = pedir_ao_claude(conteudo_do_material(pdf=pdf, texto=texto), pedido,
+                               sistema=SISTEMA_RESUMO, esquema=None, max_tokens=MAX_TOKENS_RESUMO)
+    html, erro = extrair_html(mensagem)
+    return {**uso_e_custo(mensagem), 'erro': erro or '', 'html': html}
+
+
+# ===== Texto de uma página do caderno (para gerar questões a partir dela) =====
+
+class _LeitorDeTexto(HTMLParser):
+    """Junta só o texto visível de um HTML (pula <script> e <style>)."""
+
+    def __init__(self):
+        super().__init__()
+        self.partes, self.pular = [], 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in ('script', 'style'):
+            self.pular += 1
+
+    def handle_endtag(self, tag):
+        if tag in ('script', 'style') and self.pular:
+            self.pular -= 1
+
+    def handle_data(self, data):
+        if not self.pular and data.strip():
+            self.partes.append(data.strip())
+
+
+def texto_da_pagina(pagina):
+    """O texto de uma página: na escrita, o que ela escreveu; no material, o guia + as anotações."""
+    partes = []
+    if pagina.material:
+        leitor = _LeitorDeTexto()
+        leitor.feed(pagina.html)
+        partes.append('\n'.join(leitor.partes))
+    if pagina.texto.strip():
+        partes.append(('Anotações da estudante:\n' if pagina.material else '') + pagina.texto.strip())
+    return '\n\n'.join(partes)[:TEXTO_MAXIMO]

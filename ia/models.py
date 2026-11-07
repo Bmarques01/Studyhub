@@ -4,16 +4,26 @@ from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
 
+from cadernos.models import Pagina
 from estudos.models import Disciplina, Topico
 
 
 class Geracao(models.Model):
     """Um pedido feito ao Claude: o que gerou, quanto custou e o que já foi salvo.
 
+    Dois tipos: questões/flashcards (revisados antes de salvar) ou resumo no caderno
+    (vira direto uma página de material, guardada em "pagina").
+
     O material enviado (PDF/texto) NÃO fica guardado: só o nome dele.
     O texto gerado fica aqui até ela revisar e salvar (no formato da importação).
     """
 
+    TIPOS = [
+        ('questoes', 'Questões e flashcards'),
+        ('resumo', 'Resumo no caderno'),
+    ]
+
+    tipo = models.CharField(max_length=10, choices=TIPOS, default='questoes')
     criada_em = models.DateTimeField(auto_now_add=True)
     disciplina = models.ForeignKey(Disciplina, on_delete=models.SET_NULL, null=True, related_name='geracoes')
     topico = models.ForeignKey(Topico, on_delete=models.SET_NULL, null=True, blank=True, related_name='geracoes')
@@ -34,6 +44,8 @@ class Geracao(models.Model):
     texto_flashcards = models.TextField(blank=True)
     questoes_salvas = models.PositiveSmallIntegerField(default=0)
     flashcards_salvos = models.PositiveSmallIntegerField(default=0)
+    # Resumo: a página de material criada no caderno
+    pagina = models.ForeignKey(Pagina, on_delete=models.SET_NULL, null=True, blank=True, related_name='geracoes')
 
     class Meta:
         ordering = ['-criada_em', '-id']

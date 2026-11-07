@@ -67,3 +67,6 @@
 .ia-cartoes li { padding: 8px 12px; border-radius: 10px; background: var(--rosa-fundo); }
 .ia-cartoes strong { display: block; }
 .ia-cartoes span { color: var(--texto-suave); font-size: 0.92rem; }
+
+.ia-da-pagina { padding: 8px 12px; border-radius: 10px; background: var(--rosa-fundo); font-size: 0.9rem; }
+.ia-da-pagina small { color: var(--texto-suave); }

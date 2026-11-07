@@ -657,3 +657,29 @@ input.titulo-pagina[type="text"]:focus { border-bottom-color: var(--rosa-claro);
     .folha-area:fullscreen .material-notas { position: sticky; top: 0; }
     .folha-area:fullscreen .material-notas .folha .ql-editor { max-height: calc(100vh - 170px); }
 }
+
+/* ===== Janela do resumo com IA ===== */
+.detalhe-resumo { display: flex; flex-direction: column; gap: 6px; border: none; }
+.detalhe-resumo legend { margin-bottom: 4px; }
+.detalhe-resumo label { flex-direction: row !important; align-items: center; gap: 8px; }
+.detalhe-resumo small { color: var(--texto-suave); }
+.espera-resumo { color: var(--lilas); font-size: 0.85rem; }
+.espera-resumo[hidden] { display: none; }
+
+/* Enviar arquivo: o input some (mas continua funcionando pelo teclado) e o rótulo vira botão */
+.arquivo-resumo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.arquivo-resumo small { font-family: var(--fonte-mono); font-size: 0.75rem; color: var(--texto-suave); }
+.dialogo-material .btn-arquivo {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--fonte-texto);
+    font-size: 0.85rem;
+    color: var(--vinho);
+    cursor: pointer;
+}
+.btn-arquivo .icone { width: 16px; height: 16px; }
+.btn-arquivo input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.btn-arquivo:focus-within { outline: 2px solid var(--lilas); outline-offset: 2px; }

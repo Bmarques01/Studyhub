@@ -161,3 +161,28 @@ if (botaoTelaCheia && areaDaFolha) {
         botaoTelaCheia.querySelector('span').textContent = cheia ? 'sair da tela cheia' : 'tela cheia';
     });
 }
+
+// ===== Janela "resumo com IA" =====
+const dialogoResumo = document.getElementById('dialogo-resumo');
+if (dialogoResumo) {
+    document.querySelectorAll('[data-abrir-resumo]').forEach(botao => botao.addEventListener('click', () => dialogoResumo.showModal()));
+    dialogoResumo.querySelector('[data-fechar]').addEventListener('click', () => dialogoResumo.close());
+
+    // Mostra o nome do arquivo escolhido ao lado do botão
+    const entradaArquivo = dialogoResumo.querySelector('[data-arquivo-resumo]');
+    const nomeArquivo = dialogoResumo.querySelector('[data-nome-arquivo-resumo]');
+    entradaArquivo.addEventListener('change', () => {
+        nomeArquivo.textContent = entradaArquivo.files[0]?.name || 'nenhum arquivo escolhido';
+    });
+
+    // Ao enviar: trava (cada clique é uma geração paga) e avisa que demora
+    const formResumo = dialogoResumo.querySelector('[data-form-resumo]');
+    formResumo.addEventListener('submit', () => {
+        const botao = formResumo.querySelector('[data-botao-resumo]');
+        botao.disabled = true;
+        botao.textContent = 'gerando…';
+        formResumo.querySelector('[data-espera-resumo]').hidden = false;
+        // enquanto gera, não deixa fechar a janela com Esc (o pedido continuaria, mas sem aviso)
+        dialogoResumo.addEventListener('cancel', evento => evento.preventDefault());
+    });
+}

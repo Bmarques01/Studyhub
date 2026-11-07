@@ -38,6 +38,8 @@
             </form>
             <button type="button" class="btn btn-claro btn-largo" data-abrir-material
                     title="Um guia pronto em HTML (ex.: feito pelo Claude)">+ material</button>
+            <button type="button" class="btn btn-claro btn-largo" data-abrir-resumo
+                    title="Envie os slides e o Claude escreve um guia de estudo neste caderno">✦ resumo com IA</button>
         </div>
 
         <ul class="lista-paginas">
@@ -131,6 +133,8 @@
                         <a href="{% url 'pomodoro:index' %}?{% if pagina.topico %}topico={{ pagina.topico_id }}{% else %}disciplina={{ caderno.disciplina_id }}{% endif %}"
                            class="btn btn-claro" title="Abrir o pomodoro nesta disciplina/tópico">▶ estudar isso</a>
                     {% endif %}
+                    <a href="{% url 'ia:gerar' %}?pagina={{ pagina.id }}" class="btn btn-claro"
+                       title="Gerar questões e flashcards a partir do texto desta página">✦ questões e flashcards</a>
                     <button type="button" class="btn btn-claro btn-com-icone btn-tela-cheia" data-tela-cheia
                             aria-pressed="false" title="Só a folha na tela (Esc para sair)">
                         {% include "componentes/icone.html" with nome="tela-cheia" %}<span>tela cheia</span>
@@ -176,6 +180,49 @@
         {% endif %}
     </section>
 </div>
+
+{# ===== Janela: resumo com IA (vira uma página de material) ===== #}
+<dialog id="dialogo-resumo" class="dialogo-caderno dialogo-material" aria-labelledby="titulo-dialogo-resumo">
+    <form method="post" action="{% url 'ia:resumo' caderno.id %}" enctype="multipart/form-data" data-form-resumo>
+        {% csrf_token %}
+        <h2 id="titulo-dialogo-resumo">✦ Resumo com IA</h2>
+        <p class="dica-material">O Claude lê os slides (ou o texto) e escreve um guia de estudo, com índice, tabelas e
+            "Teste-se". Ele vira uma página nova deste caderno.</p>
+        {# O input de arquivo fica escondido; o rótulo é o botão (o padrão do navegador não combina com o site) #}
+        <div class="arquivo-resumo">
+            <label class="btn btn-claro btn-arquivo">
+                <input type="file" name="arquivo" accept=".pdf,.txt,.md,application/pdf,text/plain" data-arquivo-resumo>
+                {% include "componentes/icone.html" with nome="enviar" %} enviar slides (PDF) ou .txt
+            </label>
+            <small data-nome-arquivo-resumo>nenhum arquivo escolhido</small>
+        </div>
+        <p class="ou">ou</p>
+        <label>cole o texto da aula
+            <textarea name="texto" rows="5" placeholder="Cole aqui o conteúdo da aula..."></textarea>
+        </label>
+        <fieldset class="detalhe-resumo">
+            <legend>detalhe</legend>
+            <label><input type="radio" name="detalhe" value="curto"> resumo curto <small>(mais rápido, ~US$ 0,10 a 0,30)</small></label>
+            <label><input type="radio" name="detalhe" value="completo" checked> completo, com exemplos <small>(alguns minutos, ~US$ 0,50 a 1)</small></label>
+        </fieldset>
+        {% if topicos %}
+            <label>tópico <small>(opcional)</small>
+                <select name="topico">
+                    <option value="">sem tópico</option>
+                    {% for t in topicos %}<option value="{{ t.id }}">{{ t.nome }}</option>{% endfor %}
+                </select>
+            </label>
+        {% endif %}
+        <label>pedido extra <small>(opcional)</small>
+            <input type="text" name="pedido_extra" maxlength="500" placeholder="ex.: explique sub-redes com contas passo a passo">
+        </label>
+        <p class="espera-resumo" data-espera-resumo hidden>gerando o guia… pode levar alguns minutos. Não feche a página.</p>
+        <div class="dialogo-botoes">
+            <button type="button" class="btn btn-claro" data-fechar>cancelar</button>
+            <button class="btn" data-botao-resumo>✦ gerar</button>
+        </div>
+    </form>
+</dialog>
 
 {# ===== Janela: material novo (colar o HTML ou enviar o arquivo) ===== #}
 <dialog id="dialogo-material" class="dialogo-caderno dialogo-material" aria-labelledby="titulo-dialogo-material">

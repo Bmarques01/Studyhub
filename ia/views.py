@@ -4,6 +4,8 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from cadernos.models import Caderno, Pagina
+from cadernos.views import titulo_do_html
 from estudos.views import avisar_erros, opcoes_de_disciplina
 from flashcards.importacao import LIMITE as LIMITE_CARTOES, ler_cartoes
 from flashcards.models import Flashcard
@@ -13,7 +15,7 @@ from questoes.models import Questao
 from questoes.views import salvar_questao, topicos_por_disciplina
 
 from . import gerador
-from .forms import GerarForm
+from .forms import GerarForm, ResumoForm
 from .models import Geracao, custo_do_mes
 
 
@@ -53,20 +55,26 @@ def gerar(request):
                 else:
                     return redirect('ia:revisao', geracao_id=geracao.id)
     else:
-        # Vindo do botão de uma disciplina: já chega com ela (e o tópico) escolhidos
-        form = GerarForm(initial={
+        # Vindo do botão de uma disciplina (ou de uma página do caderno): já chega com tudo escolhido
+        inicial = {
             'disciplina': ler_id(request.GET.get('disciplina')),
             'topico': ler_id(request.GET.get('topico')),
             'gerar_questoes': request.GET.get('so') != 'flashcards',
             'gerar_flashcards': request.GET.get('so') != 'questoes',
-        })
+        }
+        pagina = Pagina.objects.select_related('caderno').filter(id=ler_id(request.GET.get('pagina'))).first()
+        if pagina:
+            inicial.update(pagina=pagina.id, disciplina=pagina.caderno.disciplina_id, topico=pagina.topico_id)
+        form = GerarForm(initial=inicial)
 
     total_mes, geracoes_mes = custo_do_mes()
+    pagina_id = ler_id(form['pagina'].value())
     return render(request, 'ia/gerar.html', {
         'form': form,
+        'pagina': Pagina.objects.select_related('caderno').filter(id=pagina_id).first() if pagina_id else None,
         'opcoes': opcoes_de_disciplina(),
         'topicos': topicos_por_disciplina(),
-        'historico': Geracao.objects.select_related('disciplina', 'topico')[:10],
+        'historico': Geracao.objects.select_related('disciplina', 'topico', 'pagina__caderno')[:10],
         'total_mes': total_mes,
         'geracoes_mes': geracoes_mes,
     })
@@ -75,6 +83,11 @@ def gerar(request):
 def revisao(request, geracao_id):
     """O que a IA gerou, no texto da importação: editar, conferir a prévia e salvar."""
     geracao = get_object_or_404(Geracao.objects.select_related('disciplina', 'topico'), id=geracao_id)
+    if geracao.tipo == 'resumo':  # o resumo não tem revisão: ele já é uma página do caderno
+        if geracao.pagina_id:
+            return redirect('cadernos:pagina', pagina_id=geracao.pagina_id)
+        messages.error(request, geracao.erro or 'A página desse resumo foi excluída.')
+        return redirect('ia:gerar')
     questoes, problemas_questoes = ler_questoes(geracao.texto_questoes)
     cartoes, problemas_cartoes = ler_cartoes(geracao.texto_flashcards)
     return render(request, 'ia/revisao.html', {
@@ -135,3 +148,44 @@ def salvar(request, geracao_id, tipo):
     messages.success(request, f'{len(itens)} {nome} em {geracao.disciplina.nome}.')
     return redirect('ia:revisao', geracao_id=geracao.id)
 
+
+
+@require_POST
+def resumo(request, caderno_id):
+    """Resumo no caderno: o Claude escreve um guia em HTML, que vira uma página de material."""
+    caderno = get_object_or_404(Caderno.objects.select_related('disciplina'), id=caderno_id)
+    form = ResumoForm(request.POST, request.FILES, caderno=caderno)
+    if not form.is_valid():
+        avisar_erros(request, form)
+        return redirect('cadernos:caderno', caderno_id=caderno.id)
+
+    dados = form.cleaned_data
+    try:
+        resultado = gerador.gerar_resumo(
+            disciplina=caderno.disciplina.nome if caderno.disciplina else '',
+            topico=dados['topico'].nome if dados['topico'] else '',
+            detalhe=dados['detalhe'],
+            pedido_extra=dados['pedido_extra'],
+            pdf=dados['pdf'],
+            texto=dados['material_texto'],
+        )
+    except gerador.ErroDaIA as erro:
+        messages.error(request, str(erro))
+        return redirect('cadernos:caderno', caderno_id=caderno.id)
+
+    codigo = resultado.pop('html')
+    pagina = None
+    if codigo:
+        pagina = Pagina.objects.create(caderno=caderno, tipo='material', html=codigo, topico=dados['topico'],
+                                       titulo=titulo_do_html(codigo) or 'Resumo')
+        caderno.save(update_fields=['atualizado_em'])
+    # Guardamos mesmo quando deu errado: a API cobrou, e o custo entra no histórico
+    Geracao.objects.create(
+        tipo='resumo', disciplina=caderno.disciplina, topico=dados['topico'], pagina=pagina,
+        material=dados['material_nome'], pedido_extra=dados['pedido_extra'], **resultado,
+    )
+    if not pagina:
+        messages.error(request, resultado['erro'])
+        return redirect('cadernos:caderno', caderno_id=caderno.id)
+    messages.success(request, f'Resumo "{pagina.titulo}" criado (custou US$ {resultado["custo"]:.2f}).')
+    return redirect('cadernos:pagina', pagina_id=pagina.id)

@@ -49,6 +49,12 @@
             {# ===== Material ===== #}
             <fieldset class="ia-material">
                 <legend>material da aula</legend>
+                {% if pagina %}
+                    {# O texto desta página do caderno é o material (a menos que ela envie outro) #}
+                    <input type="hidden" name="pagina" value="{{ pagina.id }}">
+                    <p class="ia-da-pagina">✓ usando a página <strong>{{ pagina.titulo }}</strong> do caderno {{ pagina.caderno.nome }}
+                        <small>(ou envie outro material abaixo)</small></p>
+                {% endif %}
                 <div class="qz-arquivo" data-arquivo>
                     <label class="btn btn-claro btn-com-icone">
                         <input type="file" name="arquivo" accept=".pdf,.txt,.md,application/pdf,text/plain" class="qz-arquivo-input">
@@ -104,8 +110,8 @@
             <h2 class="rotulo">custo da IA</h2>
             <p class="ia-total"><strong>US$ {{ total_mes|floatformat:2 }}</strong> este mês
                 <small>· {{ geracoes_mes }} {% if geracoes_mes == 1 %}geração{% else %}gerações{% endif %}</small></p>
-            <p class="qz-dica">Cada geração custa em média alguns centavos de dólar (PDFs grandes custam mais).
-                O saldo de créditos fica em platform.claude.com.</p>
+            <p class="qz-dica">Questões e flashcards custam alguns centavos de dólar; um resumo completo de um PDF grande
+                pode passar de US$ 0,50. O saldo de créditos fica em platform.claude.com.</p>
 
             {% if historico %}
                 <h2 class="rotulo">últimas gerações</h2>
@@ -113,11 +119,16 @@
                     {% for g in historico %}
                         <li>
                             <a href="{% url 'ia:revisao' g.id %}">
-                                <strong>{{ g.disciplina.nome|default:"(disciplina excluída)" }}{% if g.topico %} · {{ g.topico.nome }}{% endif %}</strong>
+                                {% if g.tipo == 'resumo' %}
+                                    <strong>resumo · {% if g.pagina %}{{ g.pagina.caderno.nome }}{% else %}{{ g.disciplina.nome|default:"caderno" }}{% endif %}</strong>
+                                {% else %}
+                                    <strong>{{ g.disciplina.nome|default:"(disciplina excluída)" }}{% if g.topico %} · {{ g.topico.nome }}{% endif %}</strong>
+                                {% endif %}
                                 <small>{{ g.criada_em|date:"d/m H:i" }} · {{ g.material|truncatechars:30 }}</small>
                             </a>
                             <span class="ia-custo">US$ {{ g.custo|floatformat:2 }}</span>
                             {% if g.erro %}<small class="ia-falhou">não deu certo</small>
+                            {% elif g.tipo == 'resumo' %}<small class="ia-salvo">{% if g.pagina %}✓ no caderno{% else %}página excluída{% endif %}</small>
                             {% elif g.questoes_salvas or g.flashcards_salvos %}<small class="ia-salvo">✓ salvo</small>
                             {% else %}<small class="ia-pendente">a revisar</small>{% endif %}
                         </li>
