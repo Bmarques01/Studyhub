@@ -220,8 +220,8 @@
     list-style: none;
     padding: 10px 14px;
     border-radius: 10px;
-    background: #fde7ef;
-    color: #9c2f5f;
+    background: var(--fundo-alerta);
+    color: var(--alerta-forte);
     font-size: 0.9rem;
 }
 
@@ -279,7 +279,7 @@
 }
 
 /* a certa: preenchida + ✓ (não só a cor) */
-.qz-certa input:checked + span { border-color: var(--certa); background: var(--certa); color: var(--branco); }
+.qz-certa input:checked + span { border-color: var(--certa); background: var(--certa); color: var(--sobre-cor); }
 .qz-certa input:checked + span::after { content: '✓'; font-size: 0.75rem; }
 .qz-certa input:focus-visible + span { outline: 2px solid var(--lilas); }
 
@@ -328,7 +328,7 @@
     padding: 12px 14px;
     border-radius: 10px;
     border: 1px dashed #c98500;
-    background: #fff8e6;
+    background: var(--fundo-aviso);
     font-size: 0.9rem;
 }
 
@@ -420,7 +420,7 @@ button.qz-alternativa:hover { border-color: var(--rosa); background: var(--rosa-
 .qz-alternativa kbd { flex-shrink: 0; }
 
 .qz-corrigidas .qz-alternativa { cursor: default; }
-.qz-corrigidas .certa { border-color: var(--certa); background: #efecfd; }
+.qz-corrigidas .certa { border-color: var(--certa); background: var(--fundo-lilas); }
 .qz-corrigidas .certa strong { color: var(--certa); }
 .qz-corrigidas .marcada { border-color: var(--errada); border-style: dashed; }
 .qz-corrigidas .marcada strong { color: var(--errada); }
@@ -524,7 +524,7 @@ button.qz-alternativa:hover { border-color: var(--rosa); background: var(--rosa-
 
 .qz-motivo:hover { background: var(--rosa-fundo); }
 .qz-motivo kbd { font-size: 0.7rem; color: var(--texto-suave); }
-.qz-motivo[aria-pressed="true"] { border-color: var(--errada); background: var(--errada); color: var(--branco); font-weight: 600; }
+.qz-motivo[aria-pressed="true"] { border-color: var(--errada); background: var(--errada); color: var(--sobre-cor); font-weight: 600; }
 .qz-motivo[aria-pressed="true"]::before { content: '✓'; }
 .qz-motivo[aria-pressed="true"] kbd { color: inherit; }
 
@@ -605,7 +605,7 @@ button.qz-alternativa:hover { border-color: var(--rosa); background: var(--rosa-
 .qz-erro:target { box-shadow: 0 0 0 3px var(--rosa-bebe), var(--sombra); }
 .qz-erro-onde { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--texto-suave); }
 .qz-erro-onde .qz-tipo { margin: 0; }
-.qz-dominado { background: var(--certa) !important; color: var(--branco) !important; }
+.qz-dominado { background: var(--certa) !important; color: var(--sobre-cor) !important; }
 .qz-erro-enunciado { font-weight: 600; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 .qz-alternativas-lista .marcada { color: var(--errada); }
 
@@ -652,3 +652,6 @@ button.qz-alternativa:hover { border-color: var(--rosa); background: var(--rosa-
 .qz-seta { display: inline-block; width: 0.8em; font-size: 1.2em; line-height: 1; transition: transform 0.15s; }
 .qz-abrir[aria-expanded="true"] .qz-seta { transform: rotate(90deg); }
 .qz-abrir-tudo { display: flex; justify-content: flex-end; margin-bottom: -4px; }
+
+/* Modo escuro: certa/errada um pouco mais claras (validadas no fundo #241820) */
+[data-tema="escuro"] .dash { --certa: #7262e6; --errada: #e0609a; }

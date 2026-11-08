@@ -111,9 +111,9 @@
 }
 
 /* situação: ícone + texto, nunca só a cor */
-.situacao-aprovada strong { color: #2f855a; }
+.situacao-aprovada strong { color: var(--sucesso); }
 .situacao-reprovada strong,
-.situacao-impossivel strong { color: #b0436f; }
+.situacao-impossivel strong { color: var(--alerta); }
 .situacao-possivel .nota-grande {
     background: var(--degrade);
     -webkit-background-clip: text;
@@ -126,7 +126,7 @@
     margin-left: 6px;
     font-family: var(--fonte-mono);
     font-size: 0.68rem;
-    color: #b0436f;
+    color: var(--alerta);
 }
 
 .sem-topico .ranking-nome {

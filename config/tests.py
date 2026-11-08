@@ -56,3 +56,20 @@ class LoginTests(TestCase):
         self.assertContains(resposta, 'Senha trocada.')
         self.conta.refresh_from_db()
         self.assertTrue(self.conta.check_password('outra-senha-456'))
+
+
+class TemaTests(TestCase):
+    """Modo escuro: o botão fica no menu e o <head> aplica o tema salvo antes de desenhar a página."""
+
+    APLICA_TEMA = "localStorage.getItem('tema') === 'escuro'"
+
+    def test_botao_no_menu_e_tema_aplicado_no_head(self):
+        get_user_model().objects.create_user('bruna', password='senha-forte-123')
+        self.client.login(username='bruna', password='senha-forte-123')
+        resposta = self.client.get(reverse('dashboard:index'))
+        self.assertContains(resposta, 'data-trocar-tema')
+        self.assertContains(resposta, self.APLICA_TEMA)
+        self.assertContains(resposta, 'js/tema.js')
+
+    def test_tela_de_entrar_tambem_respeita_o_tema(self):
+        self.assertContains(self.client.get(reverse('entrar')), self.APLICA_TEMA)

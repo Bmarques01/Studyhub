@@ -4,7 +4,6 @@
     --s-compensada: #ee8fb7;
     --s-cursando: #5b4bd0;
     --s-falta: #efe4ea;
-    --texto-suave: #8a6b7c;
 }
 
 .curso {
@@ -148,7 +147,7 @@
 .chave.compensada { background: var(--s-compensada); }
 .chave.cursando { background: var(--s-cursando); }
 .chave.falta, .chave.nao_cursada { background: var(--s-falta); }
-.chave.reprovada { box-shadow: inset 0 0 0 2px #b0436f; }
+.chave.reprovada { box-shadow: inset 0 0 0 2px var(--alerta); }
 
 /* ===== Blocos ===== */
 .blocos {
@@ -278,7 +277,7 @@
 }
 
 .celula-grade.situacao-reprovada {
-    border: 2px solid #b0436f;
+    border: 2px solid var(--alerta);
 }
 
 /* ===== Duas colunas (liberadas/travadas, optativas/transversais) ===== */
@@ -374,12 +373,12 @@
     padding: 26px;
     border: none;
     border-radius: var(--raio);
-    box-shadow: 0 20px 60px rgba(74, 42, 61, 0.3);
+    box-shadow: 0 20px 60px rgb(var(--sombra-rgb) / 0.3);
     color: var(--texto);
 }
 
 .dialogo::backdrop {
-    background: rgba(74, 42, 61, 0.35);
+    background: rgb(var(--sombra-rgb) / 0.35);
 }
 
 .dialogo form {
@@ -469,4 +468,12 @@
     font-size: 0.85rem;
     font-weight: 600;
     text-decoration: none;
+}
+
+/* ===== Modo escuro: situações da grade (validadas no fundo #241820; sempre com texto/ícone além da cor) ===== */
+[data-tema="escuro"] {
+    --s-concluida: #b8407a;
+    --s-compensada: #e57aad;
+    --s-cursando: #7262e6;
+    --s-falta: #33252d;
 }

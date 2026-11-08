@@ -1,6 +1,6 @@
 /* ===== Paleta de cores =====
    Variáveis CSS: mude aqui e o site inteiro muda junto. */
-:root {
+:root, .sempre-claro {
     --rosa-fundo: #fff5f9;
     --rosa-bebe: #ffe0ec;
     --rosa-claro: #ffc2d9;
@@ -9,14 +9,71 @@
     --lilas: #a77bf3;
     --vinho: #8c3b62;
     --texto: #4a2a3d;
-    --branco: #ffffff;
+    --branco: #ffffff;       /* fundo dos cartões e do menu (no escuro vira um roxo bem escuro) */
+
+    --texto-suave: #8a6b7c;  /* rótulos e textos secundários */
+    --apagado: #d8c6cf;      /* o que está desativado / fora do mês */
+    --sobre-cor: #ffffff;    /* texto em cima do rosa ou do degradê: branco nos dois temas */
+    --quadriculado: var(--rosa-bebe);
+
+    /* avisos: erro/atenção, sucesso, e fundos clarinhos de etiquetas */
+    --alerta: #b0436f;
+    --alerta-forte: #9c2f5f;
+    --sucesso: #2f855a;
+    --roxo-texto: #4b3cb0;
+    --fundo-alerta: #fde8ef;
+    --fundo-lilas: #ece6fb;
+    --fundo-neutro: #f1ecee;
+    --fundo-aviso: #fff8e6;
+    --fundo-suave: #fdf0f7;
 
     --degrade: linear-gradient(135deg, var(--rosa-forte), var(--lilas));
+    --sombra-rgb: 74 42 61;  /* cor das sombras (usada como rgb(var(--sombra-rgb) / 0.2)) */
     --sombra: 0 8px 24px rgba(224, 96, 154, 0.15);
     --raio: 20px;
 
     --fonte-texto: 'Space Grotesk', sans-serif;
     --fonte-mono: 'JetBrains Mono', monospace;
+
+    color-scheme: light;
+}
+
+/* As variáveis voltam a ser claras dentro dele, mas a cor do texto vem herdada de fora: redefinimos aqui */
+.sempre-claro { color: var(--texto); }
+
+/* ===== Modo escuro =====
+   O botão do menu põe data-tema="escuro" no <html>; aqui só trocamos os valores das variáveis.
+   Pegada dos guias da IA: fundo quase preto arroxeado, rosa e lilás como destaque.
+   O que tem a classe .sempre-claro (folhas e capas dos cadernos) continua com a paleta clara: é "papel". */
+:root[data-tema="escuro"] {
+    --rosa-fundo: #1a1216;
+    --rosa-bebe: #3a2632;
+    --rosa-claro: #5c3a4d;
+    --rosa: #f48fb8;
+    --rosa-forte: #e0609a;
+    --lilas: #b48cf6;
+    --vinho: #f5a8ca;
+    --texto: #f3e6ee;
+    --branco: #241820;
+
+    --texto-suave: #b39aa8;
+    --apagado: #5e4654;
+    --quadriculado: #241a20;
+
+    --alerta: #f27fae;
+    --alerta-forte: #f7a1c4;
+    --sucesso: #6fcf97;
+    --roxo-texto: #b9adff;
+    --fundo-alerta: #3d1a2a;
+    --fundo-lilas: #2b2142;
+    --fundo-neutro: #2e2229;
+    --fundo-aviso: #33280f;
+    --fundo-suave: #2a1b24;
+
+    --sombra-rgb: 0 0 0;
+    --sombra: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+    color-scheme: dark;  /* barras de rolagem, calendários e caixas do navegador também escuros */
 }
 
 * {
@@ -31,8 +88,8 @@ body {
     background-color: var(--rosa-fundo);
     /* fundo quadriculado, tipo papel milimetrado */
     background-image:
-        linear-gradient(var(--rosa-bebe) 1px, transparent 1px),
-        linear-gradient(90deg, var(--rosa-bebe) 1px, transparent 1px);
+        linear-gradient(var(--quadriculado) 1px, transparent 1px),
+        linear-gradient(90deg, var(--quadriculado) 1px, transparent 1px);
     background-size: 32px 32px;
     min-height: 100vh;
 }
@@ -140,7 +197,7 @@ button, input {
 .usuaria {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     padding: 12px;
     border-radius: 14px;
     background: var(--rosa-fundo);
@@ -159,11 +216,13 @@ button, input {
 
 .usuaria-texto a {
     font-size: 0.78rem;
+    white-space: nowrap;
     color: var(--vinho);
     text-decoration: none;
 }
 
 .usuaria-texto a:hover { color: var(--rosa-forte); }
+.usuaria .btn-icone { width: 26px; flex-shrink: 0; }
 
 .avatar {
     display: grid;
@@ -172,7 +231,7 @@ button, input {
     height: 38px;
     border-radius: 50%;
     background: var(--degrade);
-    color: var(--branco);
+    color: var(--sobre-cor);
     font-weight: 700;
 }
 
@@ -252,7 +311,7 @@ button, input {
     display: inline-block;
     border: none;
     background: var(--degrade);
-    color: var(--branco);
+    color: var(--sobre-cor);
     font-weight: 600;
     font-size: 0.9rem;
     padding: 9px 18px;
@@ -281,6 +340,9 @@ button, input {
     text-decoration: none;
     font-size: 0.95rem;
 }
+
+.btn-icone [hidden] { display: none; }
+.btn-icone > span { display: inline-flex; }
 
 .btn-icone:hover {
     background: var(--rosa-bebe);
@@ -339,7 +401,7 @@ input[type="color"] {
 
 .mensagem.error {
     border-left-color: #d64545;
-    color: #9b2c2c;
+    color: var(--alerta-forte);
 }
 
 /* ===== Edição direto na página (usado com static/js/editar.js) =====
@@ -378,7 +440,7 @@ input[type="color"] {
 .marca.tipo-prova { background: #d64f8f; }
 .marca.tipo-trabalho { background: #6250d6; }
 .marca.tipo-entrega { background: #c98500; }
-.marca.tipo-outro { box-shadow: inset 0 0 0 2px #8a6b7c; }
+.marca.tipo-outro { box-shadow: inset 0 0 0 2px var(--texto-suave); }
 
 /* ===== Lista de próximos eventos (calendário e dashboard) ===== */
 .proximos {
@@ -441,7 +503,7 @@ input[type="color"] {
 
 .proximo-info small {
     padding-left: 15px;
-    color: #8a6b7c;
+    color: var(--texto-suave);
     font-size: 0.75rem;
     overflow: hidden;
     white-space: nowrap;
@@ -451,7 +513,7 @@ input[type="color"] {
 .quando {
     font-family: var(--fonte-mono);
     font-size: 0.72rem;
-    color: #8a6b7c;
+    color: var(--texto-suave);
     white-space: nowrap;
 }
 
@@ -461,7 +523,7 @@ input[type="color"] {
 }
 
 .vazio-card {
-    color: #8a6b7c;
+    color: var(--texto-suave);
     font-size: 0.9rem;
     line-height: 1.7;
 }
@@ -483,7 +545,7 @@ input[type="color"] {
     border-radius: 18px;
     background: var(--branco);
     border: 2px solid var(--rosa-claro);
-    box-shadow: 0 14px 34px rgba(74, 42, 61, 0.22);
+    box-shadow: 0 14px 34px rgb(var(--sombra-rgb) / 0.22);
     animation: mini-aparecer 0.25s ease-out;
 }
 
@@ -548,7 +610,7 @@ input[type="color"] {
 .mini-ciclo {
     font-family: var(--fonte-mono);
     font-size: 0.66rem;
-    color: #8a6b7c;
+    color: var(--texto-suave);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -575,7 +637,7 @@ input[type="color"] {
 
 .mini-btn:hover { background: var(--rosa-bebe); }
 /* ruído ligado: botão preenchido (o título também diz "desligar o ruído") */
-.mini-ruido[aria-pressed="true"] { border-color: transparent; background: var(--degrade); color: var(--branco); }
+.mini-ruido[aria-pressed="true"] { border-color: transparent; background: var(--degrade); color: var(--sobre-cor); }
 .mini-btn[hidden] { display: none; }
 .mini-btn .icone { width: 16px; height: 16px; }
 .mini-btn span { display: grid; }
@@ -683,9 +745,12 @@ input[type="color"] {
 .erro-form {
     padding: 10px 14px;
     border-radius: 10px;
-    background: #fde8ef;
-    color: #9c1f52;
+    background: var(--fundo-alerta);
+    color: var(--alerta-forte);
     font-size: 0.88rem;
 }
 
 .erro-form ul { list-style: none; }
+
+/* Eventos no escuro: o índigo do "trabalho" fica um pouco mais claro para aparecer no fundo */
+[data-tema="escuro"] .marca.tipo-trabalho { background: #6b5be0; }

@@ -22,7 +22,7 @@
     {# ===== Lateral: páginas e aparência ===== #}
     <aside class="caderno-lateral">
         <a href="{% url 'cadernos:index' %}" class="voltar">‹ cadernos</a>
-        <div class="mini-capa">
+        <div class="mini-capa sempre-claro">
             <strong>{{ caderno.nome }}</strong>
             {% if caderno.disciplina %}
                 <a href="{% url 'estudos:disciplina' caderno.disciplina.id %}">{{ caderno.disciplina.nome }}</a>
@@ -155,13 +155,13 @@
                             title="Material: {{ pagina.titulo }}"></iframe>
                     <div class="material-notas">
                         <p class="rotulo-notas">suas anotações</p>
-                        <div class="folha">
+                        <div class="folha sempre-claro">
                             <div id="editor" data-placeholder="Anote aqui dúvidas, resumos, o que caiu na prova..."></div>
                         </div>
                     </div>
                 </div>
             {% else %}
-                <div class="folha">
+                <div class="folha sempre-claro">
                     <div id="editor"></div>
                 </div>
             {% endif %}

@@ -1,5 +1,4 @@
 :root {
-    --texto-suave: #8a6b7c;
 }
 
 .sub {
@@ -60,12 +59,12 @@
     padding: 26px;
     border: none;
     border-radius: var(--raio);
-    box-shadow: 0 20px 60px rgba(74, 42, 61, 0.3);
+    box-shadow: 0 20px 60px rgb(var(--sombra-rgb) / 0.3);
     color: var(--texto);
 }
 
 .dialogo-caderno::backdrop {
-    background: rgba(74, 42, 61, 0.35);
+    background: rgb(var(--sombra-rgb) / 0.35);
 }
 
 .novo-caderno {
@@ -118,13 +117,13 @@
     background: var(--capa);
     color: var(--texto);
     text-decoration: none;
-    box-shadow: 0 10px 24px rgba(74, 42, 61, 0.18);
+    box-shadow: 0 10px 24px rgb(var(--sombra-rgb) / 0.18);
     transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .capa:hover {
     transform: translateY(-4px) rotate(-1deg);
-    box-shadow: 0 16px 30px rgba(74, 42, 61, 0.24);
+    box-shadow: 0 16px 30px rgb(var(--sombra-rgb) / 0.24);
 }
 
 .capa-lombada {
@@ -192,7 +191,7 @@
     border-radius: 6px 14px 14px 6px;
     border-left: 10px solid rgba(0, 0, 0, 0.14);
     background: var(--capa);
-    box-shadow: 0 6px 16px rgba(74, 42, 61, 0.15);
+    box-shadow: 0 6px 16px rgb(var(--sombra-rgb) / 0.15);
 }
 
 .mini-capa strong, .mini-capa a, .mini-capa small {
@@ -233,7 +232,7 @@
     border: none;
     border-radius: 8px;
     background: none;
-    color: #b0436f;
+    color: var(--alerta);
     cursor: pointer;
     opacity: 0;  /* só aparece ao passar o mouse (ou ao chegar pelo Tab) */
 }
@@ -251,7 +250,7 @@
     border: none;
     border-radius: 10px;
     background: none;
-    color: #b0436f;
+    color: var(--alerta);
     font-family: var(--fonte-mono);
     font-size: 0.75rem;
     cursor: pointer;
@@ -360,7 +359,7 @@
 .btn-texto-perigo {
     border: none;
     background: none;
-    color: #b0436f;
+    color: var(--alerta);
     font-family: inherit;
     font-size: 0.82rem;
     font-weight: 600;
@@ -438,7 +437,7 @@ input.titulo-pagina[type="text"]:focus { border-bottom-color: var(--rosa-claro);
 }
 
 .status-salvo.salvando { color: var(--lilas); }
-.status-salvo.erro { color: #b0436f; font-weight: 700; }
+.status-salvo.erro { color: var(--alerta); font-weight: 700; }
 
 .folha {
     border-radius: 18px;
@@ -534,8 +533,8 @@ input.titulo-pagina[type="text"]:focus { border-bottom-color: var(--rosa-claro);
 .marca-material {
     padding: 0 6px;
     border-radius: 999px;
-    background: #ece3fd;
-    color: #5b4bd0;
+    background: var(--fundo-lilas);
+    color: var(--roxo-texto);
     font-weight: 600;
 }
 

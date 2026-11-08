@@ -8,7 +8,6 @@
     --g-3: #bf3f7c;
     --g-4: #8c2a5c;
     --g-grade: #f3e6ec;
-    --texto-suave: #8a6b7c;
 
     display: flex;
     flex-direction: column;
@@ -136,13 +135,13 @@
     color: var(--texto-suave);
 }
 
-.kpi-delta.subiu { color: #2f855a; }
-.kpi-delta.desceu { color: #b0436f; }
+.kpi-delta.subiu { color: var(--sucesso); }
+.kpi-delta.desceu { color: var(--alerta); }
 .kpi-delta span { color: var(--texto-suave); }
 
 /* Meta: barra de progresso */
 .kpi-meta {
-    background: linear-gradient(135deg, #fff, #fdf0f7);
+    background: linear-gradient(135deg, var(--branco), var(--fundo-suave));
 }
 
 .medidor {
@@ -371,12 +370,12 @@
 }
 
 .cal-dia.fora {
-    color: #d8c6cf;
+    color: var(--apagado);
 }
 
 .cal-dia.hoje {
     background: var(--degrade);
-    color: var(--branco);
+    color: var(--sobre-cor);
     font-weight: 700;
 }
 
@@ -406,7 +405,7 @@
 }
 
 .cal-marcas .marca.tipo-outro {
-    box-shadow: inset 0 0 0 1.5px #8a6b7c, 0 0 0 1.5px var(--branco);
+    box-shadow: inset 0 0 0 1.5px var(--texto-suave), 0 0 0 1.5px var(--branco);
 }
 
 .cal-legenda {
@@ -509,7 +508,7 @@ a.sub:hover {
 }
 
 .celula.nivel-1 small, .celula.nivel-2 small { color: var(--texto); }
-.celula.nivel-3 small, .celula.nivel-4 small { color: var(--branco); }
+.celula.nivel-3 small, .celula.nivel-4 small { color: var(--sobre-cor); }
 
 .celula.fora { background: transparent; }
 .celula.futuro { box-shadow: inset 0 0 0 1px var(--g-grade); }
@@ -606,9 +605,9 @@ a.sub:hover {
     padding: 10px 12px;
     border-radius: 10px;
     background: var(--texto);
-    color: var(--branco);
+    color: var(--sobre-cor);
     font-size: 0.8rem;
-    box-shadow: 0 8px 24px rgba(74, 42, 61, 0.25);
+    box-shadow: 0 8px 24px rgb(var(--sombra-rgb) / 0.25);
     pointer-events: none;
     transform: translate(-50%, calc(-100% - 10px));
 }
@@ -667,7 +666,7 @@ a.sub:hover {
 .dash-filtro a.ativo {
     background: var(--degrade);
     border-color: transparent;
-    color: var(--branco);
+    color: var(--sobre-cor);
     font-weight: 700;
 }
 
@@ -796,3 +795,15 @@ a.sub:hover {
 }
 
 .proj-diario { font-style: italic; }
+
+/* ===== Modo escuro (paletas validadas para daltonismo no fundo #241820) =====
+   Mapa de calor: no escuro, pouco tempo = rosa apagado e muito tempo = rosa claro e brilhante. */
+[data-tema="escuro"] .dash {
+    --g-vazio: #33252d;
+    --g-grade: #33252d;
+    --g-1: #8e3363;
+    --g-2: #b8457f;
+    --g-3: #e0609a;
+    --g-4: #f39cc4;
+}
+[data-tema="escuro"] .celula.nivel-4 small { color: #1a1216; }  /* o rosa mais claro pede texto escuro */

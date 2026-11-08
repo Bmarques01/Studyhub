@@ -23,7 +23,7 @@
     <div class="grade-cadernos">
         {# ===== Cadernos (capas) ===== #}
         {% for c in cadernos %}
-            <a href="{% url 'cadernos:caderno' c.id %}" class="capa" style="--capa: {{ c.cor_capa }}">
+            <a href="{% url 'cadernos:caderno' c.id %}" class="capa sempre-claro" style="--capa: {{ c.cor_capa }}">
                 <span class="capa-lombada"></span>
                 <span class="capa-etiqueta">
                     <strong class="fonte-{{ c.fonte }}">{{ c.nome }}</strong>

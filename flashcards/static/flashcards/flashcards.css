@@ -149,11 +149,11 @@ code {
     padding: 24px 26px;
     border: none;
     border-radius: var(--raio);
-    box-shadow: 0 20px 60px rgba(74, 42, 61, 0.3);
+    box-shadow: 0 20px 60px rgb(var(--sombra-rgb) / 0.3);
     color: var(--texto);
 }
 
-.fc-dialogo::backdrop { background: rgba(74, 42, 61, 0.35); }
+.fc-dialogo::backdrop { background: rgb(var(--sombra-rgb) / 0.35); }
 
 .fc-dialogo-topo {
     display: flex;
@@ -400,3 +400,8 @@ textarea.mono { font-family: var(--fonte-mono); font-size: 0.82rem; }
 }
 
 .fc-fim .btn { margin-top: 16px; }
+
+/* Modo escuro: bordas das notas (validadas no fundo #241820) */
+[data-tema="escuro"] .nota-1 { --borda: #d64f8f; }
+[data-tema="escuro"] .nota-3 { --borda: #6b5be0; }
+[data-tema="escuro"] .nota-4 { --borda: #c07ce0; }

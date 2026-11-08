@@ -38,8 +38,8 @@
 .ia-historico a small { color: var(--texto-suave); font-size: 0.75rem; }
 .ia-custo { font-family: var(--fonte-mono); font-size: 0.8rem; }
 .ia-historico li > small { grid-column: 2; font-size: 0.72rem; text-align: right; }
-.ia-salvo { color: #2f7a4f; }
-.ia-falhou { color: #9c2f5f; }
+.ia-salvo { color: var(--sucesso); }
+.ia-falhou { color: var(--alerta-forte); }
 .ia-pendente { color: var(--lilas); }
 
 /* ===== Revisão ===== */
@@ -60,7 +60,7 @@
 .ia-editar { padding: 0; max-width: none; }
 .ia-previa { display: flex; flex-direction: column; gap: 12px; max-height: 70vh; overflow-y: auto; }
 
-.ia-salvos { color: #2f7a4f; font-weight: 600; }
+.ia-salvos { color: var(--sucesso); font-weight: 600; }
 .ia-salvos a { color: var(--rosa-forte); margin-left: 6px; }
 
 .ia-cartoes { display: flex; flex-direction: column; gap: 8px; padding-left: 22px; }

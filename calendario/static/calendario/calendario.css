@@ -54,7 +54,7 @@
     gap: 16px;
     margin-bottom: 16px;
     font-size: 0.8rem;
-    color: #8a6b7c;
+    color: var(--texto-suave);
 }
 
 .legenda-tipos span {
@@ -80,7 +80,7 @@
     padding-bottom: 4px;
     font-family: var(--fonte-mono);
     font-size: 0.72rem;
-    color: #8a6b7c;
+    color: var(--texto-suave);
     text-align: center;
 }
 
@@ -110,7 +110,7 @@
 }
 
 .mes-dia.fora .mes-numero {
-    color: #d8c6cf;
+    color: var(--apagado);
 }
 
 .mes-numero {
@@ -127,7 +127,7 @@
 
 .mes-dia.hoje .mes-numero {
     background: var(--degrade);
-    color: var(--branco);
+    color: var(--sobre-cor);
 }
 
 .evento-chip {
@@ -170,7 +170,7 @@
     padding-left: 6px;
     font-family: var(--fonte-mono);
     font-size: 0.68rem;
-    color: #8a6b7c;
+    color: var(--texto-suave);
 }
 
 /* ===== Formulário de evento ===== */
@@ -187,7 +187,7 @@
     gap: 6px;
     font-family: var(--fonte-mono);
     font-size: 0.75rem;
-    color: #8a6b7c;
+    color: var(--texto-suave);
     border: none;
     min-width: 0;
 }
@@ -289,7 +289,7 @@
 .btn-texto-perigo {
     border: none;
     background: none;
-    color: #b0436f;
+    color: var(--alerta);
     font-family: inherit;
     font-weight: 600;
     cursor: pointer;

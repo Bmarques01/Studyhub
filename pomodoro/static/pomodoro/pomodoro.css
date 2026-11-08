@@ -62,7 +62,7 @@
 }
 
 .tempos-topo small {
-    color: var(--texto-suave, #8a6b7c);
+    color: var(--texto-suave);
 }
 
 .modo-atual {
@@ -186,7 +186,7 @@
 .btn-principal {
     border: none;
     background: var(--degrade);
-    color: var(--branco);
+    color: var(--sobre-cor);
     font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: 0.03em;
@@ -278,7 +278,7 @@ kbd {
 .ruido-ligar[aria-pressed="true"] {
     border-color: transparent;
     background: var(--degrade);
-    color: var(--branco);
+    color: var(--sobre-cor);
     font-weight: 700;
 }
 
@@ -315,7 +315,7 @@ kbd {
 
 .ruido-estado {
     min-width: 9em;
-    color: var(--texto-suave, #8a6b7c);
+    color: var(--texto-suave);
 }
 
 /* ===== Resumo do dia ===== */

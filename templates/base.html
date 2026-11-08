@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block titulo %}{% endblock %} · Studyhub</title>
+    {# Aplica o tema escolhido ANTES de desenhar a página (senão ela pisca clara a cada troca de tela) #}
+    <script>try { if (localStorage.getItem('tema') === 'escuro') document.documentElement.dataset.tema = 'escuro'; } catch (e) {}</script>
 
     <!-- Fontes do Google: Space Grotesk (texto) e JetBrains Mono (logo e números) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +15,7 @@
 
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <script src="{% static 'js/editar.js' %}" defer></script>
+    <script src="{% static 'js/tema.js' %}" defer></script>
     {# Motor do pomodoro: roda em todas as páginas, para o tempo não parar ao navegar #}
     <script src="{% static 'js/pomodoro-motor.js' %}" defer></script>
     {% block head %}{% endblock %}
@@ -68,6 +71,10 @@
                 <strong>{{ nome }}</strong>
                 <a href="{% url 'trocar_senha' %}">trocar senha</a>
             </div>
+            <button type="button" class="btn-icone" data-trocar-tema title="Modo escuro" aria-label="Modo escuro" aria-pressed="false">
+                <span data-icone-lua>{% include "componentes/icone.html" with nome="lua" %}</span>
+                <span data-icone-sol hidden>{% include "componentes/icone.html" with nome="sol" %}</span>
+            </button>
             {# Sair é um formulário (POST), para nenhum link de fora deslogar você sem querer #}
             <form method="post" action="{% url 'sair' %}">
                 {% csrf_token %}

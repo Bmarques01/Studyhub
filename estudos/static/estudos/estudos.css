@@ -278,7 +278,7 @@
 .btn-texto-perigo {
     border: none;
     background: none;
-    color: #b0436f;
+    color: var(--alerta);
     font-family: inherit;
     font-size: 0.85rem;
     font-weight: 600;
@@ -337,7 +337,7 @@ details[open] > .grupo-resumo .seta {
 .grupo-info {
     margin-left: auto;
     font-size: 0.8rem;
-    color: #8a6b7c;
+    color: var(--texto-suave);
 }
 
 .grupo-corpo {
@@ -410,7 +410,7 @@ details[open] > .grupo-resumo .seta {
 
 .cartao-info {
     font-size: 0.8rem;
-    color: #8a6b7c;
+    color: var(--texto-suave);
 }
 
 .cartao-evento {

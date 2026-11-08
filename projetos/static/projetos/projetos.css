@@ -1,5 +1,4 @@
 :root {
-    --texto-suave: #8a6b7c;
 }
 
 .sub {
@@ -85,12 +84,12 @@
 }
 
 .status-ativo { background: var(--rosa-bebe); }
-.status-ideia, .status-pausado { background: #f0eaf0; }
-.status-concluido { background: #e8e4fb; }
+.status-ideia, .status-pausado { background: var(--fundo-neutro); }
+.status-concluido { background: var(--fundo-lilas); }
 
 /* pessoal × trabalho: o texto diz o tipo; a borda só ajuda a bater o olho */
 .etiqueta.tipo-pessoal { background: var(--branco); box-shadow: inset 0 0 0 1px var(--rosa); }
-.etiqueta.tipo-trabalho { background: var(--branco); box-shadow: inset 0 0 0 1px #6250d6; color: #4b3cb0; }
+.etiqueta.tipo-trabalho { background: var(--branco); box-shadow: inset 0 0 0 1px #6250d6; color: var(--roxo-texto); }
 
 .etiquetas { display: inline-flex; gap: 5px; flex-shrink: 0; }
 
@@ -242,7 +241,7 @@
     gap: 10px;
     padding: 14px;
     border-radius: var(--raio);
-    background: rgba(255, 255, 255, 0.7);
+    background: color-mix(in srgb, var(--branco) 70%, transparent);
     border: 1px solid var(--rosa-bebe);
 }
 
@@ -346,9 +345,9 @@
     color: var(--vinho);
 }
 
-.tipo-bug { background: #fbe3e8; color: #9b2c4a; }
-.tipo-melhoria { background: #ece6fb; color: #4b3a8c; }
-.tipo-refatoracao { background: #f1ecee; color: #5a4a52; }
+.tipo-bug { background: var(--fundo-alerta); color: var(--alerta-forte); }
+.tipo-melhoria { background: var(--fundo-lilas); color: var(--roxo-texto); }
+.tipo-refatoracao { background: var(--fundo-neutro); color: var(--texto); }
 
 .prioridade {
     font-family: var(--fonte-mono);
@@ -483,7 +482,7 @@
     color: var(--rosa-forte);
 }
 
-.entrada-rotulo.travei { color: #b0436f; }
+.entrada-rotulo.travei { color: var(--alerta); }
 
 .editar-projeto summary {
     cursor: pointer;
@@ -499,7 +498,7 @@
 .btn-texto-perigo {
     border: none;
     background: none;
-    color: #b0436f;
+    color: var(--alerta);
     font-family: inherit;
     font-size: 0.85rem;
     font-weight: 600;
@@ -555,7 +554,7 @@
     place-items: center;
     border-color: var(--rosa-forte);
     background: var(--rosa-forte);
-    color: var(--branco);
+    color: var(--sobre-cor);
     font-size: 0.75rem;
     font-weight: 700;
 }
@@ -568,7 +567,7 @@
     margin-bottom: 6px;
 }
 
-.passou { color: #b0436f; }
+.passou { color: var(--alerta); }
 
 .funcionalidade-pagina .medidor-projeto {
     margin-top: 10px;

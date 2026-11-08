@@ -131,6 +131,17 @@ Compartilhado: `templates/base.html` (menu lateral, mensagens, mini pomodoro), `
   `#f093bb, #e0609a, #bf3f7c, #8c2a5c`; eventos prova `#d64f8f`, trabalho `#6250d6`, entrega `#c98500`,
   outro = bolinha vazada; grade concluída `#c2417f`, compensada `#ee8fb7`, cursando `#5b4bd0`.
   Estados sempre com ícone/texto além da cor.
+- **Modo escuro** (só pelo botão lua/sol na caixa da usuária; `static/js/tema.js`, escolha em
+  `localStorage["tema"]`; uma linha no `<head>` do `base.html` e do `login.html` aplica antes de desenhar):
+  `:root[data-tema="escuro"]` só troca os valores das variáveis do topo do `base.css` (fundo `#1a1216`,
+  cartões `--branco: #241820`, texto `#f3e6ee`). Por isso **nada de cor escrita direto no CSS**: usar as
+  variáveis (`--texto-suave`, `--apagado`, `--alerta`, `--sucesso`, `--roxo-texto`, `--fundo-alerta/-lilas/
+  -neutro/-aviso/-suave`, sombras com `rgb(var(--sombra-rgb) / 0.2)`). Texto sobre rosa/degradê usa
+  `--sobre-cor` (sempre branco; `--branco` vira escuro no escuro). `.sempre-claro` devolve a paleta clara
+  (folhas e capas dos cadernos são "papel"). Paletas do escuro validadas no fundo `#241820` (no fim de cada
+  CSS): calor `#8e3363, #b8457f, #e0609a, #f39cc4`; trabalho `#6b5be0`; grade `#b8407a / #e57aad / #7262e6`;
+  certa/errada `#7262e6 / #e0609a`; notas `#d64f8f, #c98500, #6b5be0, #c07ce0` (compensada e nota 4 ficam
+  um pouco acima da faixa de brilho para separar bem dos vizinhos; sempre têm texto junto).
 
 ## Convenções de código
 
