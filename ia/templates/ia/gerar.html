@@ -110,8 +110,13 @@
             <h2 class="rotulo">custo da IA</h2>
             <p class="ia-total"><strong>US$ {{ total_mes|floatformat:2 }}</strong> este mês
                 <small>· {{ geracoes_mes }} {% if geracoes_mes == 1 %}geração{% else %}gerações{% endif %}</small></p>
-            <p class="qz-dica">Questões e flashcards custam alguns centavos de dólar; um resumo completo de um PDF grande
-                pode passar de US$ 0,50. O saldo de créditos fica em platform.claude.com.</p>
+            {% if modo_ia == 'assinatura' %}
+                <p class="qz-dica">Gerando <strong>pela sua assinatura do Claude</strong> (Claude Code deste computador):
+                    não gasta créditos da API, mas conta no limite de uso do plano. O total acima soma só o que foi pela API.</p>
+            {% else %}
+                <p class="qz-dica">Gerando pela API: questões e flashcards custam alguns centavos de dólar; um resumo completo
+                    de um PDF grande pode passar de US$ 0,50. O saldo de créditos fica em platform.claude.com.</p>
+            {% endif %}
 
             {% if historico %}
                 <h2 class="rotulo">últimas gerações</h2>
@@ -126,7 +131,7 @@
                                 {% endif %}
                                 <small>{{ g.criada_em|date:"d/m H:i" }} · {{ g.material|truncatechars:30 }}</small>
                             </a>
-                            <span class="ia-custo">US$ {{ g.custo|floatformat:2 }}</span>
+                            <span class="ia-custo">{% if g.via == 'assinatura' %}assinatura{% else %}US$ {{ g.custo|floatformat:2 }}{% endif %}</span>
                             {% if g.erro %}<small class="ia-falhou">não deu certo</small>
                             {% elif g.tipo == 'resumo' %}<small class="ia-salvo">{% if g.pagina %}✓ no caderno{% else %}página excluída{% endif %}</small>
                             {% elif g.questoes_salvas or g.flashcards_salvos %}<small class="ia-salvo">✓ salvo</small>

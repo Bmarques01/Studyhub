@@ -1,4 +1,5 @@
 import json
+import pathlib
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -13,7 +14,7 @@ from flashcards.models import Flashcard
 from questoes.importacao import ler_questoes
 from questoes.models import Questao
 
-from . import gerador
+from . import assinatura, gerador
 from .models import Geracao, custo_do_mes
 
 # O que a IA "devolveria" (no formato do esquema)
@@ -79,7 +80,7 @@ class GeradorTests(TestCase):
         self.assertIsNotNone(gerador.ler_resposta(mensagem_falsa(stop_reason='refusal'))[1])
 
     def test_sem_chave(self):
-        with patch.dict('os.environ', {'ANTHROPIC_API_KEY': ''}):
+        with patch.dict('os.environ', {'ANTHROPIC_API_KEY': '', 'IA_MODO': 'api'}):
             with self.assertRaisesMessage(gerador.ErroDaIA, 'Falta a chave'):
                 gerador.pedir_ao_claude({}, 'pedido')
 
@@ -278,3 +279,111 @@ class ResumoTests(TestCase):
                                                           'gerar_flashcards': 'on', 'quantidade_flashcards': 2})
         self.assertContains(resposta, 'página do caderno está vazia')
         falso.assert_not_called()
+
+
+# ===== Modo assinatura (o Claude Code do computador). O programa nunca roda de verdade nos testes. =====
+
+def saida_do_claude_code(**extra):
+    """O JSON que o `claude -p --output-format json` devolve (só os campos que usamos)."""
+    dados = {'type': 'result', 'subtype': 'success', 'is_error': False, 'result': '',
+             'structured_output': RESPOSTA, 'stop_reason': 'tool_use',
+             'usage': {'input_tokens': 2, 'cache_creation_input_tokens': 1500, 'cache_read_input_tokens': 500,
+                       'output_tokens': 300}}
+    dados.update(extra)
+    return json.dumps(dados)
+
+
+class AssinaturaTests(TestCase):
+    def test_le_a_resposta_com_esquema(self):
+        mensagem = assinatura.ler_saida(saida_do_claude_code())
+        self.assertEqual(mensagem.via, 'assinatura')
+        self.assertEqual(mensagem.stop_reason, 'end_turn')
+        self.assertEqual(mensagem.usage.input_tokens, 2002)  # entrada + cache
+        dados, erro = gerador.ler_resposta(mensagem)
+        self.assertIsNone(erro)
+        self.assertEqual(len(dados['questoes']), 3)
+
+    def test_le_o_html_do_resumo(self):
+        mensagem = assinatura.ler_saida(saida_do_claude_code(structured_output=None, stop_reason='end_turn',
+                                                              result='Pronto!\n<!DOCTYPE html><html>oi</html>'))
+        self.assertEqual(gerador.extrair_html(mensagem), ('<!DOCTYPE html><html>oi</html>', None))
+
+    def test_erros_viram_mensagens(self):
+        for texto, esperado in [('Claude usage limit reached', 'limite de uso'),
+                                ('Not logged in · Please run /login', 'login'),
+                                ('outra coisa', 'deu erro')]:
+            with self.assertRaisesMessage(assinatura.ErroDaAssinatura, esperado):
+                assinatura.ler_saida(saida_do_claude_code(is_error=True, subtype='error_during_execution',
+                                                          result=texto))
+        with self.assertRaisesMessage(assinatura.ErroDaAssinatura, 'formato inesperado'):
+            assinatura.ler_saida('isso não é json')
+
+    def test_sem_custo_em_dolar(self):
+        mensagem = assinatura.ler_saida(saida_do_claude_code())
+        mensagem.model = gerador.MODELO
+        uso = gerador.uso_e_custo(mensagem)
+        self.assertEqual((uso['via'], uso['custo']), ('assinatura', Decimal('0')))
+        self.assertEqual(gerador.uso_e_custo(mensagem_falsa())['via'], 'api')  # a da API continua com custo
+
+    def test_ambiente_sem_a_chave_da_api(self):
+        """Com a chave no ambiente, o Claude Code usaria a API (e gastaria créditos)."""
+        with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'sk-teste'}):
+            variaveis = assinatura.ambiente(64000)
+        self.assertNotIn('ANTHROPIC_API_KEY', variaveis)
+        self.assertEqual(variaveis['CLAUDE_CODE_MAX_OUTPUT_TOKENS'], '64000')
+
+    def test_comando(self):
+        sem_pdf = assinatura.montar_comando('claude', 'sistema', gerador.ESQUEMA, 'claude-opus-5-5', com_pdf=False)
+        self.assertIn('--json-schema', sem_pdf)
+        self.assertEqual(sem_pdf[sem_pdf.index('--tools') + 1], '')  # nenhuma ferramenta
+        com_pdf = assinatura.montar_comando('claude', 'sistema', None, 'claude-opus-5-5', com_pdf=True)
+        self.assertNotIn('--json-schema', com_pdf)
+        self.assertEqual(com_pdf[com_pdf.index('--tools') + 1], 'Read')
+
+    def test_acha_a_extensao_mais_nova(self):
+        caminhos = ['C:/u/.vscode/extensions/anthropic.claude-code-2.1.9-win32-x64/resources/native-binary/claude.exe',
+                    'C:/u/.vscode/extensions/anthropic.claude-code-2.1.319-win32-x64/resources/native-binary/claude.exe']
+        self.assertEqual(max(caminhos, key=assinatura.versao), caminhos[1])
+
+    def test_caminho_do_env_que_nao_existe(self):
+        with patch.dict('os.environ', {'CLAUDE_CAMINHO': 'C:/nao/existe/claude.exe'}):
+            with self.assertRaisesMessage(assinatura.ErroDaAssinatura, 'não existe'):
+                assinatura.achar_programa()
+
+    @patch('ia.assinatura.achar_programa', return_value='claude')
+    @patch('ia.assinatura.subprocess.run')
+    def test_pdf_vai_para_a_pasta_temporaria(self, rodar, _):
+        vistos = {}
+
+        def falso(comando, **opcoes):
+            pasta = pathlib.Path(opcoes['cwd'])
+            vistos['pdf'] = (pasta / 'slides.pdf').read_bytes()
+            vistos['pedido'] = opcoes['input']
+            return SimpleNamespace(stdout=saida_do_claude_code(), stderr='', returncode=0)
+
+        rodar.side_effect = falso
+        with patch.dict('os.environ', {'IA_MODO': 'assinatura'}):
+            mensagem = gerador.pedir_ao_claude(gerador.conteudo_do_material(pdf=b'%PDF-1.4 slides'), 'Gere 1.')
+        self.assertEqual(vistos['pdf'], b'%PDF-1.4 slides')
+        self.assertIn('slides.pdf', vistos['pedido'])
+        self.assertEqual((mensagem.via, mensagem.model), ('assinatura', gerador.MODELO))
+
+    @patch('ia.assinatura.achar_programa', return_value='claude')
+    @patch('ia.assinatura.subprocess.run', return_value=SimpleNamespace(stdout='', stderr='travou', returncode=1))
+    def test_sem_resposta_vira_erro_da_ia(self, *_):
+        with patch.dict('os.environ', {'IA_MODO': 'assinatura'}):
+            with self.assertRaisesMessage(gerador.ErroDaIA, 'travou'):
+                gerador.pedir_ao_claude(gerador.conteudo_do_material(texto='oi'), 'Gere 1.')
+
+    @patch('ia.gerador.pedir_ao_claude')
+    def test_geracao_pela_assinatura_aparece_sem_dolar(self, falso):
+        falso.return_value = assinatura.ler_saida(saida_do_claude_code())
+        falso.return_value.model = gerador.MODELO
+        categoria = Categoria.objects.create(nome='CC')
+        redes = Disciplina.objects.create(nome='Redes', categoria=categoria)
+        resposta = self.client.post(reverse('ia:gerar'), {
+            'disciplina': redes.id, 'texto': 'O BGP usa TCP.', 'gerar_questoes': 'on', 'quantidade_questoes': 3,
+            'tipos': ['multipla'], 'gerar_flashcards': 'on', 'quantidade_flashcards': 1}, follow=True)
+        geracao = Geracao.objects.get()
+        self.assertEqual((geracao.via, geracao.custo), ('assinatura', Decimal('0')))
+        self.assertContains(resposta, 'pela assinatura')

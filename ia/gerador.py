@@ -7,7 +7,9 @@ Como funciona:
 3. Transformamos esse JSON no MESMO texto da importação (P: / A) ... * / R: / E: e F: / V:).
    Assim a revisão usa os leitores que já existem, e a Bruna pode editar o texto antes de salvar.
 
-A chave da API vem do arquivo .env (ANTHROPIC_API_KEY) e nunca vai para o navegador.
+Dois jeitos de falar com o Claude (IA_MODO no .env):
+- "assinatura" (padrão): pelo Claude Code do computador, gastando o limite do plano (ia/assinatura.py).
+- "api": pela API paga por uso; a chave vem do .env (ANTHROPIC_API_KEY) e nunca vai para o navegador.
 """
 import base64
 import json
@@ -17,6 +19,8 @@ from html.parser import HTMLParser
 from decimal import Decimal
 
 import anthropic
+
+from . import assinatura
 
 from flashcards.importacao import MARCADOR as MARCADOR_CARTAO
 from questoes.importacao import ALTERNATIVA, MARCA_DE_CERTA, MARCADOR as MARCADOR_QUESTAO
@@ -130,10 +134,29 @@ def conteudo_do_material(pdf=None, texto=''):
     return {'type': 'text', 'text': f'<material>\n{texto}\n</material>'}
 
 
+def modo():
+    """'assinatura' ou 'api', conforme o IA_MODO do .env."""
+    return 'api' if os.environ.get('IA_MODO', '').strip().lower() == 'api' else 'assinatura'
+
+
 def pedir_ao_claude(material, pedido, sistema=SISTEMA, esquema=ESQUEMA, max_tokens=MAX_TOKENS):
-    """A chamada à API (separada para os testes poderem trocá-la por uma resposta falsa).
-    Usa "stream" porque a resposta pode demorar; no fim pegamos a mensagem inteira.
-    esquema=None: resposta em texto livre (o guia em HTML)."""
+    """O pedido ao Claude (separado para os testes poderem trocá-lo por uma resposta falsa).
+    material: o bloco de conteudo_do_material. esquema=None: resposta em texto livre (o guia em HTML)."""
+    if modo() == 'api':
+        return pedir_pela_api(material, pedido, sistema, esquema, max_tokens)
+    if material.get('type') == 'document':
+        pdf, texto = base64.standard_b64decode(material['source']['data']), ''
+    else:
+        pdf, texto = None, material.get('text', '')
+    try:
+        return assinatura.pedir(pdf=pdf, texto=texto, pedido=pedido, sistema=sistema, esquema=esquema,
+                                max_tokens=max_tokens, modelo=MODELO)
+    except assinatura.ErroDaAssinatura as erro:
+        raise ErroDaIA(str(erro))
+
+
+def pedir_pela_api(material, pedido, sistema, esquema, max_tokens):
+    """A chamada à API. Usa "stream" porque a resposta pode demorar; no fim pegamos a mensagem inteira."""
     formato = {'effort': 'medium'}
     if esquema:
         formato['format'] = {'type': 'json_schema', 'schema': esquema}
@@ -235,12 +258,15 @@ def flashcards_em_texto(cartoes):
 
 
 def uso_e_custo(mensagem):
+    """Pela assinatura não há custo em dólar (sai do limite do plano): o custo fica 0."""
     uso = mensagem.usage
+    via = getattr(mensagem, 'via', 'api')
     return {
+        'via': via,
         'modelo': mensagem.model,
         'tokens_entrada': uso.input_tokens,
         'tokens_saida': uso.output_tokens,
-        'custo': calcular_custo(mensagem.model, uso.input_tokens, uso.output_tokens),
+        'custo': Decimal('0') if via == 'assinatura' else calcular_custo(mensagem.model, uso.input_tokens, uso.output_tokens),
     }
 
 

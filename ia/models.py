@@ -32,7 +32,11 @@ class Geracao(models.Model):
     pediu_questoes = models.PositiveSmallIntegerField(default=0)
     pediu_flashcards = models.PositiveSmallIntegerField(default=0)
 
-    # O que a API devolveu (para o histórico de custos)
+    # Por onde foi: API (paga por uso) ou assinatura do Claude (pelo Claude Code, sem custo em dólar)
+    VIAS = [('api', 'API'), ('assinatura', 'assinatura do Claude')]
+    via = models.CharField(max_length=10, choices=VIAS, default='api')
+
+    # O que o Claude devolveu (para o histórico de custos)
     modelo = models.CharField(max_length=60, blank=True)
     tokens_entrada = models.PositiveIntegerField(default=0)
     tokens_saida = models.PositiveIntegerField(default=0)

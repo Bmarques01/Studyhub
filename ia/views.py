@@ -77,6 +77,7 @@ def gerar(request):
         'historico': Geracao.objects.select_related('disciplina', 'topico', 'pagina__caderno')[:10],
         'total_mes': total_mes,
         'geracoes_mes': geracoes_mes,
+        'modo_ia': gerador.modo(),
     })
 
 
@@ -187,5 +188,6 @@ def resumo(request, caderno_id):
     if not pagina:
         messages.error(request, resultado['erro'])
         return redirect('cadernos:caderno', caderno_id=caderno.id)
-    messages.success(request, f'Resumo "{pagina.titulo}" criado (custou US$ {resultado["custo"]:.2f}).')
+    gasto = 'pela assinatura' if resultado['via'] == 'assinatura' else f'custou US$ {resultado["custo"]:.2f}'
+    messages.success(request, f'Resumo "{pagina.titulo}" criado ({gasto}).')
     return redirect('cadernos:pagina', pagina_id=pagina.id)

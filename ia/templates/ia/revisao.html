@@ -19,7 +19,7 @@
             <p class="dash-data">
                 {{ geracao.disciplina.nome|default:"(disciplina excluída)" }}{% if geracao.topico %} · {{ geracao.topico.nome }}{% endif %} ·
                 {{ geracao.material }} · {{ geracao.criada_em|date:"d/m/Y H:i" }} ·
-                custou US$ {{ geracao.custo|floatformat:2 }}
+                {% if geracao.via == 'assinatura' %}pela assinatura{% else %}custou US$ {{ geracao.custo|floatformat:2 }}{% endif %}
             </p>
         </div>
     </header>
