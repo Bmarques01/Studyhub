@@ -153,3 +153,22 @@ def registrar_erro(questao, resposta_dada, quando=None):
         erro.dominado_em = None
         erro.save()
     return erro
+
+
+def desfazer_erro(resposta):
+    """O contrário do registrar_erro, para o "cliquei errado": se a questão entrou no caderno
+    só por causa desta resposta, ela sai; se já estava lá, conta uma vez a menos."""
+    erro = Erro.objects.filter(questao_id=resposta.questao_id).first()
+    if not erro:
+        return
+    if erro.vezes <= 1:
+        erro.delete()
+        return
+    erro.vezes -= 1
+    # a "última resposta errada" volta a ser a de antes desta
+    anterior = (Resposta.objects.filter(questao_id=resposta.questao_id, acertou=False)
+                .exclude(id=resposta.id).order_by('-respondida_em').first())
+    if anterior:
+        erro.resposta_dada = anterior.resposta_dada
+        erro.errou_em = anterior.respondida_em
+    erro.save()

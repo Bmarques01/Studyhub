@@ -79,9 +79,18 @@
     {% elif momento == 'correcao' %}
         {# ===== Correção da questão que acabou de responder ===== #}
         <section class="card qz-palco">
-            <p class="qz-resultado-questao {% if resposta.acertou %}acertou{% else %}errou{% endif %}" role="status">
-                {% if resposta.acertou %}✓ Acertou!{% else %}✗ Errou{% endif %}
-            </p>
+            <div class="qz-resultado-linha">
+                <p class="qz-resultado-questao {% if resposta.acertou %}acertou{% else %}errou{% endif %}" role="status">
+                    {% if resposta.acertou %}✓ Acertou!{% else %}✗ Errou{% endif %}
+                </p>
+                {% if pode_desfazer %}
+                    {# clicou na alternativa errada sem querer: apaga a resposta e responde de novo #}
+                    <form method="post" action="{% url 'questoes:desfazer' item.id resposta.id %}">
+                        {% csrf_token %}
+                        <button class="btn-texto qz-desfazer" title="Apaga esta resposta (e o que ela pôs no caderno de erros) para responder de novo">↶ cliquei errado</button>
+                    </form>
+                {% endif %}
+            </div>
             <div class="qz-enunciado">{{ questao.enunciado }}</div>
             {% if questao.tipo == 'multipla' %}
                 <ul class="qz-alternativas qz-corrigidas">

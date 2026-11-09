@@ -16,6 +16,7 @@ urlpatterns = [
     path('questionario/novo/', views.criar_questionario, name='criar_questionario'),
     path('questionario/<int:questionario_id>/', views.questionario, name='questionario'),
     path('questionario/<int:questionario_id>/responder/', views.responder, name='responder'),
+    path('questionario/<int:questionario_id>/desfazer/<int:resposta_id>/', views.desfazer, name='desfazer'),
     path('questionario/<int:questionario_id>/refazer/', views.refazer_erradas, name='refazer_erradas'),
 
     # caderno de erros (os nomes têm "erro": é assim que o menu sabe marcar "Erros")

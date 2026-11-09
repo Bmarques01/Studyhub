@@ -483,3 +483,56 @@ class CadernoDeErrosTests(Base):
         migracao.trazer_erros_antigos(apps, None)
         erro = Erro.objects.get()
         self.assertEqual((erro.vezes, erro.resposta_dada), (2, 'C'))
+
+
+class CliqueiErradoTests(Base):
+    """O "cliquei errado" da correção: apaga a última resposta e desfaz o caderno de erros."""
+
+    def setUp(self):
+        super().setUp()
+        self.q = self.multipla(topico=self.bgp)
+        self.q2 = self.multipla(enunciado='Qual porta o OSPF usa?')
+        self.item = Questionario.objects.create(disciplina=self.redes, questoes=[self.q.id, self.q2.id])
+
+    def responder(self, questao, texto):
+        alternativa = questao.alternativas.get(texto=texto)
+        self.client.post(reverse('questoes:responder', args=[self.item.id]),
+                         {'questao': questao.id, 'alternativa': alternativa.id})
+        return Resposta.objects.filter(questionario=self.item, questao=questao).get()
+
+    def desfazer(self, resposta):
+        return self.client.post(reverse('questoes:desfazer', args=[self.item.id, resposta.id]))
+
+    def test_desfazer_erro_novo(self):
+        resposta = self.responder(self.q, '80')
+        pagina = self.client.get(reverse('questoes:questionario', args=[self.item.id]) + f'?ver={resposta.id}')
+        self.assertContains(pagina, 'cliquei errado')
+        self.desfazer(resposta)
+        # a resposta some, a questão sai do caderno e volta a ser a da vez
+        self.assertFalse(Resposta.objects.exists())
+        self.assertFalse(Erro.objects.exists())
+        pagina = self.client.get(reverse('questoes:questionario', args=[self.item.id]))
+        self.assertEqual(pagina.context['questao'], self.q)
+
+    def test_erro_antigo_so_conta_uma_vez_a_menos(self):
+        antes = registrar_erro(self.q, 'C')
+        resposta = self.responder(self.q, '80')
+        self.assertEqual(Erro.objects.get().vezes, 2)
+        self.desfazer(resposta)
+        erro = Erro.objects.get()
+        self.assertEqual((erro.id, erro.vezes), (antes.id, 1))
+
+    def test_so_a_ultima_resposta(self):
+        primeira = self.responder(self.q, '179')
+        segunda = self.responder(self.q2, '80')
+        pagina = self.client.get(reverse('questoes:questionario', args=[self.item.id]) + f'?ver={primeira.id}')
+        self.assertNotContains(pagina, 'cliquei errado')
+        self.desfazer(primeira)  # não é a última: nada muda
+        self.assertEqual(Resposta.objects.count(), 2)
+        self.desfazer(segunda)
+        self.assertEqual(list(Resposta.objects.values_list('id', flat=True)), [primeira.id])
+
+    def test_so_aceita_post(self):
+        resposta = self.responder(self.q, '80')
+        self.client.get(reverse('questoes:desfazer', args=[self.item.id, resposta.id]))
+        self.assertTrue(Resposta.objects.exists())

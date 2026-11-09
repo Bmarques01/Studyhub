@@ -13,7 +13,7 @@ from flashcards.views import ler_id, periodos_atuais
 
 from .forms import ImportarForm, QuestaoForm, QuestionarioForm
 from .importacao import LIMITE, MAX_ALTERNATIVAS, ler_questoes
-from .models import Alternativa, Erro, Questao, Questionario, Resposta, registrar_erro
+from .models import Alternativa, Erro, Questao, Questionario, Resposta, desfazer_erro, registrar_erro
 
 ALTERNATIVAS_NO_FORMULARIO = 4  # espaços em branco ao escrever uma questão nova
 
@@ -332,7 +332,8 @@ def questionario(request, questionario_id):
                         resposta=vista, tem_proxima=proxima is not None,
                         # errou: pergunta "por que errei?" · acertou uma que estava nos erros: oferece "dominei"
                         erro=Erro.objects.filter(questao_id=vista.questao_id).first(),
-                        aqui=request.get_full_path())
+                        aqui=request.get_full_path(),
+                        pode_desfazer=vista.id == ultima_resposta(item).id)
         if contexto['questao']:
             return render(request, 'questoes/questionario.html', contexto)
 
@@ -382,6 +383,25 @@ def responder(request, questionario_id):
     if not acertou:
         registrar_erro(proxima, dada, resposta.respondida_em)  # errou: vai para o caderno de erros
     return redirect(reverse('questoes:questionario', args=[item.id]) + f'?ver={resposta.id}')
+
+
+def ultima_resposta(questionario):
+    return questionario.respostas.order_by('-respondida_em', '-id').first()
+
+
+@require_POST
+def desfazer(request, questionario_id, resposta_id):
+    """ "Cliquei errado": apaga a última resposta (e o que ela pôs no caderno de erros),
+    e a questão volta a ser a da vez. Só a última, para não bagunçar a ordem do questionário."""
+    item = get_object_or_404(Questionario, id=questionario_id)
+    resposta = ultima_resposta(item)
+    if resposta and resposta.id == resposta_id:
+        with transaction.atomic():
+            if not resposta.acertou:
+                desfazer_erro(resposta)
+            resposta.delete()
+        messages.info(request, 'Resposta desfeita. Pode responder de novo.')
+    return redirect('questoes:questionario', questionario_id=item.id)
 
 
 @require_POST

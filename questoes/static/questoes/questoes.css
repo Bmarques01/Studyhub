@@ -456,6 +456,9 @@ button.qz-alternativa:hover { border-color: var(--rosa); background: var(--rosa-
 .qz-acertei { background: var(--certa); }
 .qz-veredito .btn { display: inline-flex; align-items: center; gap: 8px; }
 
+.qz-resultado-linha { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.qz-desfazer { font-size: 0.85rem; color: var(--texto-suave); }
+.qz-desfazer:hover { color: var(--rosa-forte); }
 .qz-resultado-questao { font-size: 1.3rem; font-weight: 700; }
 .qz-resultado-questao.acertou { color: var(--certa); }
 .qz-resultado-questao.errou { color: var(--errada); }
