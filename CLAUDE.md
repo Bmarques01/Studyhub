@@ -157,6 +157,9 @@ Compartilhado: `templates/base.html` (menu lateral, mensagens, mini pomodoro), `
 - Em consultas com `annotate(Count/Sum)`, o Django **ignora o `Meta.ordering`**: usar `order_by` explícito.
 - `{% firstof ... as x %}` guarda **texto**, não o objeto: usar `{% with x=a|default:b %}`.
 - Scripts de página que usam o motor do pomodoro precisam de `defer` (o motor também é `defer`).
+- O `runserver` se reinicia sozinho quando um arquivo muda, mas, se vários arquivos mudam no mesmo segundo,
+  ele pode carregar um deles pela metade (ex.: `NameError` de uma função que existe no arquivo). Depois de
+  editar vários `.py` de uma vez, **reiniciar o servidor** da Bruna.
 - No Git Bash do Windows, heredocs longos com aspas às vezes quebram: escrever o script num arquivo
   temporário e rodar com `python arquivo.py`. `Set-Content` do PowerShell grava com BOM.
 
