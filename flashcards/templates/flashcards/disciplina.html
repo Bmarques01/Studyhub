@@ -42,8 +42,10 @@
 
     {# ===== Um bloco por baralho ===== #}
     {% for b in baralhos %}
-        <section class="card fc-baralho" {% if b.topico %}id="baralho-{{ b.topico.id }}"{% endif %}>
-            <header class="card-topo">
+        {# Fechado: só o nome e os números. Os cartões aparecem ao clicar (a página não fica enorme). #}
+        <details class="card fc-baralho" id="baralho-{{ b.topico.id|default:'sem' }}">
+            <summary class="card-topo">
+                <span class="fc-seta" aria-hidden="true">›</span>
                 <h2 class="rotulo">{% if b.topico %}{{ b.topico.nome }}{% else %}sem baralho{% endif %}</h2>
                 <span class="sub">
                     {{ b.resumo.total }} {% if b.resumo.total == 1 %}cartão{% else %}cartões{% endif %}{% if b.resumo.total %} · {{ b.resumo.para_revisar }} hoje{% endif %}
@@ -57,11 +59,11 @@
                         </a>
                     {% endif %}
                 </div>
-            </header>
+            </summary>
             <ul class="fc-cartoes">
                 {% for c in b.cartoes %}{% include "flashcards/_cartao.html" %}{% endfor %}
             </ul>
-        </section>
+        </details>
     {% empty %}
         <p class="card vazio-card">Nenhum cartão de {{ disciplina.nome }} ainda.
             Use <strong>+ novo</strong> para criar um cartão, colar vários de uma vez ou criar um baralho.</p>

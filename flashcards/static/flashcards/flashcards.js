@@ -68,3 +68,23 @@ dialogo.addEventListener('click', evento => {
         || evento.clientY < caixa.top || evento.clientY > caixa.bottom;
     if (evento.target === dialogo && fora) dialogo.close();
 });
+
+// ===== Baralhos que abrem e fecham (página da disciplina) =====
+// A página lembra quais estavam abertos (sessionStorage): criar, editar ou excluir um cartão
+// recarrega a página, e o baralho em que você estava continua aberto.
+(function () {
+    const baralhos = document.querySelectorAll('details.fc-baralho');
+    if (!baralhos.length) return;
+    const chave = 'fc-abertos-' + location.pathname;
+    let abertos = [];
+    try { abertos = JSON.parse(sessionStorage.getItem(chave)) || []; } catch (e) { /* sem sessionStorage: começa tudo fechado */ }
+
+    const alvo = location.hash.slice(1);  // veio de um link #baralho-ID (ex.: baralho recém-criado)
+    baralhos.forEach(b => {
+        if (abertos.includes(b.id) || b.id === alvo) b.open = true;
+        b.addEventListener('toggle', () => {
+            const ids = [...baralhos].filter(x => x.open).map(x => x.id);
+            try { sessionStorage.setItem(chave, JSON.stringify(ids)); } catch (e) { /* tudo bem */ }
+        });
+    });
+})();

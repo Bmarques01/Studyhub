@@ -130,7 +130,23 @@ code {
 .fc-titulo .bolinha { width: 14px; height: 14px; }
 
 .fc-baralho { padding: 20px 24px; scroll-margin-top: 20px; }
-.fc-baralho .card-topo { flex-wrap: wrap; gap: 6px 14px; justify-content: flex-start; }
+.fc-baralho .card-topo { flex-wrap: wrap; gap: 6px 14px; justify-content: flex-start; align-items: center; }
+
+/* Baralho fechado: só o topo, clicável; a setinha gira quando abre */
+.fc-baralho summary { list-style: none; cursor: pointer; margin-bottom: 0; }
+.fc-baralho summary::-webkit-details-marker { display: none; }
+.fc-baralho[open] summary { margin-bottom: 18px; }
+.fc-baralho summary:hover .rotulo { color: var(--rosa-forte); }
+.fc-baralho summary:focus-visible { outline: 2px solid var(--rosa-forte); outline-offset: 4px; border-radius: 8px; }
+.fc-seta {
+    display: inline-block;
+    width: 1em;
+    color: var(--rosa-forte);
+    font-family: var(--fonte-mono);
+    font-weight: 700;
+    transition: transform 0.15s;
+}
+.fc-baralho[open] .fc-seta { transform: rotate(90deg); }
 
 .fc-baralho-acoes {
     display: flex;
