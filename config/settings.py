@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'flashcards',
     'questoes',
     'ia',
+    'desempenho',
 ]
 
 MIDDLEWARE = [

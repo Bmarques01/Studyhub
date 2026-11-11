@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Onde melhorar{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'desempenho/desempenho.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+<div class="dash dm">
+
+    <header class="dash-topo">
+        <div>
+            <h1>Onde melhorar</h1>
+            <p class="dash-data">
+                Pelas últimas {{ janela }} respostas de cada tópico, nos questionários e nos flashcards.
+                Mais fraco primeiro.
+            </p>
+        </div>
+    </header>
+
+    {% if grupos %}
+        {# legenda: o que cada situação quer dizer (com símbolo além da cor) #}
+        <p class="dm-legenda">
+            <span class="dm-chip fraco"><b aria-hidden="true">!</b> precisa de atenção</span> abaixo de {{ fraco }}%
+            <span class="dm-chip quase"><b aria-hidden="true">~</b> quase lá</span> de {{ fraco }} a {{ bom|add:"-1" }}%
+            <span class="dm-chip bem"><b aria-hidden="true">✓</b> indo bem</span> {{ bom }}% ou mais
+            <span class="dm-legenda-nota">questões = acertos · flashcards = lembrou (tudo menos "errei") · ▲▼ = comparado com as {{ janela }} respostas anteriores</span>
+        </p>
+
+        {% for g in grupos %}
+            <section class="card dm-disciplina" style="--cor: {{ g.disciplina.cor }}">
+                <header class="dm-disciplina-topo">
+                    <h2><i class="bolinha"></i>{{ g.disciplina.nome }}</h2>
+                    {% include "desempenho/_situacao.html" with s=g.situacao %}
+                    <div class="dm-disciplina-numeros">
+                        {% include "desempenho/_medida.html" with parte=g.questoes rotulo="questões" %}
+                        {% include "desempenho/_medida.html" with parte=g.flashcards rotulo="flashcards" %}
+                    </div>
+                </header>
+
+                <ul class="dm-topicos">
+                    {% for t in g.topicos %}
+                        <li class="dm-topico">
+                            <span class="dm-topico-nome">
+                                {% if t.topico %}{{ t.topico.nome }}{% else %}<em>sem tópico</em>{% endif %}
+                            </span>
+                            {% include "desempenho/_situacao.html" with s=t.situacao %}
+                            {% include "desempenho/_medida.html" with parte=t.questoes rotulo="questões" %}
+                            {% include "desempenho/_medida.html" with parte=t.flashcards rotulo="flashcards" %}
+                            <div class="dm-acoes">
+                                {% if t.erros %}
+                                    <a href="{% url 'questoes:erros' %}?disciplina={{ g.disciplina.id }}" class="btn-texto"
+                                       title="Questões deste tópico que ainda estão no caderno de erros">{{ t.erros }} {% if t.erros == 1 %}erro{% else %}erros{% endif %}</a>
+                                {% endif %}
+                                {% if t.tem_cartoes %}
+                                    <a href="{% url 'flashcards:revisar' %}?disciplina={{ g.disciplina.id }}{% if t.topico %}&topico={{ t.topico.id }}{% endif %}"
+                                       class="btn btn-claro" title="Revisar os flashcards que estão na hora">revisar</a>
+                                {% endif %}
+                                {% if t.tem_questoes %}
+                                    <form method="post" action="{% url 'questoes:criar_questionario' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="disciplina" value="{{ g.disciplina.id }}">
+                                        {% if t.topico %}<input type="hidden" name="topicos" value="{{ t.topico.id }}">{% else %}<input type="hidden" name="sem_topico" value="1">{% endif %}
+                                        <input type="hidden" name="quantidade" value="10">
+                                        <button class="btn" title="Questionário com 10 questões sorteadas deste tópico">praticar</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endfor %}
+    {% else %}
+        <section class="card">
+            <p class="vazio-card">
+                Ainda não há resultados para analisar.<br>
+                Responda alguns <a href="{% url 'questoes:index' %}">questionários</a> ou revise
+                <a href="{% url 'flashcards:index' %}">flashcards</a>: a partir de {{ minimo }} respostas
+                num tópico, ele aparece aqui.
+            </p>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

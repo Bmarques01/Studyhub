@@ -61,6 +61,9 @@
             <a href="{% url 'questoes:erros' %}" class="menu-item {% if app == 'questoes' and 'erro' in request.resolver_match.url_name %}ativo{% endif %}">
                 {% include "componentes/icone.html" with nome="erros" %} Erros
             </a>
+            <a href="{% url 'desempenho:index' %}" class="menu-item {% if app == 'desempenho' %}ativo{% endif %}">
+                {% include "componentes/icone.html" with nome="melhorar" %} Onde melhorar
+            </a>
         </nav>
         {% endwith %}
 

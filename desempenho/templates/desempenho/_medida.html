@@ -1,0 +1,16 @@
+{# Uma medida: "questões 55% ▼" com barrinha. Recebe parte (pct, quantidade, tendencia) e rotulo. #}
+<div class="dm-medida">
+    <span class="dm-medida-rotulo">{{ rotulo }}</span>
+    {% if parte.pct is not None %}
+        <span class="dm-trilho" aria-hidden="true"><span class="dm-barra" style="width: {{ parte.pct }}%"></span></span>
+        <span class="dm-valor">
+            {{ parte.pct }}%
+            {% if parte.tendencia == 'subiu' %}<span class="dm-seta subiu" title="melhorando: acertou mais do que nas respostas anteriores">▲<span class="so-leitor"> melhorando</span></span>
+            {% elif parte.tendencia == 'caiu' %}<span class="dm-seta caiu" title="piorando: acertou menos do que nas respostas anteriores">▼<span class="so-leitor"> piorando</span></span>{% endif %}
+        </span>
+    {% elif parte.quantidade %}
+        <span class="dm-sem" title="Ainda são poucas respostas para calcular">poucos dados ({{ parte.quantidade }})</span>
+    {% else %}
+        <span class="dm-sem">—</span>
+    {% endif %}
+</div>

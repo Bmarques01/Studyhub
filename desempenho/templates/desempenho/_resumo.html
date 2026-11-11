@@ -1,0 +1,27 @@
+{# Bloco do dashboard: os 3 tópicos mais fracos (recebe fracos e tem_resultados) #}
+<section class="card dm-resumo">
+    <header class="card-topo">
+        <h2 class="rotulo">onde melhorar</h2>
+        <a href="{% url 'desempenho:index' %}" class="sub">ver tudo →</a>
+    </header>
+    {% if fracos %}
+        <ol class="dm-resumo-lista">
+            {% for t in fracos %}
+                <li style="--cor: {{ t.disciplina.cor }}">
+                    <span class="dm-resumo-nome">
+                        <strong>{% if t.topico %}{{ t.topico.nome }}{% else %}sem tópico{% endif %}</strong>
+                        <small><i class="bolinha"></i>{{ t.disciplina.nome }}</small>
+                        {% include "desempenho/_situacao.html" with s=t.situacao %}
+                    </span>
+                    <span class="dm-resumo-pct">{{ t.dominio }}%</span>
+                </li>
+            {% endfor %}
+        </ol>
+    {% elif tem_resultados %}
+        <p class="vazio-card">Nenhum tópico abaixo de {{ bom_desempenho }}%. Indo bem!</p>
+    {% else %}
+        <p class="vazio-card">
+            Responda questionários e revise flashcards:<br>os tópicos mais fracos aparecem aqui.
+        </p>
+    {% endif %}
+</section>

@@ -5,6 +5,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'desempenho/desempenho.css' %}">
 <script src="{% static 'dashboard/dashboard.js' %}" defer></script>
 {% endblock %}
 
@@ -251,6 +252,9 @@
                 <small>0 · &lt;30min · &lt;1h · &lt;2h · 2h+</small>
             </div>
         </section>
+
+        {# ===== Onde melhorar: os 3 tópicos mais fracos ===== #}
+        {% include "desempenho/_resumo.html" %}
 
         {# ===== Projetos ativos: progresso + o que foi feito no período ===== #}
         {% if projetos %}

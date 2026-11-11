@@ -19,5 +19,6 @@ urlpatterns = [
     path('flashcards/', include('flashcards.urls')),
     path('questoes/', include('questoes.urls')),
     path('ia/', include('ia.urls')),
+    path('melhorar/', include('desempenho.urls')),
     path('', include('dashboard.urls')),  # página inicial = dashboard
 ]

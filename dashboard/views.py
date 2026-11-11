@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from calendario.models import Evento
+from desempenho import calculo as desempenho
 from calendario.views import eventos_por_dia, proximos_eventos, semanas_do_mes
 from flashcards import memoria
 from flashcards.models import Flashcard
@@ -252,6 +253,9 @@ def index(request):
         for semana in semanas
     ]
 
+    # --- Onde melhorar: os tópicos mais fracos (questionários e flashcards) ---
+    grupos_desempenho = desempenho.pontos_fracos()
+
     if agora.hour < 12:
         saudacao = 'Bom dia'
     elif agora.hour < 18:
@@ -290,6 +294,9 @@ def index(request):
         'projetos': resumo_dos_projetos(periodo, hoje),
         'tem_flashcards': Flashcard.objects.exists(),
         'flashcards_hoje': memoria.para_revisar(),
+        'fracos': desempenho.mais_fracos(grupos_desempenho),
+        'tem_resultados': bool(grupos_desempenho),
+        'bom_desempenho': desempenho.BOM,
     })
 
 
