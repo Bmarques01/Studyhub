@@ -656,5 +656,5 @@ button.qz-alternativa:hover { border-color: var(--rosa); background: var(--rosa-
 .qz-abrir[aria-expanded="true"] .qz-seta { transform: rotate(90deg); }
 .qz-abrir-tudo { display: flex; justify-content: flex-end; margin-bottom: -4px; }
 
-/* Modo escuro: certa azul-lavanda, errada magenta (validadas no fundo #1e1145) */
-[data-tema="escuro"] .dash { --certa: #5c86ff; --errada: #e040d8; }
+/* Modo escuro: certa azul-lavanda, errada rosa (validadas no fundo #2a0c30) */
+[data-tema="escuro"] .dash { --certa: #5c86ff; --errada: #e83aa8; }

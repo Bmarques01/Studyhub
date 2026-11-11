@@ -43,48 +43,48 @@
 
 /* ===== Modo escuro =====
    O botão do menu põe data-tema="escuro" no <html>; aqui só trocamos os valores das variáveis.
-   Paleta do wallpaper da Bruna: noite roxo-índigo, magenta neon e lilás, com um brilho rosa no fundo.
-   O que tem a classe .sempre-claro (folhas e capas dos cadernos) continua com a paleta clara: é "papel". */
+   Paleta do wallpaper da Bruna, com o rosa escuro como protagonista: noite ameixa-rosada, rosa/magenta
+   nos destaques e um toque de lilás. O que tem .sempre-claro (folhas e capas dos cadernos) continua "papel". */
 :root[data-tema="escuro"] {
-    --rosa-fundo: #120a2b;   /* fundo da página */
-    --rosa-bebe: #2f1f66;    /* bordas e preenchimentos leves */
-    --rosa-claro: #4a3194;
-    --rosa: #ff6fe0;
-    --rosa-forte: #e040d8;   /* magenta neon */
-    --lilas: #8f5cff;
-    --vinho: #ff9cec;        /* títulos e destaques em texto */
-    --texto: #efe8ff;
-    --branco: #1e1145;       /* cartões e menu */
+    --rosa-fundo: #1c0820;   /* fundo da página */
+    --rosa-bebe: #4a1650;    /* bordas e preenchimentos leves */
+    --rosa-claro: #6e2275;
+    --rosa: #ff6fc8;
+    --rosa-forte: #e83aa8;   /* o rosa protagonista */
+    --lilas: #b04be0;
+    --vinho: #ff9fd6;        /* títulos e destaques em texto */
+    --texto: #fbe9f6;
+    --branco: #2a0c30;       /* cartões e menu */
 
-    --texto-suave: #a99ad8;
-    --apagado: #46387c;
-    --quadriculado: rgba(143, 92, 255, 0.07);
+    --texto-suave: #c99bbf;
+    --apagado: #5c2a5e;
+    --quadriculado: rgba(232, 58, 168, 0.07);
 
-    --alerta: #ff7ac8;
-    --alerta-forte: #ffa6dc;
+    --alerta: #ff7ab0;
+    --alerta-forte: #ffa6c9;
     --sucesso: #6fe3b0;
-    --roxo-texto: #c6b8ff;
-    --fundo-alerta: #3a1452;
-    --fundo-lilas: #2b1c6b;
-    --fundo-neutro: #24194f;
-    --fundo-aviso: #3a2a1e;
-    --fundo-suave: #251350;
+    --roxo-texto: #e3b8ff;
+    --fundo-alerta: #45122f;
+    --fundo-lilas: #351545;
+    --fundo-neutro: #2e1433;
+    --fundo-aviso: #3a2418;
+    --fundo-suave: #331038;
 
-    --degrade: linear-gradient(135deg, #e040d8, #8f5cff);
-    --sombra-rgb: 6 0 24;
-    --sombra: 0 8px 28px rgba(6, 0, 24, 0.55);
+    --degrade: linear-gradient(135deg, #e83aa8, #b04be0);
+    --sombra-rgb: 12 0 14;
+    --sombra: 0 8px 28px rgba(12, 0, 14, 0.55);
 
     color-scheme: dark;  /* barras de rolagem, calendários e caixas do navegador também escuros */
 }
 
-/* Brilho do wallpaper: rosa no canto de baixo, azul-lavanda no de cima (por baixo do quadriculado) */
+/* Brilho do wallpaper: rosa forte no canto de baixo, lilás fraquinho no de cima (por baixo do quadriculado) */
 [data-tema="escuro"] body {
     background-image:
         linear-gradient(var(--quadriculado) 1px, transparent 1px),
         linear-gradient(90deg, var(--quadriculado) 1px, transparent 1px),
-        radial-gradient(ellipse at 0% 100%, rgba(224, 64, 216, 0.28), transparent 55%),
-        radial-gradient(ellipse at 100% 0%, rgba(92, 134, 255, 0.18), transparent 50%),
-        linear-gradient(160deg, #1a0d3d, #120a2b 60%);
+        radial-gradient(ellipse at 0% 100%, rgba(232, 58, 168, 0.38), transparent 60%),
+        radial-gradient(ellipse at 100% 0%, rgba(176, 75, 224, 0.16), transparent 50%),
+        linear-gradient(160deg, #26092c, #1c0820 60%);
     background-size: 32px 32px, 32px 32px, auto, auto, auto;
     background-attachment: fixed;
 }
@@ -765,6 +765,6 @@ input[type="color"] {
 
 .erro-form ul { list-style: none; }
 
-/* Eventos no escuro: prova magenta, trabalho azul-lavanda, entrega âmbar (validadas no fundo #1e1145) */
-[data-tema="escuro"] .marca.tipo-prova { background: #e040d8; }
+/* Eventos no escuro: prova rosa, trabalho azul-lavanda, entrega âmbar (validadas no fundo #2a0c30) */
+[data-tema="escuro"] .marca.tipo-prova { background: #e83aa8; }
 [data-tema="escuro"] .marca.tipo-trabalho { background: #5c86ff; }

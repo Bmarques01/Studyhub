@@ -417,8 +417,8 @@ textarea.mono { font-family: var(--fonte-mono); font-size: 0.82rem; }
 
 .fc-fim .btn { margin-top: 16px; }
 
-/* Modo escuro: bordas das notas — errei magenta, difícil âmbar, bom azul, fácil verde (validadas no fundo #1e1145) */
-[data-tema="escuro"] .nota-1 { --borda: #e040d8; }
+/* Modo escuro: bordas das notas — errei rosa, difícil âmbar, bom azul, fácil verde (validadas no fundo #2a0c30) */
+[data-tema="escuro"] .nota-1 { --borda: #e83aa8; }
 [data-tema="escuro"] .nota-2 { --borda: #c98500; }
 [data-tema="escuro"] .nota-3 { --borda: #5c86ff; }
 [data-tema="escuro"] .nota-4 { --borda: #3a9f6a; }

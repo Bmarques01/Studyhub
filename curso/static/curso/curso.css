@@ -470,10 +470,10 @@
     text-decoration: none;
 }
 
-/* ===== Modo escuro: situações da grade (validadas no fundo #1e1145; sempre com texto/ícone além da cor) ===== */
+/* ===== Modo escuro: situações da grade (validadas no fundo #2a0c30; sempre com texto/ícone além da cor) ===== */
 [data-tema="escuro"] {
     --s-concluida: #9b3fc2;
     --s-compensada: #e8589f;
     --s-cursando: #5c86ff;
-    --s-falta: #2a1b5c;
+    --s-falta: #3d1442;
 }
