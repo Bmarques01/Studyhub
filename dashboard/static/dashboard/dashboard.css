@@ -796,14 +796,16 @@ a.sub:hover {
 
 .proj-diario { font-style: italic; }
 
-/* ===== Modo escuro (paletas validadas para daltonismo no fundo #241820) =====
-   Mapa de calor: no escuro, pouco tempo = rosa apagado e muito tempo = rosa claro e brilhante. */
+/* ===== Modo escuro (paletas validadas para daltonismo no fundo #1e1145) =====
+   Semana atual magenta × anterior azul-lavanda. Mapa de calor: pouco tempo = roxo, muito = rosa claro. */
 [data-tema="escuro"] .dash {
-    --g-vazio: #33252d;
-    --g-grade: #33252d;
-    --g-1: #8e3363;
-    --g-2: #b8457f;
-    --g-3: #e0609a;
-    --g-4: #f39cc4;
+    --g-atual: #e040d8;
+    --g-anterior: #5c86ff;
+    --g-vazio: #2a1b5c;
+    --g-grade: #2a1b5c;
+    --g-1: #8a2fa8;
+    --g-2: #ae3cc0;
+    --g-3: #d453dc;
+    --g-4: #f39cf0;
 }
-[data-tema="escuro"] .celula.nivel-4 small { color: #1a1216; }  /* o rosa mais claro pede texto escuro */
+[data-tema="escuro"] .celula.nivel-4 small { color: #120a2b; }  /* o rosa mais claro pede texto escuro */

@@ -43,37 +43,50 @@
 
 /* ===== Modo escuro =====
    O botão do menu põe data-tema="escuro" no <html>; aqui só trocamos os valores das variáveis.
-   Pegada dos guias da IA: fundo quase preto arroxeado, rosa e lilás como destaque.
+   Paleta do wallpaper da Bruna: noite roxo-índigo, magenta neon e lilás, com um brilho rosa no fundo.
    O que tem a classe .sempre-claro (folhas e capas dos cadernos) continua com a paleta clara: é "papel". */
 :root[data-tema="escuro"] {
-    --rosa-fundo: #1a1216;
-    --rosa-bebe: #3a2632;
-    --rosa-claro: #5c3a4d;
-    --rosa: #f48fb8;
-    --rosa-forte: #e0609a;
-    --lilas: #b48cf6;
-    --vinho: #f5a8ca;
-    --texto: #f3e6ee;
-    --branco: #241820;
+    --rosa-fundo: #120a2b;   /* fundo da página */
+    --rosa-bebe: #2f1f66;    /* bordas e preenchimentos leves */
+    --rosa-claro: #4a3194;
+    --rosa: #ff6fe0;
+    --rosa-forte: #e040d8;   /* magenta neon */
+    --lilas: #8f5cff;
+    --vinho: #ff9cec;        /* títulos e destaques em texto */
+    --texto: #efe8ff;
+    --branco: #1e1145;       /* cartões e menu */
 
-    --texto-suave: #b39aa8;
-    --apagado: #5e4654;
-    --quadriculado: #241a20;
+    --texto-suave: #a99ad8;
+    --apagado: #46387c;
+    --quadriculado: rgba(143, 92, 255, 0.07);
 
-    --alerta: #f27fae;
-    --alerta-forte: #f7a1c4;
-    --sucesso: #6fcf97;
-    --roxo-texto: #b9adff;
-    --fundo-alerta: #3d1a2a;
-    --fundo-lilas: #2b2142;
-    --fundo-neutro: #2e2229;
-    --fundo-aviso: #33280f;
-    --fundo-suave: #2a1b24;
+    --alerta: #ff7ac8;
+    --alerta-forte: #ffa6dc;
+    --sucesso: #6fe3b0;
+    --roxo-texto: #c6b8ff;
+    --fundo-alerta: #3a1452;
+    --fundo-lilas: #2b1c6b;
+    --fundo-neutro: #24194f;
+    --fundo-aviso: #3a2a1e;
+    --fundo-suave: #251350;
 
-    --sombra-rgb: 0 0 0;
-    --sombra: 0 8px 24px rgba(0, 0, 0, 0.35);
+    --degrade: linear-gradient(135deg, #e040d8, #8f5cff);
+    --sombra-rgb: 6 0 24;
+    --sombra: 0 8px 28px rgba(6, 0, 24, 0.55);
 
     color-scheme: dark;  /* barras de rolagem, calendários e caixas do navegador também escuros */
+}
+
+/* Brilho do wallpaper: rosa no canto de baixo, azul-lavanda no de cima (por baixo do quadriculado) */
+[data-tema="escuro"] body {
+    background-image:
+        linear-gradient(var(--quadriculado) 1px, transparent 1px),
+        linear-gradient(90deg, var(--quadriculado) 1px, transparent 1px),
+        radial-gradient(ellipse at 0% 100%, rgba(224, 64, 216, 0.28), transparent 55%),
+        radial-gradient(ellipse at 100% 0%, rgba(92, 134, 255, 0.18), transparent 50%),
+        linear-gradient(160deg, #1a0d3d, #120a2b 60%);
+    background-size: 32px 32px, 32px 32px, auto, auto, auto;
+    background-attachment: fixed;
 }
 
 * {
@@ -752,5 +765,6 @@ input[type="color"] {
 
 .erro-form ul { list-style: none; }
 
-/* Eventos no escuro: o índigo do "trabalho" fica um pouco mais claro para aparecer no fundo */
-[data-tema="escuro"] .marca.tipo-trabalho { background: #6b5be0; }
+/* Eventos no escuro: prova magenta, trabalho azul-lavanda, entrega âmbar (validadas no fundo #1e1145) */
+[data-tema="escuro"] .marca.tipo-prova { background: #e040d8; }
+[data-tema="escuro"] .marca.tipo-trabalho { background: #5c86ff; }

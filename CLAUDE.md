@@ -133,15 +133,18 @@ Compartilhado: `templates/base.html` (menu lateral, mensagens, mini pomodoro), `
   Estados sempre com ícone/texto além da cor.
 - **Modo escuro** (só pelo botão lua/sol na caixa da usuária; `static/js/tema.js`, escolha em
   `localStorage["tema"]`; uma linha no `<head>` do `base.html` e do `login.html` aplica antes de desenhar):
-  `:root[data-tema="escuro"]` só troca os valores das variáveis do topo do `base.css` (fundo `#1a1216`,
-  cartões `--branco: #241820`, texto `#f3e6ee`). Por isso **nada de cor escrita direto no CSS**: usar as
+  `:root[data-tema="escuro"]` só troca os valores das variáveis do topo do `base.css`. Paleta tirada do
+  **wallpaper da Bruna** (noite roxo-índigo + magenta neon + lilás): fundo `#120a2b` com brilho rosa no canto
+  de baixo e azul-lavanda no de cima (`[data-tema="escuro"] body`), cartões `--branco: #1e1145`, texto
+  `#efe8ff`, `--rosa-forte #e040d8`, `--lilas #8f5cff`. Por isso **nada de cor escrita direto no CSS**: usar as
   variáveis (`--texto-suave`, `--apagado`, `--alerta`, `--sucesso`, `--roxo-texto`, `--fundo-alerta/-lilas/
-  -neutro/-aviso/-suave`, sombras com `rgb(var(--sombra-rgb) / 0.2)`). Texto sobre rosa/degradê usa
+  -neutro/-aviso/-suave`, sombras com `rgb(var(--sombra-rgb) / 0.2)`; campos de formulário com
+  `background: var(--branco)`, senão o navegador põe cinza). Texto sobre rosa/degradê usa
   `--sobre-cor` (sempre branco; `--branco` vira escuro no escuro). `.sempre-claro` devolve a paleta clara
-  (folhas e capas dos cadernos são "papel"). Paletas do escuro validadas no fundo `#241820` (no fim de cada
-  CSS): calor `#8e3363, #b8457f, #e0609a, #f39cc4`; trabalho `#6b5be0`; grade `#b8407a / #e57aad / #7262e6`;
-  certa/errada `#7262e6 / #e0609a`; notas `#d64f8f, #c98500, #6b5be0, #c07ce0` (compensada e nota 4 ficam
-  um pouco acima da faixa de brilho para separar bem dos vizinhos; sempre têm texto junto).
+  (folhas e capas dos cadernos são "papel"). Paletas do escuro validadas no fundo `#1e1145` (no fim de cada
+  CSS), todas passando: par principal magenta `#e040d8` × azul-lavanda `#5c86ff` (semana atual × anterior,
+  errada × certa, prova × trabalho; entrega `#c98500`); calor `#8a2fa8, #ae3cc0, #d453dc, #f39cf0`;
+  grade `#9b3fc2 / #e8589f / #5c86ff`; notas `#e040d8, #c98500, #5c86ff, #3a9f6a`.
 
 ## Convenções de código
 

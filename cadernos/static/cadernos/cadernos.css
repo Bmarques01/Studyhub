@@ -642,8 +642,8 @@ input.titulo-pagina[type="text"]:focus { border-bottom-color: var(--rosa-claro);
     padding: 20px 32px 32px;
     background-color: var(--rosa-fundo);
     background-image:
-        linear-gradient(var(--rosa-bebe) 1px, transparent 1px),
-        linear-gradient(90deg, var(--rosa-bebe) 1px, transparent 1px);
+        linear-gradient(var(--quadriculado) 1px, transparent 1px),
+        linear-gradient(90deg, var(--quadriculado) 1px, transparent 1px);
     background-size: 32px 32px;
 }
 

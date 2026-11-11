@@ -166,6 +166,7 @@
     padding: 10px 18px;
     border: 2px solid var(--rosa-bebe);
     border-radius: 12px;
+    background: var(--branco);
     font-size: 1rem;
     color: var(--texto);
     text-align: center;
